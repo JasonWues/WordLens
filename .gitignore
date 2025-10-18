@@ -154,11 +154,6 @@ $RECYCLE.BIN/
 # Mac crap
 .DS_Store
 
-#################
-## Monodevelop
-#################
-*.userprefs
-*.nugetreferenceswitcher
 
 
 #################
@@ -191,3 +186,6 @@ BenchmarkDotNet.Artifacts/
 
 dirs.sln
 
+*.lib
+
+*/target/

@@ -6,11 +6,31 @@
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <PublishAot>true</PublishAot>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <PublishAot>false</PublishAot>
     </PropertyGroup>
 
     <ItemGroup>
         <Folder Include="Models\"/>
         <AvaloniaResource Include="Assets\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <DirectPInvoke Include="native.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="native.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Userenv.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Pathcch.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Shell32.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Gdi32.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Propsys.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Ole32.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="OleAut32.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="RuntimeObject.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="User32.lib" />
     </ItemGroup>
 
     <ItemGroup>
@@ -24,5 +44,40 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
+        <PackageReference Include="SharpHook" Version="7.0.3" />
     </ItemGroup>
+
+    <Target Name="BuildRust" BeforeTargets="Build">
+        <!-- 打印一条消息，方便在构建日志中看到这个过程 -->
+        <Message Text="--- 开始编译 Rust 原生库 ---" Importance="high" />
+
+        <!-- 1. 定义 Rust 项目相关的变量 -->
+        <PropertyGroup>
+            <!-- Rust 项目相对于当前 C# 项目的路径 -->
+            <RustProjectDir>$(SolutionDir)native\</RustProjectDir>
+            <!-- Rust 编译后输出的库文件名 -->
+            <RustLibName>native.lib</RustLibName>
+        </PropertyGroup>
+
+        <!-- 2. 根据 C# 的构建配置 (Debug/Release) 来决定 Rust 的构建参数 -->
+        <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+            <RustBuildCommand>cargo build --release</RustBuildCommand>
+            <RustOutDir>$(RustProjectDir)target/release/</RustOutDir>
+        </PropertyGroup>
+
+        <PropertyGroup Condition="'$(Configuration)' != 'Release'">
+            <RustBuildCommand>cargo build</RustBuildCommand>
+            <RustOutDir>$(RustProjectDir)target/debug/</RustOutDir>
+        </PropertyGroup>
+
+        <!-- 3. 执行 cargo build 命令 -->
+        <Exec Command="$(RustBuildCommand)" WorkingDirectory="$(RustProjectDir)" />
+
+        <!-- 4. 将编译好的 .dll 文件复制到 C# 项目的输出目录 -->
+        <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
+              DestinationFolder="$(MSBuildProjectDirectory)"
+              SkipUnchangedFiles="true" />
+
+        <Message Text="--- Rust 原生库编译并复制完成 ---" Importance="high" />
+    </Target>
 </Project>
