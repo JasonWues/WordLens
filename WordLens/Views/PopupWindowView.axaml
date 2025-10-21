@@ -3,9 +3,9 @@
         xmlns:vm="using:WordLens.ViewModels"
         x:Class="WordLens.Views.PopupWindowView"
         x:DataType="vm:PopupWindowViewModel"
-        Width="520" Height="260"
+        Width="520" Height="340"
         CanResize="False"
-        Topmost="True"
+        Topmost="{Binding IsTopmost}"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         Title="WordLens">
@@ -13,16 +13,157 @@
         <vm:PopupWindowViewModel />
     </Design.DataContext>
 
+    <Window.Styles>
+        <StyleInclude Source="/Assets/Icons.axaml" />
+        
+        <!-- 按钮样式 -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        
+        <Style Selector="Button.icon-button:pointerover">
+            <Setter Property="Background" Value="#10000000" />
+        </Style>
+        
+        <Style Selector="Button.icon-button:pressed">
+            <Setter Property="Background" Value="#20000000" />
+        </Style>
+
+        <Style Selector="Button.icon-button:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+
+        <!-- 置顶按钮激活状态 -->
+        <Style Selector="Button.icon-button.topmost-active">
+            <Setter Property="Background" Value="#20409EFF" />
+        </Style>
+        
+        <Style Selector="Button.icon-button.topmost-active:pointerover">
+            <Setter Property="Background" Value="#30409EFF" />
+        </Style>
+    </Window.Styles>
+
     <Border Padding="12">
-        <Grid RowDefinitions="Auto,* ,Auto" ColumnDefinitions="*">
-            <TextBlock Text="Selection" FontWeight="Bold" Margin="0,0,0,6" />
-            <ScrollViewer Grid.Row="1">
-                <TextBlock Text="{Binding SourceText}" TextWrapping="Wrap" />
-            </ScrollViewer>
-            <StackPanel Grid.Row="2" Spacing="8">
-                <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" />
-                <TextBlock Text="{Binding TranslatedText}" TextWrapping="Wrap" />
-            </StackPanel>
+        <Grid RowDefinitions="Auto,8,Auto,*,8,Auto,8,Auto,*">
+            
+            <!-- 顶部工具栏 -->
+            <Border Grid.Row="0" 
+                    Background="#F5F5F5" 
+                    CornerRadius="4" 
+                    Padding="8,4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- 左侧：置顶按钮 -->
+                    <Button Grid.Column="0"
+                            Classes="icon-button"
+                            Classes.topmost-active="{Binding IsTopmost}"
+                            Command="{Binding ToggleTopmostCommand}"
+                            ToolTip.Tip="置顶窗口"
+                            HorizontalAlignment="Left">
+                        <Panel>
+                            <PathIcon Width="16" Height="16"
+                                      Data="{StaticResource pin_regular}"
+                                      IsVisible="{Binding !IsTopmost}" />
+                            <PathIcon Width="16" Height="16"
+                                      Data="{StaticResource pin_off_regular}"
+                                      IsVisible="{Binding IsTopmost}" />
+                        </Panel>
+                    </Button>
+
+                    <!-- 右侧：复制翻译按钮 -->
+                    <Button Grid.Column="1"
+                            Classes="icon-button"
+                            IsEnabled="{Binding CanCopyTranslation}"
+                            Click="CopyTranslation_Click"
+                            ToolTip.Tip="复制翻译"
+                            HorizontalAlignment="Right">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Width="16" Height="16"
+                                      Data="{StaticResource copy_regular}" />
+                            <TextBlock Text="复制翻译" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- 原文标题栏 -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" 
+                           Text="原文" 
+                           FontWeight="Bold" 
+                           VerticalAlignment="Center" />
+                
+                <!-- 清空按钮 -->
+                <Button Grid.Column="1"
+                        Classes="icon-button"
+                        Command="{Binding ClearSourceCommand}"
+                        ToolTip.Tip="清空"
+                        IsEnabled="{Binding CanCopySource}">
+                    <PathIcon Width="14" Height="14"
+                              Data="{StaticResource dismiss_regular}" />
+                </Button>
+            </Grid>
+
+            <!-- 原文内容 -->
+            <Border Grid.Row="3" 
+                    Background="#F9F9F9"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="8">
+                <ScrollViewer>
+                    <TextBlock Text="{Binding SourceText}" 
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Top" />
+                </ScrollViewer>
+            </Border>
+
+            <!-- 进度条 -->
+            <ProgressBar Grid.Row="5" 
+                         IsVisible="{Binding IsBusy}" 
+                         IsIndeterminate="True"
+                         Height="3" />
+
+            <!-- 翻译结果标题栏 -->
+            <Grid Grid.Row="6" ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" 
+                           Text="翻译" 
+                           FontWeight="Bold" 
+                           VerticalAlignment="Center" />
+                
+                <!-- 复制原文按钮 -->
+                <Button Grid.Column="1"
+                        Classes="icon-button"
+                        IsEnabled="{Binding CanCopySource}"
+                        Click="CopySource_Click"
+                        ToolTip.Tip="复制原文">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Width="14" Height="14"
+                                  Data="{StaticResource copy_regular}" />
+                        <TextBlock Text="复制原文" 
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- 翻译内容 -->
+            <Border Grid.Row="8"
+                    Background="#F9F9F9"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="8">
+                <ScrollViewer>
+                    <TextBlock Text="{Binding TranslatedText}" 
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Top" />
+                </ScrollViewer>
+            </Border>
         </Grid>
     </Border>
 </Window>

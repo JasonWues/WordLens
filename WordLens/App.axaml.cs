@@ -6,9 +6,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using WordLens.Services;
 using WordLens.ViewModels;
 using WordLens.Views;
+using ZLogger;
+using ZLogger.Providers;
 
 namespace WordLens
 {
@@ -73,6 +76,19 @@ namespace WordLens
             services.AddSingleton<TranslationService>();
             services.AddSingleton<ISelectionService, SelectionService>();
             services.AddHttpClient();
+            services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.SetMinimumLevel(LogLevel.Trace);
+                logging.AddZLoggerConsole();
+                logging.AddZLoggerRollingFile(opt =>
+                {
+                    opt.FilePathSelector = (dt, index) =>
+                        $"logs/{dt:yyyy-MM-dd}_{index}.log";
+                    opt.RollingInterval = RollingInterval.Day;
+                    opt.RollingSizeKB = 1024;
+                });
+            });
         }
     }
 }

@@ -18,7 +18,7 @@
 
     <TrayIcon.Icons>
         <TrayIcons>
-            <TrayIcon Icon="/Assets/avalonia-logo.ico">
+            <TrayIcon Icon="/Assets/avalonia-logo.ico" Command="{Binding ShowSettingCommand}">
                 <TrayIcon.Menu>
                     <NativeMenu>
                         <NativeMenuItem Header="设置" Command="{Binding ShowSettingCommand}"/>

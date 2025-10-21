@@ -19,6 +19,13 @@ namespace WordLens.ViewModels
         [ObservableProperty]
         private string? translatedText;
 
+        [ObservableProperty]
+        private bool isTopmost;
+
+        public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
+        
+        public bool CanCopyTranslation => !string.IsNullOrWhiteSpace(TranslatedText);
+
         public PopupWindowViewModel()
         {
 
@@ -27,6 +34,16 @@ namespace WordLens.ViewModels
         public PopupWindowViewModel(TranslationService translationService)
         {
             _translationService = translationService;
+        }
+
+        partial void OnSourceTextChanged(string? value)
+        {
+            OnPropertyChanged(nameof(CanCopySource));
+        }
+
+        partial void OnTranslatedTextChanged(string? value)
+        {
+            OnPropertyChanged(nameof(CanCopyTranslation));
         }
 
         [RelayCommand]
@@ -44,6 +61,19 @@ namespace WordLens.ViewModels
             {
                 IsBusy = false;
             }
+        }
+
+        [RelayCommand]
+        public void ToggleTopmost()
+        {
+            IsTopmost = !IsTopmost;
+        }
+
+        [RelayCommand]
+        public void ClearSource()
+        {
+            SourceText = string.Empty;
+            TranslatedText = string.Empty;
         }
     }
 }

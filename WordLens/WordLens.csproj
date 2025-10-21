@@ -33,6 +33,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" />
     <PackageReference Include="Semi.Avalonia" Version="11.3.7"/>
     <PackageReference Include="SharpHook" Version="7.0.3"/>
+    <PackageReference Include="ZLogger" Version="2.5.10" />
   </ItemGroup>
 
   <Target Name="BuildRust" BeforeTargets="Build">

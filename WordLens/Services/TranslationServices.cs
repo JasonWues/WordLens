@@ -95,7 +95,7 @@ namespace WordLens.Services
                 Model = _config.Model,
                 Messages = new List<ChatMessage>
                 {
-                    new ChatMessage
+                    new()
                     {
                         Role = "system",
                         Content = $"You are a translation engine. Translate to {targetLanguage}. Only return the translation."

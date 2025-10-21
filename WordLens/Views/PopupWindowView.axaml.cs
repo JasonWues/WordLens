@@ -1,4 +1,7 @@
-﻿using Avalonia.Controls;
+﻿using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using WordLens.ViewModels;
 
 namespace WordLens.Views
 {
@@ -7,6 +10,34 @@ namespace WordLens.Views
         public PopupWindowView()
         {
             InitializeComponent();
+        }
+
+        private async void CopySource_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is PopupWindowViewModel vm)
+            {
+                await CopyToClipboardAsync(vm.SourceText);
+            }
+        }
+
+        private async void CopyTranslation_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is PopupWindowViewModel vm)
+            {
+                await CopyToClipboardAsync(vm.TranslatedText);
+            }
+        }
+
+        private async Task CopyToClipboardAsync(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel?.Clipboard != null)
+            {
+                await topLevel.Clipboard.SetTextAsync(text);
+            }
         }
     }
 }
