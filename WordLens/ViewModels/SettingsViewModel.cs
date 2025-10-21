@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using SharpHook.Data;
 using WordLens.Models;
 using WordLens.Services;
@@ -14,6 +15,7 @@ namespace WordLens.ViewModels
 {
     public partial class SettingsViewModel : ViewModelBase
     {
+
         private readonly ISettingsService _settingsService;
         private readonly IHotkeyService _hotkeyService;
         private AppSettings? _originalSettings;

@@ -8,7 +8,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using WordLens.Models;
+using ZLogger;
 
 namespace WordLens.Services
 {
@@ -22,10 +24,15 @@ namespace WordLens.Services
         private readonly ISettingsService _settings;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public TranslationService(ISettingsService settings, IHttpClientFactory httpClientFactory)
+        readonly ILogger<TranslationService> _logger;
+
+
+        public TranslationService(ISettingsService settings, IHttpClientFactory httpClientFactory,ILogger<TranslationService> logger)
         {
             _settings = settings;
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
+
         }
 
         public async Task<string> TranslateAsync(string text, CancellationToken ct = default)
@@ -40,6 +47,7 @@ namespace WordLens.Services
             };
 
             var httpClient = CreateHttpClientWithProxy(cfg.Proxy);
+            _logger.ZLogInformation($"Translating text using provider {providerCfg.Name} to language {cfg.TargetLanguage}");
             return await provider.TranslateAsync(text, cfg.TargetLanguage, httpClient, ct);
         }
 

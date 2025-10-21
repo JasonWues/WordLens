@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using WordLens.Models;
+using ZLogger;
 
 namespace WordLens.Services
 {
@@ -15,9 +17,11 @@ namespace WordLens.Services
     public class SettingsService : ISettingsService
     {
         readonly private string _path;
+        readonly private ILogger<SettingsService> _logger;
 
-        public SettingsService()
+        public SettingsService(ILogger<SettingsService> logger)
         {
+            _logger = logger;
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             var dir = Path.Combine(appData, "WordLens");
             Directory.CreateDirectory(dir);
@@ -34,7 +38,8 @@ namespace WordLens.Services
             }
 
             var json = await File.ReadAllTextAsync(_path);
-            var settings = JsonSerializer.Deserialize<AppSettings>(json,SourceGenerationContext.Default.AppSettings);
+            var settings = JsonSerializer.Deserialize<AppSettings>(json, SourceGenerationContext.Default.AppSettings);
+            _logger.ZLogInformation($"Settings loaded successfully path:{_path}");
             return settings ?? new AppSettings();
         }
 
