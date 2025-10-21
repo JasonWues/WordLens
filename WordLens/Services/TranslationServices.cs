@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -13,15 +14,15 @@ namespace WordLens.Services
 {
     public interface ITranslationProvider
     {
-        Task<string> TranslateAsync(string text, string targetLanguage,HttpClient httpClient, CancellationToken ct = default);
+        Task<string> TranslateAsync(string text, string targetLanguage, HttpClient httpClient, CancellationToken ct = default);
     }
 
     public class TranslationService
     {
-        readonly private ISettingsService _settings;
-        readonly private IHttpClientFactory _httpClientFactory;
+        private readonly ISettingsService _settings;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public TranslationService(ISettingsService settings,IHttpClientFactory httpClientFactory)
+        public TranslationService(ISettingsService settings, IHttpClientFactory httpClientFactory)
         {
             _settings = settings;
             _httpClientFactory = httpClientFactory;
@@ -38,21 +39,47 @@ namespace WordLens.Services
                 _ => throw new NotSupportedException("Provider not supported")
             };
 
-            return await provider.TranslateAsync(text, cfg.TargetLanguage,_httpClientFactory.CreateClient(), ct);
+            var httpClient = CreateHttpClientWithProxy(cfg.Proxy);
+            return await provider.TranslateAsync(text, cfg.TargetLanguage, httpClient, ct);
+        }
+
+        private HttpClient CreateHttpClientWithProxy(ProxyConfig proxyConfig)
+        {
+            if (!proxyConfig.Enabled)
+            {
+                return _httpClientFactory.CreateClient();
+            }
+
+            var handler = new HttpClientHandler();
+            
+            var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
+            
+            if (proxyConfig.UseAuthentication &&
+                !string.IsNullOrEmpty(proxyConfig.Username))
+            {
+                proxy.Credentials = new NetworkCredential(
+                    proxyConfig.Username,
+                    proxyConfig.Password
+                );
+            }
+
+            handler.Proxy = proxy;
+            handler.UseProxy = true;
+
+            return new HttpClient(handler);
         }
     }
 
     public class OpenAITranslationProvider : ITranslationProvider
     {
-        readonly private ProviderConfig _config;
+        private readonly ProviderConfig _config;
 
         public OpenAITranslationProvider(ProviderConfig config)
         {
             _config = config;
-
         }
 
-        public async Task<string> TranslateAsync(string text, string targetLanguage,HttpClient httpClient, CancellationToken ct = default)
+        public async Task<string> TranslateAsync(string text, string targetLanguage, HttpClient httpClient, CancellationToken ct = default)
         {
             if (!string.IsNullOrWhiteSpace(_config.ApiKey))
             {
@@ -77,11 +104,16 @@ namespace WordLens.Services
                 }
             };
 
-            using var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions");
-            req.Content = new StringContent(JsonSerializer.Serialize(payload,SourceGenerationContext.Default.ChatCompletionRequest), Encoding.UTF8, "application/json");
+            var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions");
+            req.Content = new StringContent(
+                JsonSerializer.Serialize(payload, SourceGenerationContext.Default.ChatCompletionRequest),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            using var resp = await httpClient.SendAsync(req, ct);
+            var resp = await httpClient.SendAsync(req, ct);
             resp.EnsureSuccessStatusCode();
+            
             await using var stream = await resp.Content.ReadAsStreamAsync(ct);
             using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
             var root = doc.RootElement;

@@ -46,11 +46,15 @@ namespace WordLens.ViewModels
         }
 
         [RelayCommand]
-        private void ShowSetting()
+        private async void ShowSetting()
         {
             var view = _services.GetRequiredService<MainWindowView>();
-            view.DataContext =  _services.GetRequiredService<MainWindowViewModel>();
+            var viewModel = _services.GetRequiredService<MainWindowViewModel>();
+            view.DataContext = viewModel;
             view.Show();
+            
+            // 初始化设置
+            await viewModel.InitializeAsync();
         }
 
         [RelayCommand]

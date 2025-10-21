@@ -8,6 +8,7 @@ namespace WordLens.Models
         public HotkeyConfig Hotkey { get; set; } = HotkeyConfig.Default();
         public string TargetLanguage { get; set; } = "zh-CN";
         public string? SelectedProvider { get; set; } = "OpenAI";
+        public ProxyConfig Proxy { get; set; } = new ProxyConfig();
 
         public List<ProviderConfig> Providers { get; set; } = new List<ProviderConfig>
         {
@@ -49,5 +50,15 @@ namespace WordLens.Models
         public string BaseUrl { get; set; } = string.Empty; // e.g. https://api.openai.com or compatible
         public string? ApiKey { get; set; }
         public string Model { get; set; } = string.Empty;
+    }
+
+    public class ProxyConfig
+    {
+        public bool Enabled { get; set; } = false;
+        public string Address { get; set; } = "http://127.0.0.1";
+        public int Port { get; set; } = 8080;
+        public bool UseAuthentication { get; set; } = false;
+        public string? Username { get; set; }
+        public string? Password { get; set; }
     }
 }

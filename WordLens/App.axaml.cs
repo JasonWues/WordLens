@@ -58,10 +58,15 @@ namespace WordLens
 
         private static void ConfigureServices(IServiceCollection services)
         {
+            // ViewModels
             services.AddSingleton<ApplicationViewModel>();
-            services.AddTransient<MainWindowView>();
             services.AddTransient<MainWindowViewModel>();
             services.AddTransient<PopupWindowViewModel>();
+            
+            // Views
+            services.AddTransient<MainWindowView>();
+            
+            // Services
             services.AddSingleton<IHotkeyService, HotkeyService>();
             services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
             services.AddSingleton<ISettingsService, SettingsService>();

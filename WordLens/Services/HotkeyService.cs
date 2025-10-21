@@ -28,14 +28,18 @@ namespace WordLens.Services
 
         public async Task StartAsync(CancellationToken ct = default)
         {
-
-
             var settings = await _settingsService.LoadAsync();
             _config = settings.Hotkey;
 
             _hook = new EventLoopGlobalHook();
             _hook.KeyPressed += OnKeyPressed;
             await _hook.RunAsync();
+        }
+
+        public async Task ReloadHotkeyAsync()
+        {
+            var settings = await _settingsService.LoadAsync();
+            _config = settings.Hotkey;
         }
 
         public void Stop()
