@@ -1,6 +1,7 @@
-﻿namespace WordLens.ViewModels;
-
-public partial class MainWindowViewModel : ViewModelBase
+﻿namespace WordLens.ViewModels
 {
-    public string Greeting { get; } = "Welcome to Avalonia!";
+    public class MainWindowViewModel : ViewModelBase
+    {
+        public string Greeting { get; } = "Welcome to Avalonia!";
+    }
 }

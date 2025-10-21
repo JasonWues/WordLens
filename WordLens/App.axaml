@@ -2,14 +2,31 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="WordLens.App"
              xmlns:local="using:WordLens"
+             xmlns:semi="https://irihi.tech/semi"
+             xmlns:vm="using:WordLens.ViewModels"
+             x:DataType="vm:ApplicationViewModel"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <local:ViewLocator />
     </Application.DataTemplates>
-  
+
     <Application.Styles>
-        <FluentTheme />
+        <semi:SemiTheme Locale="zh-CN" />
     </Application.Styles>
+
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="/Assets/avalonia-logo.ico">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="设置" Command="{Binding ShowSettingCommand}"/>
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="退出程序" Command="{Binding ExitCommand}" />
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
 </Application>

@@ -1,11 +1,14 @@
+using System;
 using Avalonia.Controls;
 
-namespace WordLens.Views;
-
-public partial class MainWindowView : Window
+namespace WordLens.Views
 {
-    public MainWindowView()
+    public partial class MainWindowView : Window
     {
-        InitializeComponent();
+
+        public MainWindowView()
+        {
+            InitializeComponent();
+        }
     }
 }

@@ -1,47 +1,73 @@
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
+using System;
 using System.Linq;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.DependencyInjection;
+using WordLens.Services;
 using WordLens.ViewModels;
 using WordLens.Views;
 
-namespace WordLens;
-
-public partial class App : Application
+namespace WordLens
 {
-    public override void Initialize()
+    public class App : Application
     {
-        AvaloniaXamlLoader.Load(this);
-    }
+        private IServiceProvider? _services;
 
-    public override void OnFrameworkInitializationCompleted()
-    {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        public override void Initialize()
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-            DisableAvaloniaDataAnnotationValidation();
-            desktop.MainWindow = new MainWindowView
-            {
-                DataContext = new MainWindowViewModel(),
-            };
+            AvaloniaXamlLoader.Load(this);
         }
 
-        base.OnFrameworkInitializationCompleted();
-    }
-
-    private void DisableAvaloniaDataAnnotationValidation()
-    {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
+        public override void OnFrameworkInitializationCompleted()
         {
-            BindingPlugins.DataValidators.Remove(plugin);
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+                // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
+                // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
+                DisableAvaloniaDataAnnotationValidation();
+                var collection = new ServiceCollection();
+                ConfigureServices(collection);
+                _services = collection.BuildServiceProvider();
+
+                DataContext = _services.GetRequiredService<ApplicationViewModel>();
+
+                var hotkeyManager = _services.GetRequiredService<IHotkeyManagerService>();
+                _ = hotkeyManager.StartAsync();
+            }
+
+            base.OnFrameworkInitializationCompleted();
+        }
+
+        private void DisableAvaloniaDataAnnotationValidation()
+        {
+            // Get an array of plugins to remove
+            var dataValidationPluginsToRemove =
+                BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+
+            // remove each entry found
+            foreach (var plugin in dataValidationPluginsToRemove)
+            {
+                BindingPlugins.DataValidators.Remove(plugin);
+            }
+        }
+
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<ApplicationViewModel>();
+            services.AddTransient<MainWindowView>();
+            services.AddTransient<MainWindowViewModel>();
+            services.AddTransient<PopupWindowViewModel>();
+            services.AddSingleton<IHotkeyService, HotkeyService>();
+            services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<TranslationService>();
+            services.AddSingleton<ISelectionService, SelectionService>();
+            services.AddHttpClient();
         }
     }
 }

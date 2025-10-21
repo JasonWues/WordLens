@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace WordLens.Native
 {
@@ -18,7 +16,7 @@ namespace WordLens.Native
         public static string GetSelectionText()
         {
 
-            IntPtr resultPtr = IntPtr.Zero;
+            var resultPtr = IntPtr.Zero;
             string resultString = null;
 
             try
@@ -31,7 +29,7 @@ namespace WordLens.Native
                 }
 
                 resultString = Marshal.PtrToStringUTF8(resultPtr);
-                
+
             }
             finally
             {

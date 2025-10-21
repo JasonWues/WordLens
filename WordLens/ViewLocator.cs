@@ -1,33 +1,28 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using StaticViewLocator;
 using WordLens.ViewModels;
+using WordLens.Views;
 
-namespace WordLens;
-
-[StaticViewLocator]
-public partial class ViewLocator : IDataTemplate
+namespace WordLens
 {
-    public Control? Build(object? data)
+    public class ViewLocator : IDataTemplate
     {
-        if (data is null)
+
+        public Control? Build(object? param)
         {
-            return null;
+            return param switch
+            {
+                MainWindowViewModel => new MainWindowView(),
+                PopupWindowViewModel => new PopupWindowView(),
+                _ => throw new Exception($"Unable to create view for type: {param.GetType()}")
+            };
+
         }
 
-        var type = data.GetType();
-
-        if (s_views.TryGetValue(type, out var func))
+        public bool Match(object? data)
         {
-            return func.Invoke();
+            return data is ViewModelBase;
         }
-
-        throw new Exception($"Unable to create view for type: {type}");
-    }
-
-    public bool Match(object? data)
-    {
-        return data is ViewModelBase;
     }
 }
