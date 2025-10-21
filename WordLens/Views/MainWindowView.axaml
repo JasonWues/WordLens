@@ -28,8 +28,8 @@
                             <TextBlock Text="目标语言" FontWeight="Bold" FontSize="14"/>
                             <ComboBox ItemsSource="{Binding AvailableLanguages}"
                                       SelectedValue="{Binding TargetLanguage}"
-                                      SelectedValuePath="Code"
-                                      DisplayMemberPath="DisplayName"
+                                      SelectedValueBinding="{Binding Code}"
+                                      DisplayMemberBinding="{Binding DisplayName}"
                                       Width="300"
                                       HorizontalAlignment="Left"/>
                             <TextBlock Text="选择翻译的目标语言" 

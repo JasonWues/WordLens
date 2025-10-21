@@ -19,7 +19,6 @@ namespace WordLens.Services
 
         public Task<string?> GetSelectedTextAsync()
         {
-            // P/Invoke is fast; wrap to keep async flow consistent
             var text = SelectionNative.GetSelectionText();
             return Task.FromResult(string.IsNullOrWhiteSpace(text) ? null : text);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
@@ -46,7 +47,7 @@ namespace WordLens.ViewModels
         }
 
         [RelayCommand]
-        private async void ShowSetting()
+        private async Task ShowSettingAsync()
         {
             var view = _services.GetRequiredService<MainWindowView>();
             var viewModel = _services.GetRequiredService<MainWindowViewModel>();
