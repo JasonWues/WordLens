@@ -34,16 +34,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.3.6"/>
-        <PackageReference Include="Avalonia.Desktop" Version="11.3.6"/>
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6"/>
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6"/>
+        <PackageReference Include="Avalonia" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.7" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.6">
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.7">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="SharpHook" Version="7.0.3" />
     </ItemGroup>
 
@@ -73,7 +73,6 @@
         <!-- 3. 执行 cargo build 命令 -->
         <Exec Command="$(RustBuildCommand)" WorkingDirectory="$(RustProjectDir)" />
 
-        <!-- 4. 将编译好的 .dll 文件复制到 C# 项目的输出目录 -->
         <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
               DestinationFolder="$(MSBuildProjectDirectory)"
               SkipUnchangedFiles="true" />
