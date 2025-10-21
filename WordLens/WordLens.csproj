@@ -15,12 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="Models\"/>
         <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <DirectPInvoke Include="native.lib" />
+        <DirectPInvoke Include="native" />
         <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="native.lib" />
         <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Userenv.lib" />
         <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Pathcch.lib" />
@@ -44,7 +43,12 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.2.25502.107" />
         <PackageReference Include="SharpHook" Version="7.0.3" />
+        <PackageReference Include="StaticViewLocator" Version="0.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <Target Name="BuildRust" BeforeTargets="Build">
