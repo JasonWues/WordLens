@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:WordLens.ViewModels"
+        xmlns:views="using:WordLens.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="550"
@@ -177,6 +178,21 @@
                         <CheckBox Content="启用 HTTP 代理" IsChecked="{Binding ProxyEnabled}"/>
 
                         <StackPanel Spacing="12" IsEnabled="{Binding ProxyEnabled}">
+                            <!-- 使用系统代理 -->
+                            <CheckBox Content="使用系统代理"
+                                      IsChecked="{Binding ProxyUseSystemProxy}"
+                                      ToolTip.Tip="使用操作系统配置的代理设置"/>
+                            
+                            <TextBlock Text="启用后将自动使用系统代理设置，无需手动配置地址和端口"
+                                       FontSize="12"
+                                       Opacity="0.6"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding ProxyUseSystemProxy}"/>
+
+                            <Separator IsVisible="{Binding ProxyUseSystemProxy}"/>
+
+                            <!-- 自定义代理配置区域 -->
+                            <StackPanel Spacing="12" IsEnabled="{Binding !ProxyUseSystemProxy}">
                             <!-- 代理地址 -->
                             <StackPanel Spacing="8">
                                 <TextBlock Text="代理地址" FontWeight="Bold"/>
@@ -218,9 +234,15 @@
                                              PasswordChar="●"/>
                                 </StackPanel>
                             </StackPanel>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+
+            <!-- 关于标签页 -->
+            <TabItem Header="关于">
+                <views:AboutView DataContext="{Binding AboutViewModel}" />
             </TabItem>
         </TabControl>
 

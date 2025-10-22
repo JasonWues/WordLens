@@ -133,19 +133,34 @@ namespace WordLens.Services
 
             var handler = new HttpClientHandler();
             
-            var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
-            
-            if (proxyConfig.UseAuthentication &&
-                !string.IsNullOrEmpty(proxyConfig.Username))
+            // 使用系统代理
+            if (proxyConfig.UseSystemProxy)
             {
-                proxy.Credentials = new NetworkCredential(
-                    proxyConfig.Username,
-                    proxyConfig.Password
-                );
+                handler.UseProxy = true;
+                handler.Proxy = null;
+                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                
+                _logger.ZLogInformation($"使用系统代理配置");
             }
+            else
+            {
+                // 使用自定义代理
+                var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
+                
+                if (proxyConfig.UseAuthentication &&
+                    !string.IsNullOrEmpty(proxyConfig.Username))
+                {
+                    proxy.Credentials = new NetworkCredential(
+                        proxyConfig.Username,
+                        proxyConfig.Password
+                    );
+                }
 
-            handler.Proxy = proxy;
-            handler.UseProxy = true;
+                handler.Proxy = proxy;
+                handler.UseProxy = true;
+                
+                _logger.ZLogInformation($"使用自定义代理: {proxyConfig.Address}:{proxyConfig.Port}");
+            }
 
             return new HttpClient(handler);
         }

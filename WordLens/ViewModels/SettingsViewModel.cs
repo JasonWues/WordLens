@@ -52,6 +52,9 @@ namespace WordLens.ViewModels
         private bool proxyEnabled = false;
 
         [ObservableProperty]
+        private bool proxyUseSystemProxy = false;
+
+        [ObservableProperty]
         private string proxyAddress = "http://127.0.0.1";
 
         [ObservableProperty]
@@ -131,6 +134,7 @@ namespace WordLens.ViewModels
 
             // 加载代理设置
             ProxyEnabled = settings.Proxy.Enabled;
+            ProxyUseSystemProxy = settings.Proxy.UseSystemProxy;
             ProxyAddress = settings.Proxy.Address;
             ProxyPort = settings.Proxy.Port;
             ProxyUseAuthentication = settings.Proxy.UseAuthentication;
@@ -178,6 +182,7 @@ namespace WordLens.ViewModels
                 SelectedProvider = Providers.FirstOrDefault(p => p.Name == _originalSettings.SelectedProvider);
 
                 ProxyEnabled = _originalSettings.Proxy.Enabled;
+                ProxyUseSystemProxy = _originalSettings.Proxy.UseSystemProxy;
                 ProxyAddress = _originalSettings.Proxy.Address;
                 ProxyPort = _originalSettings.Proxy.Port;
                 ProxyUseAuthentication = _originalSettings.Proxy.UseAuthentication;
@@ -345,6 +350,7 @@ namespace WordLens.ViewModels
                 Proxy = new ProxyConfig
                 {
                     Enabled = ProxyEnabled,
+                    UseSystemProxy = ProxyUseSystemProxy,
                     Address = ProxyAddress,
                     Port = ProxyPort,
                     UseAuthentication = ProxyUseAuthentication,

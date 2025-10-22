@@ -68,6 +68,7 @@ namespace WordLens.Models
     public class ProxyConfig
     {
         public bool Enabled { get; set; } = false;
+        public bool UseSystemProxy { get; set; } = false;
         public string Address { get; set; } = "http://127.0.0.1";
         public int Port { get; set; } = 8080;
         public bool UseAuthentication { get; set; } = false;
