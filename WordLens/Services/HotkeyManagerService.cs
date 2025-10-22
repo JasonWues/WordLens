@@ -15,17 +15,14 @@ namespace WordLens.Services
     public class HotkeyManagerService : IHotkeyManagerService
     {
         readonly private IHotkeyService _hotkeyService;
-        readonly private IServiceScopeFactory _scopeFactory;
         readonly private ISelectionService _selectionService;
 
         public HotkeyManagerService(
             IHotkeyService hotkeyService,
-            ISelectionService selectionService,
-            IServiceScopeFactory scopeFactory)
+            ISelectionService selectionService)
         {
             _hotkeyService = hotkeyService;
             _selectionService = selectionService;
-            _scopeFactory = scopeFactory;
         }
 
         public async Task StartAsync()

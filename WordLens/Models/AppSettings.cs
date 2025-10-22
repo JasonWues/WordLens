@@ -6,6 +6,9 @@ namespace WordLens.Models
     public class AppSettings
     {
         public HotkeyConfig Hotkey { get; set; } = HotkeyConfig.Default();
+        
+        public HotkeyConfig OcrHotkey { get; set; } = HotkeyConfig.Default();
+        
         public string TargetLanguage { get; set; } = "zh-CN";
         public string? SelectedProvider { get; set; } = "OpenAI";
         public ProxyConfig Proxy { get; set; } = new ProxyConfig();

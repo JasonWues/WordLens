@@ -1,22 +1,28 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using Semi.Avalonia;
 using SharpHook.Data;
+using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
+using WordLens.Util;
 
 namespace WordLens.ViewModels
 {
     public partial class SettingsViewModel : ViewModelBase
     {
 
-        private readonly ISettingsService _settingsService;
+        private readonly ISettingsService? _settingsService;
         private readonly IHotkeyService _hotkeyService;
         private AppSettings? _originalSettings;
 
@@ -25,6 +31,9 @@ namespace WordLens.ViewModels
 
         [ObservableProperty]
         private string hotkeyDisplay = "Ctrl+Shift+T";
+
+        [ObservableProperty]
+        private string ocrHotkeyDisplay = "Ctrl+Shift+W";
 
         [ObservableProperty]
         private bool isCapturingHotkey = false;
@@ -63,21 +72,14 @@ namespace WordLens.ViewModels
         // 可用的目标语言列表
         public List<LanguageOption> AvailableLanguages { get; } = new()
         {
-            new LanguageOption("zh-CN", "简体中文"),
-            new LanguageOption("zh-TW", "繁體中文"),
-            new LanguageOption("en", "English"),
-            new LanguageOption("ja", "日本語"),
-            new LanguageOption("ko", "한국어"),
-            new LanguageOption("fr", "Français"),
-            new LanguageOption("de", "Deutsch"),
-            new LanguageOption("es", "Español"),
-            new LanguageOption("ru", "Русский"),
+            new LanguageOption("zh-cn", "简体中文"),
+            new LanguageOption("en-us", "English"),
+            new LanguageOption("ja-jp", "日本語"),
         };
 
         public SettingsViewModel()
         {
-            // 设计时构造函数
-            _settingsService = null!;
+            _settingsService = null;
             _hotkeyService = null!;
         }
 
@@ -85,6 +87,15 @@ namespace WordLens.ViewModels
         {
             _settingsService = settingsService;
             _hotkeyService = hotkeyService;
+            
+            WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
+            {
+                if (IsCapturingHotkey)
+                {
+                    CaptureKey(m.KeyEventArgs);
+                    m.KeyEventArgs.Handled = true;
+                }
+            });
         }
 
         public async Task InitializeAsync()
@@ -95,7 +106,7 @@ namespace WordLens.ViewModels
         [RelayCommand]
         private async Task LoadSettingsAsync()
         {
-            var settings = await _settingsService.LoadAsync();
+            var settings = _settingsService != null ? await _settingsService.LoadAsync() : new AppSettings();
             _originalSettings = settings;
 
             // 加载常规设置
@@ -168,10 +179,17 @@ namespace WordLens.ViewModels
         }
 
         [RelayCommand]
-        private void StartCaptureHotkey()
+        private void StartCaptureHotkey(string type)
         {
             IsCapturingHotkey = true;
-            HotkeyDisplay = "请按下快捷键...";
+            if (type == "ocr")
+            {
+                OcrHotkeyDisplay = "请按下快捷键...";
+            }
+            else
+            {
+                HotkeyDisplay = "请按下快捷键...";
+            }
         }
 
         public void CaptureKey(KeyEventArgs e)
@@ -179,7 +197,7 @@ namespace WordLens.ViewModels
             if (!IsCapturingHotkey) return;
 
             // 将 Avalonia 的 Key 转换为 SharpHook 的 KeyCode
-            var keyCode = ConvertToKeyCode(e.Key);
+            var keyCode = KeyCodeUtil.ConvertToKeyCode(e.Key);
             if (keyCode == KeyCode.VcUndefined) return;
 
             // 构建修饰键
@@ -216,7 +234,7 @@ namespace WordLens.ViewModels
             if (_hotkeyConfig.Modifiers.HasFlag(EventMask.LeftMeta) || _hotkeyConfig.Modifiers.HasFlag(EventMask.RightMeta))
                 parts.Add("Win");
 
-            parts.Add(GetKeyName(_hotkeyConfig.Key));
+            parts.Add(KeyCodeUtil.GetKeyName(_hotkeyConfig.Key));
             HotkeyDisplay = string.Join("+", parts);
         }
 
@@ -296,121 +314,14 @@ namespace WordLens.ViewModels
             };
         }
 
-        private static KeyCode ConvertToKeyCode(Key key)
+        partial void OnTargetLanguageChanged(string value)
         {
-            return key switch
+            if (!string.IsNullOrEmpty(value))
             {
-                Key.A => KeyCode.VcA,
-                Key.B => KeyCode.VcB,
-                Key.C => KeyCode.VcC,
-                Key.D => KeyCode.VcD,
-                Key.E => KeyCode.VcE,
-                Key.F => KeyCode.VcF,
-                Key.G => KeyCode.VcG,
-                Key.H => KeyCode.VcH,
-                Key.I => KeyCode.VcI,
-                Key.J => KeyCode.VcJ,
-                Key.K => KeyCode.VcK,
-                Key.L => KeyCode.VcL,
-                Key.M => KeyCode.VcM,
-                Key.N => KeyCode.VcN,
-                Key.O => KeyCode.VcO,
-                Key.P => KeyCode.VcP,
-                Key.Q => KeyCode.VcQ,
-                Key.R => KeyCode.VcR,
-                Key.S => KeyCode.VcS,
-                Key.T => KeyCode.VcT,
-                Key.U => KeyCode.VcU,
-                Key.V => KeyCode.VcV,
-                Key.W => KeyCode.VcW,
-                Key.X => KeyCode.VcX,
-                Key.Y => KeyCode.VcY,
-                Key.Z => KeyCode.VcZ,
-                Key.D0 => KeyCode.Vc0,
-                Key.D1 => KeyCode.Vc1,
-                Key.D2 => KeyCode.Vc2,
-                Key.D3 => KeyCode.Vc3,
-                Key.D4 => KeyCode.Vc4,
-                Key.D5 => KeyCode.Vc5,
-                Key.D6 => KeyCode.Vc6,
-                Key.D7 => KeyCode.Vc7,
-                Key.D8 => KeyCode.Vc8,
-                Key.D9 => KeyCode.Vc9,
-                Key.F1 => KeyCode.VcF1,
-                Key.F2 => KeyCode.VcF2,
-                Key.F3 => KeyCode.VcF3,
-                Key.F4 => KeyCode.VcF4,
-                Key.F5 => KeyCode.VcF5,
-                Key.F6 => KeyCode.VcF6,
-                Key.F7 => KeyCode.VcF7,
-                Key.F8 => KeyCode.VcF8,
-                Key.F9 => KeyCode.VcF9,
-                Key.F10 => KeyCode.VcF10,
-                Key.F11 => KeyCode.VcF11,
-                Key.F12 => KeyCode.VcF12,
-                Key.Space => KeyCode.VcSpace,
-                Key.Enter => KeyCode.VcEnter,
-                _ => KeyCode.VcUndefined
-            };
+                SemiTheme.OverrideLocaleResources(Application.Current,new CultureInfo(value));
+            }
         }
 
-        private static string GetKeyName(KeyCode keyCode)
-        {
-            return keyCode switch
-            {
-                KeyCode.VcA => "A",
-                KeyCode.VcB => "B",
-                KeyCode.VcC => "C",
-                KeyCode.VcD => "D",
-                KeyCode.VcE => "E",
-                KeyCode.VcF => "F",
-                KeyCode.VcG => "G",
-                KeyCode.VcH => "H",
-                KeyCode.VcI => "I",
-                KeyCode.VcJ => "J",
-                KeyCode.VcK => "K",
-                KeyCode.VcL => "L",
-                KeyCode.VcM => "M",
-                KeyCode.VcN => "N",
-                KeyCode.VcO => "O",
-                KeyCode.VcP => "P",
-                KeyCode.VcQ => "Q",
-                KeyCode.VcR => "R",
-                KeyCode.VcS => "S",
-                KeyCode.VcT => "T",
-                KeyCode.VcU => "U",
-                KeyCode.VcV => "V",
-                KeyCode.VcW => "W",
-                KeyCode.VcX => "X",
-                KeyCode.VcY => "Y",
-                KeyCode.VcZ => "Z",
-                KeyCode.Vc0 => "0",
-                KeyCode.Vc1 => "1",
-                KeyCode.Vc2 => "2",
-                KeyCode.Vc3 => "3",
-                KeyCode.Vc4 => "4",
-                KeyCode.Vc5 => "5",
-                KeyCode.Vc6 => "6",
-                KeyCode.Vc7 => "7",
-                KeyCode.Vc8 => "8",
-                KeyCode.Vc9 => "9",
-                KeyCode.VcF1 => "F1",
-                KeyCode.VcF2 => "F2",
-                KeyCode.VcF3 => "F3",
-                KeyCode.VcF4 => "F4",
-                KeyCode.VcF5 => "F5",
-                KeyCode.VcF6 => "F6",
-                KeyCode.VcF7 => "F7",
-                KeyCode.VcF8 => "F8",
-                KeyCode.VcF9 => "F9",
-                KeyCode.VcF10 => "F10",
-                KeyCode.VcF11 => "F11",
-                KeyCode.VcF12 => "F12",
-                KeyCode.VcSpace => "Space",
-                KeyCode.VcEnter => "Enter",
-                _ => keyCode.ToString()
-            };
-        }
     }
 
     public class LanguageOption

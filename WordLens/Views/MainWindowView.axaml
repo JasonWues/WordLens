@@ -49,6 +49,18 @@
                                          VerticalContentAlignment="Center"/>
                                 <Button Content="设置快捷键"
                                         Command="{Binding StartCaptureHotkeyCommand}"
+                                        CommandParameter="text"
+                                        IsEnabled="{Binding !IsCapturingHotkey}"
+                                        MinWidth="100"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBox Text="{Binding OcrHotkeyDisplay}" 
+                                         IsReadOnly="True" 
+                                         Width="200"
+                                         VerticalContentAlignment="Center"/>
+                                <Button Content="设置OCR快捷键"
+                                        Command="{Binding StartCaptureHotkeyCommand}"
+                                        CommandParameter="ocr"
                                         IsEnabled="{Binding !IsCapturingHotkey}"
                                         MinWidth="100"/>
                             </StackPanel>
