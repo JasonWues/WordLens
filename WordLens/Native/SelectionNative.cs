@@ -27,7 +27,6 @@ namespace WordLens.Native
                 {
                     return null;
                 }
-
                 resultString = Marshal.PtrToStringUTF8(resultPtr);
 
             }

@@ -7,6 +7,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SharpHook;
 using WordLens.Services;
 using WordLens.ViewModels;
 using WordLens.Views;
@@ -77,6 +78,7 @@ namespace WordLens
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<TranslationService>();
             services.AddSingleton<ISelectionService, SelectionService>();
+            services.AddSingleton<IGlobalHook, EventLoopGlobalHook>();
             services.AddHttpClient();
             
             // 配置日志

@@ -22,7 +22,7 @@ namespace WordLens.Views
 
         private async void CopyTranslation_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is string text)
+            if (sender is Button { Tag: string text } button)
             {
                 await CopyToClipboardAsync(text);
             }

@@ -6,19 +6,22 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Copyright>CrimsonNinja</Copyright>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PublishAot>false</PublishAot>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PublishAot>true</PublishAot>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <DebuggerSupport>false</DebuggerSupport>
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**"/>
   </ItemGroup>
-
+  
+  
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.7"/>
     <PackageReference Include="Avalonia.Desktop" Version="11.3.7"/>

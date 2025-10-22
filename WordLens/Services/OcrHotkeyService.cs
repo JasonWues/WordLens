@@ -20,12 +20,13 @@ namespace WordLens.Services
         private readonly ISettingsService _settingsService;
         private readonly ILogger<OcrHotkeyService> _logger;
         private HotkeyConfig _config = HotkeyConfig.Default();
-        private EventLoopGlobalHook? _hook;
+        private IGlobalHook? _hook;
 
-        public OcrHotkeyService(ISettingsService settingsService, ILogger<OcrHotkeyService> logger)
+        public OcrHotkeyService(ISettingsService settingsService, ILogger<OcrHotkeyService> logger,IGlobalHook hook)
         {
             _settingsService = settingsService;
             _logger = logger;
+            _hook = hook;
         }
 
         public event EventHandler? OcrHotkeyTriggered;
@@ -36,8 +37,6 @@ namespace WordLens.Services
             _config = settings.OcrHotkey;
 
             _logger.ZLogInformation($"OCR热键服务启动，快捷键配置: Modifiers={_config.Modifiers}, Key={_config.Key}");
-
-            _hook = new EventLoopGlobalHook();
             _hook.KeyPressed += OnKeyPressed;
             await _hook.RunAsync();
         }

@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:WordLens.ViewModels"
         xmlns:models="using:WordLens.Models"
+        xmlns:conv="using:WordLens.Converter"
         x:Class="WordLens.Views.PopupWindowView"
         x:DataType="vm:PopupWindowViewModel"
         Width="600" Height="500"
@@ -98,7 +99,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <PathIcon Width="16" Height="16"
                                       Data="{StaticResource pin_regular}" />
-                            <TextBlock Text="{Binding IsTopmost, Converter={StaticResource BoolToTextConverter}, ConverterParameter='已置顶|置顶'}" 
+                            <TextBlock Text="{Binding IsTopmost, Converter={x:Static conv:BoolToTextConverter.BoolToParameterTextConverter }, ConverterParameter='已置顶|置顶'}" 
                                        VerticalAlignment="Center"
                                        FontSize="12" />
                         </StackPanel>
@@ -186,7 +187,6 @@
                            IsVisible="{Binding HasTranslationResults}" />
             </Grid>
 
-            <!-- 翻译结果列表（垂直显示） -->
             <ScrollViewer Grid.Row="6">
                 <ItemsControl ItemsSource="{Binding TranslationResults}">
                     <ItemsControl.ItemTemplate>

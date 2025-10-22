@@ -20,12 +20,13 @@ namespace WordLens.Services
         private readonly ISettingsService _settingsService;
         private readonly ILogger<HotkeyService> _logger;
         private HotkeyConfig _config = HotkeyConfig.Default();
-        private EventLoopGlobalHook? _hook;
+        private IGlobalHook? _hook;
 
-        public HotkeyService(ISettingsService settingsService, ILogger<HotkeyService> logger)
+        public HotkeyService(ISettingsService settingsService, ILogger<HotkeyService> logger,IGlobalHook hook)
         {
             _settingsService = settingsService;
             _logger = logger;
+            _hook = hook;
         }
 
         public event EventHandler? HotkeyTriggered;
@@ -37,7 +38,6 @@ namespace WordLens.Services
 
             _logger.ZLogInformation($"翻译热键服务启动，快捷键配置: Modifiers={_config.Modifiers}, Key={_config.Key}");
 
-            _hook = new EventLoopGlobalHook();
             _hook.KeyPressed += OnKeyPressed;
             await _hook.RunAsync();
         }
