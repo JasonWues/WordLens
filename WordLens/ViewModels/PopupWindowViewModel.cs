@@ -1,14 +1,19 @@
+using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using WordLens.Models;
 using WordLens.Services;
+using ZLogger;
 
 namespace WordLens.ViewModels
 {
     public partial class PopupWindowViewModel : ViewModelBase
     {
-        readonly private TranslationService _translationService;
+        private readonly TranslationService _translationService;
+        private readonly ILogger<PopupWindowViewModel> _logger;
 
         [ObservableProperty]
         private bool isBusy;
@@ -17,23 +22,25 @@ namespace WordLens.ViewModels
         private string? sourceText;
 
         [ObservableProperty]
-        private string? translatedText;
+        private ObservableCollection<TranslationResult> translationResults = new();
 
         [ObservableProperty]
         private bool isTopmost;
 
         public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
         
-        public bool CanCopyTranslation => !string.IsNullOrWhiteSpace(TranslatedText);
+        public bool HasTranslationResults => TranslationResults.Count > 0;
 
         public PopupWindowViewModel()
         {
-
+            _translationService = null!;
+            _logger = null!;
         }
 
-        public PopupWindowViewModel(TranslationService translationService)
+        public PopupWindowViewModel(TranslationService translationService, ILogger<PopupWindowViewModel> logger)
         {
             _translationService = translationService;
+            _logger = logger;
         }
 
         partial void OnSourceTextChanged(string? value)
@@ -41,9 +48,9 @@ namespace WordLens.ViewModels
             OnPropertyChanged(nameof(CanCopySource));
         }
 
-        partial void OnTranslatedTextChanged(string? value)
+        partial void OnTranslationResultsChanged(ObservableCollection<TranslationResult> value)
         {
-            OnPropertyChanged(nameof(CanCopyTranslation));
+            OnPropertyChanged(nameof(HasTranslationResults));
         }
 
         [RelayCommand]
@@ -53,9 +60,24 @@ namespace WordLens.ViewModels
                 return;
 
             IsBusy = true;
+            TranslationResults.Clear();
+
             try
             {
-                TranslatedText = await _translationService.TranslateAsync(SourceText, cancellationToken);
+                _logger.ZLogInformation($"开始翻译请求");
+
+                var results = await _translationService.TranslateAsync(SourceText, cancellationToken);
+
+                foreach (var result in results)
+                {
+                    TranslationResults.Add(result);
+                }
+
+                _logger.ZLogInformation($"翻译结果已添加到UI，共 {results.Count} 个");
+            }
+            catch (System.Exception ex)
+            {
+                _logger.ZLogError(ex, $"翻译过程中发生异常");
             }
             finally
             {
@@ -73,7 +95,7 @@ namespace WordLens.ViewModels
         public void ClearSource()
         {
             SourceText = string.Empty;
-            TranslatedText = string.Empty;
+            TranslationResults.Clear();
         }
     }
 }

@@ -68,6 +68,10 @@ namespace WordLens.ViewModels
 
         // 快捷键配置
         private HotkeyConfig _hotkeyConfig = HotkeyConfig.Default();
+        private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.Default();
+        
+        // 当前正在捕获的热键类型
+        private string _currentCapturingType = string.Empty;
 
         // 可用的目标语言列表
         public List<LanguageOption> AvailableLanguages { get; } = new()
@@ -112,7 +116,9 @@ namespace WordLens.ViewModels
             // 加载常规设置
             TargetLanguage = settings.TargetLanguage;
             _hotkeyConfig = settings.Hotkey;
+            _ocrHotkeyConfig = settings.OcrHotkey;
             UpdateHotkeyDisplay();
+            UpdateOcrHotkeyDisplay();
 
             // 加载翻译源
             Providers.Clear();
@@ -159,7 +165,9 @@ namespace WordLens.ViewModels
                 // 恢复原始设置
                 TargetLanguage = _originalSettings.TargetLanguage;
                 _hotkeyConfig = _originalSettings.Hotkey;
+                _ocrHotkeyConfig = _originalSettings.OcrHotkey;
                 UpdateHotkeyDisplay();
+                UpdateOcrHotkeyDisplay();
 
                 Providers.Clear();
                 foreach (var provider in _originalSettings.Providers)
@@ -182,6 +190,8 @@ namespace WordLens.ViewModels
         private void StartCaptureHotkey(string type)
         {
             IsCapturingHotkey = true;
+            _currentCapturingType = type;
+            
             if (type == "ocr")
             {
                 OcrHotkeyDisplay = "请按下快捷键...";
@@ -211,14 +221,26 @@ namespace WordLens.ViewModels
             if (e.KeyModifiers.HasFlag(KeyModifiers.Meta))
                 modifiers |= EventMask.LeftMeta;
 
-            _hotkeyConfig = new HotkeyConfig
+            var newConfig = new HotkeyConfig
             {
                 Modifiers = modifiers,
                 Key = keyCode
             };
 
+            // 根据捕获类型更新相应的热键配置
+            if (_currentCapturingType == "ocr")
+            {
+                _ocrHotkeyConfig = newConfig;
+                UpdateOcrHotkeyDisplay();
+            }
+            else
+            {
+                _hotkeyConfig = newConfig;
+                UpdateHotkeyDisplay();
+            }
+
             IsCapturingHotkey = false;
-            UpdateHotkeyDisplay();
+            _currentCapturingType = string.Empty;
         }
 
         private void UpdateHotkeyDisplay()
@@ -236,6 +258,23 @@ namespace WordLens.ViewModels
 
             parts.Add(KeyCodeUtil.GetKeyName(_hotkeyConfig.Key));
             HotkeyDisplay = string.Join("+", parts);
+        }
+
+        private void UpdateOcrHotkeyDisplay()
+        {
+            var parts = new List<string>();
+
+            if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftCtrl) || _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightCtrl))
+                parts.Add("Ctrl");
+            if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftShift) || _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightShift))
+                parts.Add("Shift");
+            if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftAlt) || _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightAlt))
+                parts.Add("Alt");
+            if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftMeta) || _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightMeta))
+                parts.Add("Win");
+
+            parts.Add(KeyCodeUtil.GetKeyName(_ocrHotkeyConfig.Key));
+            OcrHotkeyDisplay = string.Join("+", parts);
         }
 
         [RelayCommand]
@@ -300,6 +339,7 @@ namespace WordLens.ViewModels
             {
                 TargetLanguage = TargetLanguage,
                 Hotkey = _hotkeyConfig,
+                OcrHotkey = _ocrHotkeyConfig,
                 SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
                 Providers = Providers.ToList(),
                 Proxy = new ProxyConfig

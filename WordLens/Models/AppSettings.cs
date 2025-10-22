@@ -53,6 +53,7 @@ namespace WordLens.Models
         public string BaseUrl { get; set; } = string.Empty; // e.g. https://api.openai.com or compatible
         public string? ApiKey { get; set; }
         public string Model { get; set; } = string.Empty;
+        public bool IsEnabled { get; set; } = true; // 默认启用
     }
 
     public class ProxyConfig

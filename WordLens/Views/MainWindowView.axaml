@@ -88,11 +88,31 @@
                              Margin="0,0,10,0">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Spacing="4" Margin="5">
-                                    <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7"/>
-                                    <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6"/>
-                                </StackPanel>
+                                <Grid ColumnDefinitions="Auto,*" Margin="5">
+                                    <!-- 启用/禁用复选框 -->
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsEnabled}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0"
+                                              ToolTip.Tip="启用/禁用此翻译源"/>
+                                    
+                                    <!-- 翻译源信息 -->
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6"/>
+                                            <TextBlock Text="✓ 已启用"
+                                                       FontSize="11"
+                                                       Foreground="#4CAF50"
+                                                       IsVisible="{Binding IsEnabled}"/>
+                                            <TextBlock Text="✗ 已禁用"
+                                                       FontSize="11"
+                                                       Foreground="#9E9E9E"
+                                                       IsVisible="{Binding !IsEnabled}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -122,6 +142,14 @@
                             <StackPanel Spacing="8" IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
                                 <TextBlock Text="翻译源详情" FontWeight="Bold"/>
                                 
+                                <!-- 启用/禁用 -->
+                                <CheckBox Content="启用此翻译源"
+                                          IsChecked="{Binding SelectedProvider.IsEnabled}"
+                                          FontWeight="SemiBold"
+                                          Margin="0,4"/>
+                                
+                                <Separator/>
+                                
                                 <TextBlock Text="名称"/>
                                 <TextBox Text="{Binding SelectedProvider.Name}" Watermark="翻译源名称"/>
                                 
@@ -129,7 +157,7 @@
                                 <TextBox Text="{Binding SelectedProvider.BaseUrl}" Watermark="https://api.openai.com"/>
                                 
                                 <TextBlock Text="API Key"/>
-                                <TextBox Text="{Binding SelectedProvider.ApiKey}" 
+                                <TextBox Text="{Binding SelectedProvider.ApiKey}"
                                          Watermark="输入 API Key"
                                          PasswordChar="●"/>
                                 

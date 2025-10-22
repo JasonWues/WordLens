@@ -23,32 +23,94 @@ namespace WordLens.Services
     {
         private readonly ISettingsService _settings;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<TranslationService> _logger;
 
-        readonly ILogger<TranslationService> _logger;
-
-
-        public TranslationService(ISettingsService settings, IHttpClientFactory httpClientFactory,ILogger<TranslationService> logger)
+        public TranslationService(ISettingsService settings, IHttpClientFactory httpClientFactory, ILogger<TranslationService> logger)
         {
             _settings = settings;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
-
         }
 
-        public async Task<string> TranslateAsync(string text, CancellationToken ct = default)
+        /// <summary>
+        /// 并行翻译文本，使用所有启用的翻译源
+        /// </summary>
+        public async Task<List<TranslationResult>> TranslateAsync(string text, CancellationToken ct = default)
         {
             var cfg = await _settings.LoadAsync();
-            var providerCfg = cfg.Providers.FirstOrDefault(p => p.Name == cfg.SelectedProvider) ?? cfg.Providers.First();
+            var enabledProviders = cfg.Providers.Where(p => p.IsEnabled).ToList();
 
-            ITranslationProvider provider = providerCfg.Type switch
+            _logger.ZLogInformation($"开始翻译，文本长度: {text.Length}，启用的翻译源数量: {enabledProviders.Count}");
+
+            if (enabledProviders.Count == 0)
             {
-                ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg),
-                _ => throw new NotSupportedException("Provider not supported")
+                _logger.ZLogWarning($"没有启用的翻译源");
+                return new List<TranslationResult>();
+            }
+
+            // 为每个翻译源创建任务
+            var tasks = enabledProviders.Select(provider =>
+                TranslateSingleProviderAsync(provider, text, cfg, ct)
+            ).ToList();
+
+            // 并行执行所有翻译任务
+            var results = await Task.WhenAll(tasks);
+
+            var successCount = results.Count(r => r.IsSuccess);
+            _logger.ZLogInformation($"翻译完成，成功: {successCount}/{results.Length}");
+
+            return results.ToList();
+        }
+
+        /// <summary>
+        /// 单个翻译源的翻译任务
+        /// </summary>
+        private async Task<TranslationResult> TranslateSingleProviderAsync(
+            ProviderConfig providerCfg,
+            string text,
+            AppSettings settings,
+            CancellationToken ct)
+        {
+            var result = new TranslationResult
+            {
+                ProviderName = providerCfg.Name,
+                IsLoading = true
             };
 
-            var httpClient = CreateHttpClientWithProxy(cfg.Proxy);
-            _logger.ZLogInformation($"Translating text using provider {providerCfg.Name} to language {cfg.TargetLanguage}");
-            return await provider.TranslateAsync(text, cfg.TargetLanguage, httpClient, ct);
+            try
+            {
+                _logger.ZLogInformation($"开始使用 {providerCfg.Name} 翻译");
+
+                ITranslationProvider provider = providerCfg.Type switch
+                {
+                    ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg),
+                    _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
+                };
+
+                var httpClient = CreateHttpClientWithProxy(settings.Proxy);
+                result.Result = await provider.TranslateAsync(
+                    text,
+                    settings.TargetLanguage,
+                    httpClient,
+                    ct
+                );
+                result.IsSuccess = true;
+
+                _logger.ZLogInformation($"{providerCfg.Name} 翻译成功，结果长度: {result.Result?.Length ?? 0}");
+            }
+            catch (Exception ex)
+            {
+                result.IsSuccess = false;
+                result.ErrorMessage = ex.Message;
+
+                _logger.ZLogError(ex, $"{providerCfg.Name} 翻译失败: {ex.Message}");
+            }
+            finally
+            {
+                result.IsLoading = false;
+            }
+
+            return result;
         }
 
         private HttpClient CreateHttpClientWithProxy(ProxyConfig proxyConfig)

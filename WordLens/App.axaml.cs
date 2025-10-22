@@ -64,6 +64,7 @@ namespace WordLens
             // ViewModels
             services.AddSingleton<ApplicationViewModel>();
             services.AddTransient<MainWindowViewModel>();
+            services.AddTransient<SettingsViewModel>();
             services.AddTransient<PopupWindowViewModel>();
             
             // Views
@@ -71,22 +72,36 @@ namespace WordLens
             
             // Services
             services.AddSingleton<IHotkeyService, HotkeyService>();
+            services.AddSingleton<IOcrHotkeyService, OcrHotkeyService>();
             services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<TranslationService>();
             services.AddSingleton<ISelectionService, SelectionService>();
             services.AddHttpClient();
+            
+            // 配置日志
             services.AddLogging(logging =>
             {
                 logging.ClearProviders();
-                logging.SetMinimumLevel(LogLevel.Trace);
+                logging.SetMinimumLevel(LogLevel.Information);
+                
+                // 控制台输出（开发时）
                 logging.AddZLoggerConsole();
+                
+                // 文件输出到 AppData 目录
+                var logDir = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "WordLens",
+                    "logs"
+                );
+                System.IO.Directory.CreateDirectory(logDir);
+                
                 logging.AddZLoggerRollingFile(opt =>
                 {
                     opt.FilePathSelector = (dt, index) =>
-                        $"logs/{dt:yyyy-MM-dd}_{index}.log";
+                        System.IO.Path.Combine(logDir, $"wordlens-{dt:yyyy-MM-dd}_{index}.log");
                     opt.RollingInterval = RollingInterval.Day;
-                    opt.RollingSizeKB = 1024;
+                    opt.RollingSizeKB = 10240; // 10MB per file
                 });
             });
         }

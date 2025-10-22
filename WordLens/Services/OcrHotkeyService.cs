@@ -8,34 +8,34 @@ using ZLogger;
 
 namespace WordLens.Services
 {
-    public interface IHotkeyService : IAsyncDisposable
+    public interface IOcrHotkeyService : IAsyncDisposable
     {
-        event EventHandler? HotkeyTriggered;
+        event EventHandler? OcrHotkeyTriggered;
         Task StartAsync(CancellationToken ct = default);
         void Stop();
     }
 
-    public class HotkeyService : IHotkeyService
+    public class OcrHotkeyService : IOcrHotkeyService
     {
         private readonly ISettingsService _settingsService;
-        private readonly ILogger<HotkeyService> _logger;
+        private readonly ILogger<OcrHotkeyService> _logger;
         private HotkeyConfig _config = HotkeyConfig.Default();
         private EventLoopGlobalHook? _hook;
 
-        public HotkeyService(ISettingsService settingsService, ILogger<HotkeyService> logger)
+        public OcrHotkeyService(ISettingsService settingsService, ILogger<OcrHotkeyService> logger)
         {
             _settingsService = settingsService;
             _logger = logger;
         }
 
-        public event EventHandler? HotkeyTriggered;
+        public event EventHandler? OcrHotkeyTriggered;
 
         public async Task StartAsync(CancellationToken ct = default)
         {
             var settings = await _settingsService.LoadAsync();
-            _config = settings.Hotkey;
+            _config = settings.OcrHotkey;
 
-            _logger.ZLogInformation($"翻译热键服务启动，快捷键配置: Modifiers={_config.Modifiers}, Key={_config.Key}");
+            _logger.ZLogInformation($"OCR热键服务启动，快捷键配置: Modifiers={_config.Modifiers}, Key={_config.Key}");
 
             _hook = new EventLoopGlobalHook();
             _hook.KeyPressed += OnKeyPressed;
@@ -45,15 +45,15 @@ namespace WordLens.Services
         public async Task ReloadHotkeyAsync()
         {
             var settings = await _settingsService.LoadAsync();
-            _config = settings.Hotkey;
-            _logger.ZLogInformation($"翻译热键配置已重新加载: Modifiers={_config.Modifiers}, Key={_config.Key}");
+            _config = settings.OcrHotkey;
+            _logger.ZLogInformation($"OCR热键配置已重新加载: Modifiers={_config.Modifiers}, Key={_config.Key}");
         }
 
         public void Stop()
         {
             if (_hook is { IsRunning: true })
             {
-                _logger.ZLogInformation($"翻译热键服务停止");
+                _logger.ZLogInformation($"OCR热键服务停止");
                 _hook.Stop();
             }
         }
@@ -68,18 +68,17 @@ namespace WordLens.Services
                     _hook.Stop();
                 }
                 _hook.Dispose();
-                _logger.ZLogInformation($"翻译热键服务已释放");
+                _logger.ZLogInformation($"OCR热键服务已释放");
             }
             await Task.CompletedTask;
         }
 
         private void OnKeyPressed(object? sender, KeyboardHookEventArgs e)
         {
-            // On Windows/macOS we can suppress if needed: e.SuppressEvent = true;
             if ((e.RawEvent.Mask & _config.Modifiers) == _config.Modifiers && e.Data.KeyCode == _config.Key)
             {
-                _logger.ZLogInformation($"翻译热键被触发");
-                HotkeyTriggered?.Invoke(this, EventArgs.Empty);
+                _logger.ZLogInformation($"OCR热键被触发（功能预留）");
+                OcrHotkeyTriggered?.Invoke(this, EventArgs.Empty);
             }
         }
     }
