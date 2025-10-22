@@ -23,11 +23,11 @@ namespace WordLens.ViewModels
     {
 
         private readonly ISettingsService? _settingsService;
-        private readonly IHotkeyService _hotkeyService;
+        private readonly IHotkeyManagerService? _hotkeyManagerService;
         private AppSettings? _originalSettings;
 
         [ObservableProperty]
-        private string targetLanguage = "zh-CN";
+        private string uiLanguage = "zh-CN";
 
         [ObservableProperty]
         private string hotkeyDisplay = "Ctrl+Shift+T";
@@ -73,24 +73,24 @@ namespace WordLens.ViewModels
         // 当前正在捕获的热键类型
         private string _currentCapturingType = string.Empty;
 
-        // 可用的目标语言列表
-        public List<LanguageOption> AvailableLanguages { get; } = new()
+        // 可用的应用界面语言列表
+        public List<LanguageOption> AvailableUILanguages { get; } = new()
         {
-            new LanguageOption("zh-cn", "简体中文"),
-            new LanguageOption("en-us", "English"),
-            new LanguageOption("ja-jp", "日本語"),
+            new LanguageOption("zh-CN", "简体中文"),
+            new LanguageOption("en", "English"),
+            new LanguageOption("ja", "日本語"),
         };
 
         public SettingsViewModel()
         {
             _settingsService = null;
-            _hotkeyService = null!;
+            _hotkeyManagerService = null!;
         }
 
-        public SettingsViewModel(ISettingsService settingsService, IHotkeyService hotkeyService)
+        public SettingsViewModel(ISettingsService settingsService, IHotkeyManagerService hotkeyManagerService)
         {
             _settingsService = settingsService;
-            _hotkeyService = hotkeyService;
+            _hotkeyManagerService = hotkeyManagerService;
             
             WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
             {
@@ -114,7 +114,7 @@ namespace WordLens.ViewModels
             _originalSettings = settings;
 
             // 加载常规设置
-            TargetLanguage = settings.TargetLanguage;
+            UiLanguage = settings.UILanguage;
             _hotkeyConfig = settings.Hotkey;
             _ocrHotkeyConfig = settings.OcrHotkey;
             UpdateHotkeyDisplay();
@@ -150,10 +150,10 @@ namespace WordLens.ViewModels
         private async Task ApplySettingsAsync()
         {
             await SaveSettingsAsync();
-            // 重新加载快捷键
-            if (_hotkeyService is HotkeyService service)
+            // 重新加载快捷键配置
+            if (_hotkeyManagerService != null)
             {
-                await service.ReloadHotkeyAsync();
+                await _hotkeyManagerService.ReloadConfigAsync();
             }
         }
 
@@ -163,7 +163,7 @@ namespace WordLens.ViewModels
             if (_originalSettings != null)
             {
                 // 恢复原始设置
-                TargetLanguage = _originalSettings.TargetLanguage;
+                UiLanguage = _originalSettings.UILanguage;
                 _hotkeyConfig = _originalSettings.Hotkey;
                 _ocrHotkeyConfig = _originalSettings.OcrHotkey;
                 UpdateHotkeyDisplay();
@@ -337,7 +337,7 @@ namespace WordLens.ViewModels
         {
             return new AppSettings
             {
-                TargetLanguage = TargetLanguage,
+                UILanguage = UiLanguage,
                 Hotkey = _hotkeyConfig,
                 OcrHotkey = _ocrHotkeyConfig,
                 SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
@@ -354,11 +354,11 @@ namespace WordLens.ViewModels
             };
         }
 
-        partial void OnTargetLanguageChanged(string value)
+        void OnUILanguageChanged(string value)
         {
             if (!string.IsNullOrEmpty(value))
             {
-                SemiTheme.OverrideLocaleResources(Application.Current,new CultureInfo(value));
+                SemiTheme.OverrideLocaleResources(Application.Current, new CultureInfo(value));
             }
         }
 

@@ -9,7 +9,16 @@ namespace WordLens.Models
         
         public HotkeyConfig OcrHotkey { get; set; } = HotkeyConfig.Default();
         
-        public string TargetLanguage { get; set; } = "zh-CN";
+        /// <summary>
+        /// 应用界面语言（用于UI显示）
+        /// </summary>
+        public string UILanguage { get; set; } = "zh-CN";
+        
+        /// <summary>
+        /// 上次选择的翻译目标语言（记住用户偏好）
+        /// </summary>
+        public string LastTargetLanguage { get; set; } = "en";
+        
         public string? SelectedProvider { get; set; } = "OpenAI";
         public ProxyConfig Proxy { get; set; } = new ProxyConfig();
 

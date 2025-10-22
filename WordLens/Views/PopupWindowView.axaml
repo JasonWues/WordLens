@@ -81,12 +81,12 @@
     </Window.Styles>
 
     <Border Padding="16">
-        <Grid RowDefinitions="Auto,12,Auto,*,12,Auto,*">
+        <Grid RowDefinitions="Auto,12,Auto,12,Auto,*,12,Auto,*">
             
             <!-- 顶部工具栏 -->
-            <Border Grid.Row="0" 
-                    Background="#F5F5F5" 
-                    CornerRadius="4" 
+            <Border Grid.Row="0"
+                    Background="#F5F5F5"
+                    CornerRadius="4"
                     Padding="8,4">
                 <Grid ColumnDefinitions="*,Auto,Auto">
                     <!-- 左侧：置顶按钮 -->
@@ -123,8 +123,86 @@
                 </Grid>
             </Border>
 
+            <!-- 语言选择区域 -->
+            <Border Grid.Row="2"
+                    Background="#F9F9F9"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12">
+                <Grid ColumnDefinitions="*,Auto,*,Auto">
+                    <!-- 源语言选择 -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="源语言"
+                                   FontSize="11"
+                                   Foreground="#666"
+                                   Margin="0,0,0,4" />
+                        <ComboBox ItemsSource="{Binding SourceLanguages}"
+                                  SelectedItem="{Binding SelectedSourceLanguage}"
+                                  SelectedValueBinding="{Binding Code}"
+                                  HorizontalAlignment="Stretch"
+                                  MinWidth="120">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="models:LanguageInfo">
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- 交换按钮 -->
+                    <Button Grid.Column="1"
+                            Classes="icon-button"
+                            Command="{Binding SwapLanguagesCommand}"
+                            Margin="8,18,8,0"
+                            ToolTip.Tip="交换语言">
+                        <PathIcon Width="16" Height="16"
+                                  Data="{StaticResource arrow_swap_regular}" />
+                    </Button>
+
+                    <!-- 目标语言选择 -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="目标语言"
+                                   FontSize="11"
+                                   Foreground="#666"
+                                   Margin="0,0,0,4" />
+                        <ComboBox ItemsSource="{Binding TargetLanguages}"
+                                  SelectedItem="{Binding SelectedTargetLanguage}"
+                                  SelectedValueBinding="{Binding Code}"
+                                  HorizontalAlignment="Stretch"
+                                  MinWidth="120">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="models:LanguageInfo">
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- 翻译按钮 -->
+                    <Button Grid.Column="3"
+                            Command="{Binding TranslateCommand}"
+                            Background="#409EFF"
+                            Foreground="White"
+                            Margin="8,18,0,0"
+                            Padding="16,6"
+                            CornerRadius="4"
+                            BorderThickness="0"
+                            Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <PathIcon Width="16" Height="16"
+                                      Data="{StaticResource translate_regular}"
+                                      Foreground="White" />
+                            <TextBlock Text="翻译"
+                                       FontSize="13"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
             <!-- 原文标题 -->
-            <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
+            <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto">
                 <TextBlock Grid.Column="0" 
                            Text="原文" 
                            FontWeight="SemiBold" 
@@ -149,29 +227,32 @@
                 </Button>
             </Grid>
 
-            <!-- 原文内容 -->
-            <Border Grid.Row="3" 
-                    Background="#F9F9F9"
+            <!-- 原文输入框 (改为 TextBox) -->
+            <Border Grid.Row="5"
+                    Background="White"
                     BorderBrush="#E0E0E0"
                     BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="12">
-                <ScrollViewer>
-                    <TextBlock Text="{Binding SourceText}" 
-                               TextWrapping="Wrap"
-                               LineHeight="22"
-                               VerticalAlignment="Top" />
-                </ScrollViewer>
+                    CornerRadius="6">
+                <TextBox Text="{Binding SourceText}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Padding="12"
+                         Watermark="在此输入要翻译的文本..."
+                         VerticalAlignment="Stretch"
+                         VerticalContentAlignment="Top"
+                         MinHeight="100" />
             </Border>
 
             <!-- 进度条 -->
-            <ProgressBar Grid.Row="4" 
-                         IsVisible="{Binding IsBusy}" 
+            <ProgressBar Grid.Row="6"
+                         IsVisible="{Binding IsBusy}"
                          IsIndeterminate="True"
                          Height="3" />
 
             <!-- 翻译结果标题 -->
-            <Grid Grid.Row="5" ColumnDefinitions="Auto,*">
+            <Grid Grid.Row="7" ColumnDefinitions="Auto,*">
                 <TextBlock Grid.Column="0" 
                            Text="翻译结果" 
                            FontWeight="SemiBold" 
@@ -187,7 +268,7 @@
                            IsVisible="{Binding HasTranslationResults}" />
             </Grid>
 
-            <ScrollViewer Grid.Row="6">
+            <ScrollViewer Grid.Row="8">
                 <ItemsControl ItemsSource="{Binding TranslationResults}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:TranslationResult">

@@ -23,17 +23,17 @@
             <TabItem Header="常规">
                 <ScrollViewer>
                     <StackPanel Spacing="16" Margin="20" DataContext="{Binding SettingsViewModel}">
-                        <!-- 目标语言 -->
+                        <!-- 应用界面语言 -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="目标语言" FontWeight="Bold" FontSize="14"/>
-                            <ComboBox ItemsSource="{Binding AvailableLanguages}"
-                                      SelectedValue="{Binding TargetLanguage}"
+                            <TextBlock Text="界面语言" FontWeight="Bold" FontSize="14"/>
+                            <ComboBox ItemsSource="{Binding AvailableUILanguages}"
+                                      SelectedValue="{Binding UiLanguage}"
                                       SelectedValueBinding="{Binding Code}"
                                       DisplayMemberBinding="{Binding DisplayName}"
                                       Width="300"
                                       HorizontalAlignment="Left"/>
-                            <TextBlock Text="选择翻译的目标语言" 
-                                       FontSize="12" 
+                            <TextBlock Text="选择应用界面显示语言（翻译语言请在翻译窗口中选择）"
+                                       FontSize="12"
                                        Opacity="0.6"/>
                         </StackPanel>
 

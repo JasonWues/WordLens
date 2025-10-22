@@ -13,9 +13,9 @@ namespace WordLens.ViewModels
             SettingsViewModel = new SettingsViewModel();
         }
 
-        public MainWindowViewModel(ISettingsService settingsService, IHotkeyService hotkeyService)
+        public MainWindowViewModel(ISettingsService settingsService, IHotkeyManagerService hotkeyManagerService)
         {
-            SettingsViewModel = new SettingsViewModel(settingsService, hotkeyService);
+            SettingsViewModel = new SettingsViewModel(settingsService, hotkeyManagerService);
         }
 
         public async Task InitializeAsync()

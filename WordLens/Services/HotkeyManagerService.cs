@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SharpHook;
 using WordLens.Messages;
+using WordLens.Models;
 using ZLogger;
 
 namespace WordLens.Services
@@ -11,24 +12,30 @@ namespace WordLens.Services
     public interface IHotkeyManagerService
     {
         Task StartAsync();
+        Task ReloadConfigAsync();
     }
 
-
+    /// <summary>
+    /// 热键管理服务
+    /// </summary>
     public class HotkeyManagerService : IHotkeyManagerService
     {
-        private readonly IHotkeyService _hotkeyService;
-        private readonly IOcrHotkeyService _ocrHotkeyService;
+        private readonly IGlobalHook _globalHook;
+        private readonly ISettingsService _settingsService;
         private readonly ISelectionService _selectionService;
         private readonly ILogger<HotkeyManagerService> _logger;
+        
+        private HotkeyConfig _translationHotkey = HotkeyConfig.Default();
+        private HotkeyConfig _ocrHotkey = HotkeyConfig.Default();
 
         public HotkeyManagerService(
-            IHotkeyService hotkeyService,
-            IOcrHotkeyService ocrHotkeyService,
+            IGlobalHook globalHook,
+            ISettingsService settingsService,
             ISelectionService selectionService,
             ILogger<HotkeyManagerService> logger)
         {
-            _hotkeyService = hotkeyService;
-            _ocrHotkeyService = ocrHotkeyService;
+            _globalHook = globalHook;
+            _settingsService = settingsService;
             _selectionService = selectionService;
             _logger = logger;
         }
@@ -37,23 +44,70 @@ namespace WordLens.Services
         {
             _logger.ZLogInformation($"热键管理服务启动");
             
-            // 订阅事件
-            _hotkeyService.HotkeyTriggered += OnTranslationHotkeyTriggered;
-            _ocrHotkeyService.OcrHotkeyTriggered += OnOcrHotkeyTriggered;
+            // 加载快捷键配置
+            var settings = await _settingsService.LoadAsync();
+            _translationHotkey = settings.Hotkey;
+            _ocrHotkey = settings.OcrHotkey;
 
-            // 并行启动两个热键服务
-            await Task.WhenAll(
-                _hotkeyService.StartAsync(),
-                _ocrHotkeyService.StartAsync()
-            );
+            _logger.ZLogInformation($"翻译热键配置: Modifiers={_translationHotkey.Modifiers}, Key={_translationHotkey.Key}");
+            _logger.ZLogInformation($"OCR热键配置: Modifiers={_ocrHotkey.Modifiers}, Key={_ocrHotkey.Key}");
+
+            // 统一订阅键盘事件（只订阅一次）
+            _globalHook.KeyPressed += OnGlobalKeyPressed;
+            
+            // 启动 GlobalHook
+            await _globalHook.RunAsync();
             
             _logger.ZLogInformation($"热键管理服务启动完成");
         }
 
-        private void OnTranslationHotkeyTriggered(object? sender, EventArgs e)
+        /// <summary>
+        /// 重新加载快捷键配置
+        /// </summary>
+        public async Task ReloadConfigAsync()
         {
-            _logger.ZLogInformation($"翻译热键被触发");
-            
+            var settings = await _settingsService.LoadAsync();
+            _translationHotkey = settings.Hotkey;
+            _ocrHotkey = settings.OcrHotkey;
+            _logger.ZLogInformation($"热键配置已重新加载");
+        }
+
+        /// <summary>
+        /// 全局键盘事件处理
+        /// </summary>
+        private void OnGlobalKeyPressed(object? sender, KeyboardHookEventArgs e)
+        {
+            // 检查翻译快捷键
+            if (IsHotkeyMatch(e, _translationHotkey))
+            {
+                _logger.ZLogInformation($"翻译热键被触发");
+                OnTranslationHotkeyTriggered();
+                return;
+            }
+
+            // 检查 OCR 快捷键
+            if (IsHotkeyMatch(e, _ocrHotkey))
+            {
+                _logger.ZLogInformation($"OCR热键被触发");
+                OnOcrHotkeyTriggered();
+                return;
+            }
+        }
+
+        /// <summary>
+        /// 检查快捷键是否匹配
+        /// </summary>
+        private bool IsHotkeyMatch(KeyboardHookEventArgs e, HotkeyConfig config)
+        {
+            return (e.RawEvent.Mask & config.Modifiers) == config.Modifiers &&
+                   e.Data.KeyCode == config.Key;
+        }
+
+        /// <summary>
+        /// 翻译热键触发处理
+        /// </summary>
+        private void OnTranslationHotkeyTriggered()
+        {
             var text = _selectionService.GetSelectedTex();
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -65,7 +119,10 @@ namespace WordLens.Services
             WeakReferenceMessenger.Default.Send(new ShowPopupMessage(text));
         }
 
-        private void OnOcrHotkeyTriggered(object? sender, EventArgs e)
+        /// <summary>
+        /// OCR热键触发处理
+        /// </summary>
+        private void OnOcrHotkeyTriggered()
         {
             _logger.ZLogInformation($"OCR热键被触发（功能预留）");
             // TODO: 未来在这里实现OCR功能

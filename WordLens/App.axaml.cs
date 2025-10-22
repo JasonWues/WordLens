@@ -72,13 +72,13 @@ namespace WordLens
             services.AddTransient<MainWindowView>();
             
             // Services
-            services.AddSingleton<IHotkeyService, HotkeyService>();
-            services.AddSingleton<IOcrHotkeyService, OcrHotkeyService>();
+            // 注意：移除了独立的 HotkeyService 和 OcrHotkeyService，
+            // 现在所有快捷键统一在 HotkeyManagerService 中管理，避免重复触发
             services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<TranslationService>();
             services.AddSingleton<ISelectionService, SelectionService>();
-            services.AddSingleton<IGlobalHook, EventLoopGlobalHook>();
+            services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();  // 使用 TaskPoolGlobalHook
             services.AddHttpClient();
             
             // 配置日志

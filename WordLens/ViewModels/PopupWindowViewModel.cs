@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,6 +15,7 @@ namespace WordLens.ViewModels
     public partial class PopupWindowViewModel : ViewModelBase
     {
         private readonly TranslationService _translationService;
+        private readonly ISettingsService _settingsService;
         private readonly ILogger<PopupWindowViewModel> _logger;
 
         [ObservableProperty]
@@ -27,20 +30,76 @@ namespace WordLens.ViewModels
         [ObservableProperty]
         private bool isTopmost;
 
+        // 源语言选择
+        [ObservableProperty]
+        private LanguageInfo? selectedSourceLanguage;
+
+        [ObservableProperty]
+        private ObservableCollection<LanguageInfo> sourceLanguages = new();
+
+        // 目标语言选择
+        [ObservableProperty]
+        private LanguageInfo? selectedTargetLanguage;
+
+        [ObservableProperty]
+        private ObservableCollection<LanguageInfo> targetLanguages = new();
+
         public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
         
         public bool HasTranslationResults => TranslationResults.Count > 0;
+        
 
         public PopupWindowViewModel()
         {
             _translationService = null!;
+            _settingsService = null!;
             _logger = null!;
         }
 
-        public PopupWindowViewModel(TranslationService translationService, ILogger<PopupWindowViewModel> logger)
+        public PopupWindowViewModel(
+            TranslationService translationService,
+            ISettingsService settingsService,
+            ILogger<PopupWindowViewModel> logger)
         {
             _translationService = translationService;
+            _settingsService = settingsService;
             _logger = logger;
+
+            // 初始化语言列表
+            InitializeLanguages();
+        }
+
+        private async void InitializeLanguages()
+        {
+            try
+            {
+                // 加载源语言列表（包含自动检测）
+                foreach (var lang in LanguageInfo.GetCommonLanguages())
+                {
+                    SourceLanguages.Add(lang);
+                }
+
+                // 加载目标语言列表（不包含自动检测）
+                foreach (var lang in LanguageInfo.GetTargetLanguages())
+                {
+                    TargetLanguages.Add(lang);
+                }
+
+                // 设置默认源语言为自动检测
+                SelectedSourceLanguage = SourceLanguages.FirstOrDefault(l => l.Code == "auto");
+
+                // 从设置中加载上次选择的目标语言
+                var settings = await _settingsService.LoadAsync();
+                SelectedTargetLanguage = TargetLanguages.FirstOrDefault(
+                    l => l.Code == settings.LastTargetLanguage) ??
+                    TargetLanguages.FirstOrDefault(l => l.Code == "en");
+
+                _logger.ZLogInformation($"语言初始化完成，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
+            }
+            catch (Exception ex)
+            {
+                _logger.ZLogError(ex, $"初始化语言列表失败");
+            }
         }
 
         partial void OnSourceTextChanged(string? value)
@@ -53,20 +112,46 @@ namespace WordLens.ViewModels
             OnPropertyChanged(nameof(HasTranslationResults));
         }
 
+        partial void OnSelectedTargetLanguageChanged(LanguageInfo? value)
+        {
+            // 保存用户的选择
+            if (value != null)
+            {
+                _ = SaveLastTargetLanguageAsync(value.Code);
+            }
+        }
+
+        private async Task SaveLastTargetLanguageAsync(string languageCode)
+        {
+            try
+            {
+                var settings = await _settingsService.LoadAsync();
+                settings.LastTargetLanguage = languageCode;
+                await _settingsService.SaveAsync(settings);
+                _logger.ZLogInformation($"已保存目标语言偏好: {languageCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.ZLogError(ex, $"保存目标语言设置失败");
+            }
+        }
+
         [RelayCommand]
         public async Task TranslateAsync(CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(SourceText))
-                return;
 
             IsBusy = true;
             TranslationResults.Clear();
 
             try
             {
-                _logger.ZLogInformation($"开始翻译请求");
+                _logger.ZLogInformation($"开始翻译，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
 
-                var results = await _translationService.TranslateAsync(SourceText, cancellationToken);
+                var results = await _translationService.TranslateAsync(
+                    SourceText!,
+                    SelectedTargetLanguage!.Code,
+                    SelectedSourceLanguage?.Code ?? "auto",
+                    cancellationToken);
 
                 foreach (var result in results)
                 {
@@ -96,6 +181,33 @@ namespace WordLens.ViewModels
         {
             SourceText = string.Empty;
             TranslationResults.Clear();
+        }
+
+        [RelayCommand]
+        public void SwapLanguages()
+        {
+            // 如果源语言不是自动检测，可以交换
+            if (SelectedSourceLanguage?.Code != "auto" && SelectedTargetLanguage != null)
+            {
+                var tempCode = SelectedSourceLanguage?.Code;
+                
+                // 将当前目标语言设置为源语言
+                SelectedSourceLanguage = SourceLanguages.FirstOrDefault(
+                    l => l.Code == SelectedTargetLanguage.Code);
+                
+                // 将原来的源语言设置为目标语言
+                if (tempCode != null)
+                {
+                    SelectedTargetLanguage = TargetLanguages.FirstOrDefault(
+                        l => l.Code == tempCode);
+                }
+
+                _logger.ZLogInformation($"已交换语言，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
+            }
+            else
+            {
+                _logger.ZLogWarning($"无法交换语言：源语言为自动检测");
+            }
         }
     }
 }

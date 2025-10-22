@@ -16,7 +16,7 @@ namespace WordLens.Services
 {
     public interface ITranslationProvider
     {
-        Task<string> TranslateAsync(string text, string targetLanguage, HttpClient httpClient, CancellationToken ct = default);
+        Task<string> TranslateAsync(string text, string targetLanguage, string sourceLanguage, HttpClient httpClient, CancellationToken ct = default);
     }
 
     public class TranslationService
@@ -35,12 +35,20 @@ namespace WordLens.Services
         /// <summary>
         /// 并行翻译文本，使用所有启用的翻译源
         /// </summary>
-        public async Task<List<TranslationResult>> TranslateAsync(string text, CancellationToken ct = default)
+        /// <param name="text">要翻译的文本</param>
+        /// <param name="targetLanguage">目标语言代码</param>
+        /// <param name="sourceLanguage">源语言代码（默认为"auto"自动检测）</param>
+        /// <param name="ct">取消令牌</param>
+        public async Task<List<TranslationResult>> TranslateAsync(
+            string text,
+            string targetLanguage,
+            string sourceLanguage = "auto",
+            CancellationToken ct = default)
         {
             var cfg = await _settings.LoadAsync();
             var enabledProviders = cfg.Providers.Where(p => p.IsEnabled).ToList();
 
-            _logger.ZLogInformation($"开始翻译，文本长度: {text.Length}，启用的翻译源数量: {enabledProviders.Count}");
+            _logger.ZLogInformation($"开始翻译，文本长度: {text.Length}，源语言: {sourceLanguage}，目标语言: {targetLanguage}，启用的翻译源数量: {enabledProviders.Count}");
 
             if (enabledProviders.Count == 0)
             {
@@ -50,7 +58,7 @@ namespace WordLens.Services
 
             // 为每个翻译源创建任务
             var tasks = enabledProviders.Select(provider =>
-                TranslateSingleProviderAsync(provider, text, cfg, ct)
+                TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, cfg, ct)
             ).ToList();
 
             // 并行执行所有翻译任务
@@ -68,6 +76,8 @@ namespace WordLens.Services
         private async Task<TranslationResult> TranslateSingleProviderAsync(
             ProviderConfig providerCfg,
             string text,
+            string targetLanguage,
+            string sourceLanguage,
             AppSettings settings,
             CancellationToken ct)
         {
@@ -90,7 +100,8 @@ namespace WordLens.Services
                 var httpClient = CreateHttpClientWithProxy(settings.Proxy);
                 result.Result = await provider.TranslateAsync(
                     text,
-                    settings.TargetLanguage,
+                    targetLanguage,
+                    sourceLanguage,
                     httpClient,
                     ct
                 );
@@ -149,7 +160,7 @@ namespace WordLens.Services
             _config = config;
         }
 
-        public async Task<string> TranslateAsync(string text, string targetLanguage, HttpClient httpClient, CancellationToken ct = default)
+        public async Task<string> TranslateAsync(string text, string targetLanguage, string sourceLanguage, HttpClient httpClient, CancellationToken ct = default)
         {
             if (!string.IsNullOrWhiteSpace(_config.ApiKey))
             {
@@ -160,6 +171,11 @@ namespace WordLens.Services
                 httpClient.BaseAddress = new Uri(_config.BaseUrl);
             }
             
+            // 构建系统提示，包含源语言和目标语言信息
+            var systemPrompt = sourceLanguage == "auto"
+                ? $"You are a translation engine. Translate to {targetLanguage}. Only return the translation."
+                : $"You are a translation engine. Translate from {sourceLanguage} to {targetLanguage}. Only return the translation.";
+            
             var payload = new ChatCompletionRequest
             {
                 Model = _config.Model,
@@ -168,7 +184,7 @@ namespace WordLens.Services
                     new ChatMessage
                     {
                         Role = "system",
-                        Content = $"You are a translation engine. Translate to {targetLanguage}. Only return the translation."
+                        Content = systemPrompt
                     },
                     new ChatMessage { Role = "user", Content = text }
                 }
