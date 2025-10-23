@@ -23,6 +23,10 @@ namespace WordLens
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
+
+#if DEBUG
+            this.AttachDeveloperTools();
+#endif
         }
 
         public override void OnFrameworkInitializationCompleted()
@@ -42,6 +46,11 @@ namespace WordLens
 
                 var hotkeyManager = _services.GetRequiredService<IHotkeyManagerService>();
                 _ = hotkeyManager.StartAsync();
+                
+                desktop.ShutdownRequested += (s, e) =>
+                {
+                    hotkeyManager.Dispose();
+                };
             }
 
             base.OnFrameworkInitializationCompleted();
@@ -66,7 +75,7 @@ namespace WordLens
             services.AddSingleton<ApplicationViewModel>();
             services.AddTransient<MainWindowViewModel>();
             services.AddTransient<SettingsViewModel>();
-            services.AddTransient<PopupWindowViewModel>();
+            services.AddSingleton<PopupWindowViewModel>();
             
             // Views
             services.AddTransient<MainWindowView>();

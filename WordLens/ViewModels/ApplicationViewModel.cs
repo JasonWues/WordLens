@@ -18,7 +18,7 @@ namespace WordLens.ViewModels
 
         public ApplicationViewModel(IServiceProvider services)
         {
-
+            
             _services = services;
 
             WeakReferenceMessenger.Default.Register<ShowPopupMessage>(this, async (recipient, message) =>
@@ -32,8 +32,6 @@ namespace WordLens.ViewModels
                         vm.SourceText = message.SelectedText;
 
                         var window = new PopupWindowView { DataContext = vm };
-                        window.Topmost = true;
-
                         window.Show();
                         await vm.TranslateAsync(CancellationToken.None);
                     }
@@ -63,7 +61,7 @@ namespace WordLens.ViewModels
         {
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime application)
             {
-                application.Shutdown();
+                application.TryShutdown();
             }
         }
     }

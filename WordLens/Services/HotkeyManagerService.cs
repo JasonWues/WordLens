@@ -9,10 +9,12 @@ using ZLogger;
 
 namespace WordLens.Services
 {
-    public interface IHotkeyManagerService
+    public interface IHotkeyManagerService : IDisposable,IAsyncDisposable
     {
         Task StartAsync();
         Task ReloadConfigAsync();
+        
+        
     }
 
     /// <summary>
@@ -51,8 +53,7 @@ namespace WordLens.Services
 
             _logger.ZLogInformation($"翻译热键配置: Modifiers={_translationHotkey.Modifiers}, Key={_translationHotkey.Key}");
             _logger.ZLogInformation($"OCR热键配置: Modifiers={_ocrHotkey.Modifiers}, Key={_ocrHotkey.Key}");
-
-            // 统一订阅键盘事件（只订阅一次）
+            
             _globalHook.KeyPressed += OnGlobalKeyPressed;
             
             // 启动 GlobalHook
@@ -129,6 +130,35 @@ namespace WordLens.Services
             // 1. 捕获屏幕截图
             // 2. 调用OCR引擎识别文字
             // 3. 发送识别结果到翻译窗口
+        }
+        
+        public void Dispose()
+        {
+            if (_globalHook != null)
+            {
+                _globalHook.KeyPressed -= OnGlobalKeyPressed;
+                if (_globalHook.IsRunning)
+                {
+                    _globalHook.Stop();
+                }
+                _globalHook.Dispose();
+                _logger.ZLogInformation($"翻译热键服务已释放");
+            }
+        }
+        
+        public async ValueTask DisposeAsync()
+        {
+            if (_globalHook != null)
+            {
+                _globalHook.KeyPressed -= OnGlobalKeyPressed;
+                if (_globalHook.IsRunning)
+                {
+                    _globalHook.Stop();
+                }
+                _globalHook.Dispose();
+                _logger.ZLogInformation($"翻译热键服务已释放");
+            }
+            await Task.CompletedTask;
         }
     }
 }

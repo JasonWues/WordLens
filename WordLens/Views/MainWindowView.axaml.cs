@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -27,9 +28,7 @@ namespace WordLens.Views
 
         private void OnWindowKeyDown(object? sender, KeyEventArgs e)
         {
-            
             WeakReferenceMessenger.Default.Send(new CapturingKeyMessage(e));
-
         }
     }
 }

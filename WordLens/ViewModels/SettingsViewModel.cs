@@ -360,7 +360,7 @@ namespace WordLens.ViewModels
             };
         }
 
-        void OnUILanguageChanged(string value)
+        partial void OnUiLanguageChanged(string value)
         {
             if (!string.IsNullOrEmpty(value))
             {

@@ -212,7 +212,7 @@ namespace WordLens.Services
                 "application/json"
             );
 
-            var resp = await httpClient.SendAsync(req, ct);
+            using var resp = await httpClient.SendAsync(req, ct);
             resp.EnsureSuccessStatusCode();
             
             await using var stream = await resp.Content.ReadAsStreamAsync(ct);
