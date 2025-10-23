@@ -125,11 +125,10 @@ namespace WordLens.Services
         /// </summary>
         private void OnOcrHotkeyTriggered()
         {
-            _logger.ZLogInformation($"OCR热键被触发（功能预留）");
-            // TODO: 未来在这里实现OCR功能
-            // 1. 捕获屏幕截图
-            // 2. 调用OCR引擎识别文字
-            // 3. 发送识别结果到翻译窗口
+            _logger.ZLogInformation($"OCR热键被触发，打开屏幕截图窗口");
+            
+            // 发送消息打开屏幕捕获窗口
+            WeakReferenceMessenger.Default.Send(new ShowOcrCaptureMessage());
         }
         
         public void Dispose()

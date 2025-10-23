@@ -1,0 +1,96 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WordLens.ViewModels"
+        x:Class="WordLens.Views.ScreenCaptureWindow"
+        x:DataType="vm:ScreenCaptureViewModel"
+        WindowState="Maximized"
+        WindowStartupLocation="Manual"
+        SystemDecorations="None"
+        Background="#80000000"
+        Topmost="True"
+        ShowInTaskbar="False"
+        TransparencyLevelHint="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        Title="屏幕截图">
+
+    <Design.DataContext>
+        <vm:ScreenCaptureViewModel />
+    </Design.DataContext>
+
+    <Window.Styles>
+        <!-- 选择矩形样式 -->
+        <Style Selector="Rectangle.selection-rect">
+            <Setter Property="Stroke" Value="#00BFFF" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="Fill" Value="#30FFFFFF" />
+        </Style>
+
+        <!-- 尺寸提示样式 -->
+        <Style Selector="Border.size-hint">
+            <Setter Property="Background" Value="#CC000000" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+
+        <!-- 提示文字样式 -->
+        <Style Selector="TextBlock.hint-text">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <!-- 顶部提示栏 -->
+        <Style Selector="Border.top-hint">
+            <Setter Property="Background" Value="#CC000000" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="0,20,0,0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <!-- 全屏画布 - 用于绘制选择区域 -->
+        <Canvas Name="CaptureCanvas"
+                Background="Transparent"
+                PointerPressed="OnPointerPressed"
+                PointerMoved="OnPointerMoved"
+                PointerReleased="OnPointerReleased"
+                KeyDown="OnKeyDown"
+                Focusable="True">
+
+            <!-- 选择矩形 -->
+            <Rectangle Name="SelectionRectangle"
+                       Classes="selection-rect"
+                       IsVisible="{Binding IsSelecting}"
+                       Canvas.Left="{Binding SelectionRect.X}"
+                       Canvas.Top="{Binding SelectionRect.Y}"
+                       Width="{Binding SelectionRect.Width}"
+                       Height="{Binding SelectionRect.Height}" />
+
+            <!-- 尺寸提示（跟随鼠标） -->
+            <Border Name="SizeHintBorder"
+                    Classes="size-hint"
+                    IsVisible="{Binding IsSelecting}">
+                <TextBlock Text="{Binding SizeHint}"
+                           Classes="hint-text"
+                           FontWeight="SemiBold" />
+            </Border>
+        </Canvas>
+
+        <!-- 顶部操作提示 -->
+        <Border Classes="top-hint"
+                IsVisible="{Binding !IsSelecting}">
+            <StackPanel Spacing="8">
+                <TextBlock Text="拖拽鼠标选择截图区域"
+                           Classes="hint-text"
+                           FontSize="16"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="按 ESC 键取消"
+                           Classes="hint-text"
+                           Opacity="0.8" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

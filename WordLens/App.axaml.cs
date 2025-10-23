@@ -90,6 +90,25 @@ namespace WordLens
             services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();  // 使用 TaskPoolGlobalHook
             services.AddHttpClient();
             
+            // 截图服务 - 根据平台注册不同实现
+            if (OperatingSystem.IsWindows())
+            {
+                services.AddSingleton<IScreenshotService, WindowsScreenshotService>();
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                services.AddSingleton<IScreenshotService, LinuxScreenshotService>();
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                services.AddSingleton<IScreenshotService, MacScreenshotService>();
+            }
+            else
+            {
+                // 不支持的平台，使用Windows实现作为默认（可能无法工作）
+                services.AddSingleton<IScreenshotService, WindowsScreenshotService>();
+            }
+            
             // 配置日志
             services.AddLogging(logging =>
             {

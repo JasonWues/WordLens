@@ -21,6 +21,7 @@ namespace WordLens.ViewModels
             
             _services = services;
 
+            // 注册翻译窗口消息
             WeakReferenceMessenger.Default.Register<ShowPopupMessage>(this, async (recipient, message) =>
             {
                 await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -34,6 +35,29 @@ namespace WordLens.ViewModels
                         var window = new PopupWindowView { DataContext = vm };
                         window.Show();
                         await vm.TranslateAsync(CancellationToken.None);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
+                });
+            });
+
+            // 注册OCR截图窗口消息
+            WeakReferenceMessenger.Default.Register<ShowOcrCaptureMessage>(this, (recipient, message) =>
+            {
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        using var scope = _services.CreateScope();
+                        var screenshotService = scope.ServiceProvider.GetRequiredService<Services.IScreenshotService>();
+                        var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ScreenCaptureViewModel>>();
+                        
+                        var vm = new ScreenCaptureViewModel(screenshotService, logger);
+                        var window = new Views.ScreenCaptureWindow { DataContext = vm };
+                        window.Show();
                     }
                     catch (Exception e)
                     {
