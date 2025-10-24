@@ -1,4 +1,6 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using WordLens.Services;
 
 namespace WordLens.ViewModels
@@ -8,18 +10,12 @@ namespace WordLens.ViewModels
         public SettingsViewModel SettingsViewModel { get; }
         
         public AboutViewModel AboutViewModel { get; }
+        
 
-        public MainWindowViewModel()
+        public MainWindowViewModel(SettingsViewModel settingsViewModel,AboutViewModel aboutViewModel)
         {
-            // 设计时构造函数
-            SettingsViewModel = new SettingsViewModel();
-            AboutViewModel = new AboutViewModel();
-        }
-
-        public MainWindowViewModel(ISettingsService settingsService, IHotkeyManagerService hotkeyManagerService)
-        {
-            SettingsViewModel = new SettingsViewModel(settingsService, hotkeyManagerService);
-            AboutViewModel = new AboutViewModel();
+            SettingsViewModel = settingsViewModel;
+            AboutViewModel = aboutViewModel;
         }
 
         public async Task InitializeAsync()

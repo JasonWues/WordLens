@@ -82,9 +82,6 @@ namespace WordLens.Services
                 _logger.LogError(ex, "截图过程中发生错误");
                 return null;
             }
-            finally
-            {
-            }
         }
 
         public async Task<WriteableBitmap?> CaptureFullScreenAsync()

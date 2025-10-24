@@ -60,9 +60,25 @@ namespace WordLens.Models
         public string Name { get; set; } = string.Empty;
         public ProviderType Type { get; set; } = ProviderType.OpenAI;
         public string BaseUrl { get; set; } = string.Empty; // e.g. https://api.openai.com or compatible
+        
+        /// <summary>
+        /// API密钥（存储时为加密格式：ENC::xxxxx）
+        /// </summary>
         public string? ApiKey { get; set; }
+        
         public string Model { get; set; } = string.Empty;
         public bool IsEnabled { get; set; } = true; // 默认启用
+        
+        /// <summary>
+        /// 是否允许手动输入模型名称（兼容模式）
+        /// </summary>
+        public bool AllowManualModelInput { get; set; } = true;
+        
+        /// <summary>
+        /// 可用模型列表（运行时缓存，不持久化）
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public System.Collections.Generic.List<ModelInfo>? AvailableModels { get; set; }
     }
 
     public class ProxyConfig

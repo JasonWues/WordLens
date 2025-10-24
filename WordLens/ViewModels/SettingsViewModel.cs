@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Semi.Avalonia;
 using SharpHook.Data;
@@ -16,14 +19,17 @@ using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
 using WordLens.Util;
+using ZLogger;
 
 namespace WordLens.ViewModels
 {
     public partial class SettingsViewModel : ViewModelBase
     {
-
         private readonly ISettingsService? _settingsService;
         private readonly IHotkeyManagerService? _hotkeyManagerService;
+        private readonly IModelProviderService? _modelProviderService;
+        private readonly IEncryptionService? _encryptionService;
+        private readonly ILogger<SettingsViewModel>? _logger;
         private AppSettings? _originalSettings;
 
         [ObservableProperty]
@@ -69,6 +75,19 @@ namespace WordLens.ViewModels
         [ObservableProperty]
         private string? proxyPassword;
 
+        // 模型管理相关属性
+        [ObservableProperty]
+        private bool isLoadingModels = false;
+
+        [ObservableProperty]
+        private bool hasModelLoadError = false;
+
+        [ObservableProperty]
+        private string modelLoadErrorMessage = string.Empty;
+
+        [ObservableProperty]
+        private ModelInfo? selectedModelInfo;
+
         // 快捷键配置
         private HotkeyConfig _hotkeyConfig = HotkeyConfig.Default();
         private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.Default();
@@ -83,18 +102,21 @@ namespace WordLens.ViewModels
             new LanguageOption("en", "English"),
             new LanguageOption("ja", "日本語"),
         };
+        
 
-        public SettingsViewModel()
-        {
-            _settingsService = null;
-            _hotkeyManagerService = null!;
-        }
-
-        public SettingsViewModel(ISettingsService settingsService, IHotkeyManagerService hotkeyManagerService)
+        public SettingsViewModel(
+            ISettingsService settingsService,
+            IHotkeyManagerService hotkeyManagerService,
+            IModelProviderService modelProviderService,
+            IEncryptionService encryptionService,
+            ILogger<SettingsViewModel> logger)
         {
             _settingsService = settingsService;
             _hotkeyManagerService = hotkeyManagerService;
-            
+            _modelProviderService = modelProviderService;
+            _encryptionService = encryptionService;
+            _logger = logger;
+
             WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
             {
                 if (IsCapturingHotkey)
@@ -108,6 +130,9 @@ namespace WordLens.ViewModels
         public async Task InitializeAsync()
         {
             await LoadSettingsAsync();
+            
+            // 自动获取所有启用Provider的模型列表
+            await LoadModelsForAllProvidersAsync();
         }
 
         [RelayCommand]
@@ -140,6 +165,32 @@ namespace WordLens.ViewModels
             ProxyUseAuthentication = settings.Proxy.UseAuthentication;
             ProxyUsername = settings.Proxy.Username;
             ProxyPassword = settings.Proxy.Password;
+        }
+
+        /// <summary>
+        /// 为所有Provider加载模型列表
+        /// </summary>
+        private async Task LoadModelsForAllProvidersAsync()
+        {
+            if (_modelProviderService == null || _encryptionService == null)
+                return;
+            
+            var providersToLoad = Providers
+                .Where(p => p.IsEnabled && !string.IsNullOrEmpty(p.ApiKey))
+                .ToList();
+
+            foreach (var provider in providersToLoad)
+            {
+                try
+                {
+                    await RefreshModelsAsync(provider);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.ZLogWarning(ex, $"为Provider {provider.Name} 加载模型失败: {ex.Message}");
+                    // 继续处理其他Provider
+                }
+            }
         }
 
         [RelayCommand]
@@ -338,6 +389,82 @@ namespace WordLens.ViewModels
             }
         }
 
+        /// <summary>
+        /// 刷新指定Provider的模型列表
+        /// </summary>
+        [RelayCommand]
+        private async Task RefreshModelsAsync(ProviderConfig? provider)
+        {
+            if (provider == null ||
+                string.IsNullOrEmpty(provider.ApiKey) ||
+                _modelProviderService == null ||
+                _encryptionService == null)
+            {
+                _logger?.ZLogWarning($"无法刷新模型：Provider或服务为null");
+                return;
+            }
+
+            IsLoadingModels = true;
+            HasModelLoadError = false;
+            ModelLoadErrorMessage = string.Empty;
+
+            try
+            {
+                _logger?.ZLogInformation($"开始刷新 {provider.Name} 的模型列表");
+
+                // 解密API Key
+                var decryptedKey = _encryptionService.Decrypt(provider.ApiKey);
+
+                // 获取模型列表
+                var models = await _modelProviderService.GetAvailableModelsAsync(
+                    decryptedKey,
+                    provider.BaseUrl,
+                    CancellationToken.None);
+
+                // 如果当前模型不在列表中，添加它（保持用户选择）
+                if (!string.IsNullOrEmpty(provider.Model) &&
+                    models.All(m => m.Id != provider.Model))
+                {
+                    models.Insert(0, new ModelInfo { Id = provider.Model, OwnedBy = "custom" });
+                    _logger?.ZLogInformation($"当前模型 {provider.Model} 不在列表中，已添加");
+                }
+
+                provider.AvailableModels = models;
+                _logger?.ZLogInformation($"成功获取 {models.Count} 个模型");
+
+                // 触发UI更新
+                OnPropertyChanged(nameof(Providers));
+            }
+            catch (ArgumentException ex)
+            {
+                HasModelLoadError = true;
+                ModelLoadErrorMessage = $"参数错误: {ex.Message}";
+                _logger?.ZLogError(ex, $"刷新模型列表失败: {ex.Message}");
+            }
+            catch (HttpRequestException ex)
+            {
+                HasModelLoadError = true;
+                ModelLoadErrorMessage = $"网络请求失败: {ex.Message}";
+                _logger?.ZLogError(ex, $"刷新模型列表失败: {ex.Message}");
+            }
+            catch (TimeoutException ex)
+            {
+                HasModelLoadError = true;
+                ModelLoadErrorMessage = $"请求超时: {ex.Message}";
+                _logger?.ZLogError(ex, $"刷新模型列表失败: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                HasModelLoadError = true;
+                ModelLoadErrorMessage = $"未知错误: {ex.Message}";
+                _logger?.ZLogError(ex, $"刷新模型列表失败: {ex.Message}");
+            }
+            finally
+            {
+                IsLoadingModels = false;
+            }
+        }
+
         private AppSettings BuildSettingsFromViewModel()
         {
             return new AppSettings
@@ -368,6 +495,17 @@ namespace WordLens.ViewModels
             }
         }
 
+        /// <summary>
+        /// 当选择的模型信息变化时，同步到Provider配置
+        /// </summary>
+        partial void OnSelectedModelInfoChanged(ModelInfo? value)
+        {
+            if (value != null && SelectedProvider != null)
+            {
+                SelectedProvider.Model = value.Id;
+                _logger?.ZLogInformation($"模型已更新为: {value.Id}");
+            }
+        }
     }
 
     public class LanguageOption

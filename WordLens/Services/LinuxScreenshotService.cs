@@ -1,39 +1,92 @@
 using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Microsoft.Extensions.Logging;
+using ScreenCapture.NET;
 
 namespace WordLens.Services
 {
     /// <summary>
-    /// Linux平台截图服务实现（预留）
-    /// TODO: 实现X11/Wayland截图功能
+    /// Linux平台截图服务实现
     /// </summary>
     public class LinuxScreenshotService : IScreenshotService
     {
+        private readonly IScreenCaptureService _screenCaptureService;
+        private readonly IScreenCapture? _screenCapture; 
         private readonly ILogger<LinuxScreenshotService> _logger;
 
-        public LinuxScreenshotService(ILogger<LinuxScreenshotService> logger)
+        public LinuxScreenshotService(ILogger<LinuxScreenshotService> logger,IScreenCaptureService screenCaptureService)
         {
             _logger = logger;
+            _screenCaptureService = screenCaptureService;
+
+            try
+            {
+                var graphicsCard = _screenCaptureService.GetGraphicsCards().FirstOrDefault();
+                var display = _screenCaptureService.GetDisplays(graphicsCard).FirstOrDefault();
+                _screenCapture = _screenCaptureService.GetScreenCapture(display);
+                _logger.LogInformation("截图服务初始化成功");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "初始化截图服务时发生严重错误");
+                _screenCapture = null;
+            }
+            
         }
 
-        public Task<WriteableBitmap?> CaptureAreaAsync(Rect area)
+        public async Task<WriteableBitmap?> CaptureAreaAsync(Rect area)
         {
-            _logger.LogWarning("Linux截图功能尚未实现");
-            // TODO: 实现X11或Wayland截图
-            // 可以使用：
-            // 1. X11: libX11, XGetImage
-            // 2. Wayland: wlroots截图协议
-            // 3. 或调用系统命令: scrot, gnome-screenshot
-            return Task.FromResult<WriteableBitmap?>(null);
+            // 如果初始化失败，直接返回 null
+            if (_screenCapture == null)
+            {
+                _logger.LogError("截图失败，因为服务未能正确初始化");
+                return null;
+            }
+
+            try
+            {
+                return await Task.Run(() =>
+                {
+                    var scale = 1;
+                    int x = (int)(area.X * scale);
+                    int y = (int)(area.Y * scale);
+                    int width = (int)(area.Width * scale);
+                    int height = (int)(area.Height * scale);
+
+                    if (width <= 0 || height <= 0)
+                    {
+                        _logger.LogWarning($"无效的截图区域: {area}");
+                        return null;
+                    }
+                    
+                    var captureZone = _screenCapture.RegisterCaptureZone(x, y, width, height);
+                    
+                    _screenCapture.CaptureScreen();
+                    
+                    using (captureZone.Lock())
+                    {
+                        // 3. 转换缓冲区
+                        var bitmap = ConvertBufferToWriteableBitmap(captureZone.RawBuffer, width, height);
+                        return bitmap;
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "截图过程中发生错误");
+                return null;
+            }
         }
 
-        public Task<WriteableBitmap?> CaptureFullScreenAsync()
+        public async Task<WriteableBitmap?> CaptureFullScreenAsync()
         {
-            _logger.LogWarning("Linux截图功能尚未实现");
-            return Task.FromResult<WriteableBitmap?>(null);
+            var bounds = GetVirtualScreenBounds();
+            return await CaptureAreaAsync(bounds);
         }
 
         public Rect GetVirtualScreenBounds()
@@ -42,6 +95,31 @@ namespace WordLens.Services
             // 可以通过X11的XRRGetScreenResources获取
             _logger.LogWarning("Linux屏幕边界获取尚未实现");
             return new Rect(0, 0, 1920, 1080); // 临时返回默认值
+        }
+        
+        private WriteableBitmap? ConvertBufferToWriteableBitmap(ReadOnlySpan<byte> rawBuffer, int width, int height)
+        {
+            try
+            {
+                var writeableBitmap = new WriteableBitmap(
+                    new PixelSize(width, height),
+                    new Vector(96, 96),
+                    PixelFormat.Bgra8888,
+                    AlphaFormat.Premul);
+
+                using (var buffer = writeableBitmap.Lock())
+                {
+                    Marshal.Copy(rawBuffer.ToArray(), 0, buffer.Address, rawBuffer.Length);
+                    
+                }
+
+                return writeableBitmap;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "从缓冲区转换位图失败");
+                return null;
+            }
         }
     }
 }

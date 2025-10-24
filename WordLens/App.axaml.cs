@@ -78,26 +78,31 @@ namespace WordLens
             services.AddTransient<SettingsViewModel>();
             services.AddSingleton<PopupWindowViewModel>();
             services.AddSingleton<ScreenCaptureViewModel>();
+            services.AddTransient<AboutViewModel>();
+
             
             // Views
             services.AddTransient<MainWindowView>();
             
             // Services
             services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
+            services.AddSingleton<IEncryptionService, EncryptionService>();
+            services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<TranslationService>();
             services.AddSingleton<ISelectionService, SelectionService>();
             services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();
-            services.AddSingleton<IScreenCaptureService, DX11ScreenCaptureService>();
             services.AddHttpClient();
             
             // 截图服务 - 根据平台注册不同实现
             if (OperatingSystem.IsWindows())
             {
+                services.AddSingleton<IScreenCaptureService, DX11ScreenCaptureService>();
                 services.AddSingleton<IScreenshotService, WindowsScreenshotService>();
             }
             else if (OperatingSystem.IsLinux())
             {
+                services.AddSingleton<IScreenCaptureService, X11ScreenCaptureService>();
                 services.AddSingleton<IScreenshotService, LinuxScreenshotService>();
             }
             else if (OperatingSystem.IsMacOS())
