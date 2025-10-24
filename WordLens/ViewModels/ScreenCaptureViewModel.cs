@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using HPPH;
 using Microsoft.Extensions.Logging;
+using ScreenCapture.NET;
 using WordLens.Messages;
 using WordLens.Services;
 using ZLogger;
@@ -150,6 +154,8 @@ namespace WordLens.ViewModels
             {
                 _logger.ZLogInformation($"开始截图: {SelectionRect}");
 
+                
+                
                 // 执行截图
                 var bitmap = await _screenshotService.CaptureAreaAsync(SelectionRect);
 

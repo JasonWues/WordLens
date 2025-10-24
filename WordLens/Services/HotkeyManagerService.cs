@@ -117,7 +117,7 @@ namespace WordLens.Services
             }
 
             _logger.ZLogInformation($"获取到选中文本，长度: {text.Length}");
-            WeakReferenceMessenger.Default.Send(new ShowPopupMessage(text));
+            WeakReferenceMessenger.Default.Send(new TriggerTranslationMessage(text),"text");
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace WordLens.Services
             _logger.ZLogInformation($"OCR热键被触发，打开屏幕截图窗口");
             
             // 发送消息打开屏幕捕获窗口
-            WeakReferenceMessenger.Default.Send(new ShowOcrCaptureMessage());
+            WeakReferenceMessenger.Default.Send(new TriggerTranslationMessage(string.Empty),"ocr");
         }
         
         public void Dispose()

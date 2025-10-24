@@ -7,6 +7,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ScreenCapture.NET;
 using SharpHook;
 using WordLens.Services;
 using WordLens.ViewModels;
@@ -76,18 +77,18 @@ namespace WordLens
             services.AddTransient<MainWindowViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddSingleton<PopupWindowViewModel>();
+            services.AddSingleton<ScreenCaptureViewModel>();
             
             // Views
             services.AddTransient<MainWindowView>();
             
             // Services
-            // 注意：移除了独立的 HotkeyService 和 OcrHotkeyService，
-            // 现在所有快捷键统一在 HotkeyManagerService 中管理，避免重复触发
             services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<TranslationService>();
             services.AddSingleton<ISelectionService, SelectionService>();
-            services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();  // 使用 TaskPoolGlobalHook
+            services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();
+            services.AddSingleton<IScreenCaptureService, DX11ScreenCaptureService>();
             services.AddHttpClient();
             
             // 截图服务 - 根据平台注册不同实现
@@ -102,11 +103,6 @@ namespace WordLens
             else if (OperatingSystem.IsMacOS())
             {
                 services.AddSingleton<IScreenshotService, MacScreenshotService>();
-            }
-            else
-            {
-                // 不支持的平台，使用Windows实现作为默认（可能无法工作）
-                services.AddSingleton<IScreenshotService, WindowsScreenshotService>();
             }
             
             // 配置日志

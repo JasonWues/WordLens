@@ -22,15 +22,16 @@
   
   
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.7"/>
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.7"/>
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7"/>
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.7"/>
+    <PackageReference Include="Avalonia" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.1.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.2.25502.107"/>
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" />
+    <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0" />
     <PackageReference Include="Semi.Avalonia" Version="11.3.7"/>
     <PackageReference Include="SharpHook" Version="7.0.3"/>
     <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />

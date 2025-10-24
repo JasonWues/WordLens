@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using ScreenCapture.NET;
 using WordLens.Messages;
 using WordLens.Views;
 
@@ -22,7 +24,7 @@ namespace WordLens.ViewModels
             _services = services;
 
             // 注册翻译窗口消息
-            WeakReferenceMessenger.Default.Register<ShowPopupMessage>(this, async (recipient, message) =>
+            WeakReferenceMessenger.Default.Register<TriggerTranslationMessage,string>(this,"text",async (recipient, message) =>
             {
                 await Dispatcher.UIThread.InvokeAsync(async () =>
                 {
@@ -43,20 +45,19 @@ namespace WordLens.ViewModels
                     }
                 });
             });
-
+            
             // 注册OCR截图窗口消息
-            WeakReferenceMessenger.Default.Register<ShowOcrCaptureMessage>(this, (recipient, message) =>
+            WeakReferenceMessenger.Default.Register<TriggerTranslationMessage,string>(this, "ocr",(recipient, message) =>
             {
                 Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     try
                     {
                         using var scope = _services.CreateScope();
-                        var screenshotService = scope.ServiceProvider.GetRequiredService<Services.IScreenshotService>();
-                        var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ScreenCaptureViewModel>>();
                         
-                        var vm = new ScreenCaptureViewModel(screenshotService, logger);
-                        var window = new Views.ScreenCaptureWindow { DataContext = vm };
+                        var vm = scope.ServiceProvider.GetRequiredService<ScreenCaptureViewModel>();
+                        
+                        var window = new ScreenCaptureWindow { DataContext = vm };
                         window.Show();
                     }
                     catch (Exception e)
