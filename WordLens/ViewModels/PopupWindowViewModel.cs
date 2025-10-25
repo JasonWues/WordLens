@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -16,6 +17,7 @@ public partial class PopupWindowViewModel : ViewModelBase
 {
     private readonly ILogger<PopupWindowViewModel> _logger;
     private readonly ISettingsService _settingsService;
+    private readonly ITranslationHistoryService _historyService;
     private readonly TranslationService _translationService;
 
     [ObservableProperty] private bool isBusy;
@@ -47,10 +49,12 @@ public partial class PopupWindowViewModel : ViewModelBase
     public PopupWindowViewModel(
         TranslationService translationService,
         ISettingsService settingsService,
+        ITranslationHistoryService historyService,
         ILogger<PopupWindowViewModel> logger)
     {
         _translationService = translationService;
         _settingsService = settingsService;
+        _historyService = historyService;
         _logger = logger;
 
         // 初始化语言列表
@@ -138,6 +142,9 @@ public partial class PopupWindowViewModel : ViewModelBase
             foreach (var result in results) TranslationResults.Add(result);
 
             _logger.ZLogInformation($"翻译结果已添加到UI，共 {results.Count} 个");
+
+            // 保存到历史记录
+            await SaveToHistoryAsync(results);
         }
         catch (Exception ex)
         {
@@ -146,6 +153,49 @@ public partial class PopupWindowViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// 保存翻译结果到历史记录
+    /// </summary>
+    private async Task SaveToHistoryAsync(List<TranslationResult> results)
+    {
+        try
+        {
+            // 只保存成功的翻译结果
+            var successResults = results.Where(r => r.IsSuccess).ToList();
+            if (successResults.Count == 0)
+            {
+                _logger.ZLogDebug($"没有成功的翻译结果，跳过保存历史");
+                return;
+            }
+
+            // 将翻译结果序列化为JSON
+            var resultsJson = System.Text.Json.JsonSerializer.Serialize(
+                successResults.Select(r => new { r.ProviderName, r.Result }).ToList());
+
+            // 获取提供商名称列表
+            var providerNames = string.Join(", ", successResults.Select(r => r.ProviderName));
+
+            var history = new Models.TranslationHistory
+            {
+                SourceText = SourceText!,
+                SourceLanguage = SelectedSourceLanguage?.Code ?? "auto",
+                TargetLanguage = SelectedTargetLanguage!.Code,
+                ResultsJson = resultsJson,
+                ProviderNames = providerNames,
+                CreatedAt = DateTime.Now,
+                IsFavorite = false
+            };
+
+            await _historyService.SaveAsync(history);
+            _logger.ZLogInformation($"翻译历史保存成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"保存翻译历史失败: {ex.Message}");
+            // 不抛出异常，避免影响正常翻译流程
         }
     }
 

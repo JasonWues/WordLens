@@ -23,6 +23,7 @@
                     <NativeMenu>
                         <NativeMenuItem Header="监听剪贴板" />
                         <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="翻译历史" Command="{Binding ShowHistoryCommand}" />
                         <NativeMenuItem Header="软件设置" Command="{Binding ShowSettingCommand}" />
                         <NativeMenuItemSeparator />
                         <NativeMenuItem Header="退出程序" Command="{Binding ExitCommand}" />

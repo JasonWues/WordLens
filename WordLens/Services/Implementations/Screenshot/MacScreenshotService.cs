@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.Logging;
 
-namespace WordLens.Services;
+namespace WordLens.Services.Implementations.Screenshot;
 
 /// <summary>
 ///     macOS平台截图服务实现（预留）

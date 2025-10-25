@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using WordLens.Models;
 using ZLogger;
 
-namespace WordLens.Services;
+namespace WordLens.Services.Implementations;
 
 /// <summary>
 ///     模型提供服务接口

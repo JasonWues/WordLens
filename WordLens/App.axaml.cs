@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 using ScreenCapture.NET;
 using SharpHook;
 using WordLens.Services;
+using WordLens.Services.Implementations;
+using WordLens.Services.Implementations.Screenshot;
 using WordLens.ViewModels;
 using WordLens.Views;
 using ZLogger;
@@ -73,7 +75,8 @@ public class App : Application
         services.AddTransient<SettingsViewModel>();
         services.AddSingleton<PopupWindowViewModel>();
         services.AddSingleton<ScreenCaptureViewModel>();
-        services.AddTransient<AboutViewModel>();
+        services.AddSingleton<AboutViewModel>();
+        services.AddSingleton<TranslationHistoryViewModel>();
 
 
         // Views
@@ -86,6 +89,7 @@ public class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<TranslationService>();
         services.AddSingleton<ISelectionService, SelectionService>();
+        services.AddSingleton<ITranslationHistoryService, TranslationHistoryService>();
         services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();
         services.AddHttpClient();
 

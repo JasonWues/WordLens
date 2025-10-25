@@ -1,14 +1,7 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using WordLens.Native;
 
-namespace WordLens.Services;
-
-public interface ISelectionService
-{
-    string GetSelectedTex();
-
-    Task<string?> GetSelectedTextAsync();
-}
+namespace WordLens.Services.Implementations;
 
 public class SelectionService : ISelectionService
 {

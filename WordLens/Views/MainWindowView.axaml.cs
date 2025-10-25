@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -19,10 +20,21 @@ public partial class MainWindowView : Window
         };
 
         KeyDown += OnWindowKeyDown;
+        
+        WeakReferenceMessenger.Default.Register<CloseWindowMessage>(this, (r, m) =>
+        {
+            Close();
+        });
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
         WeakReferenceMessenger.Default.Send(new CapturingKeyMessage(e));
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        WeakReferenceMessenger.Default.UnregisterAll(this);
+        base.OnClosed(e);
     }
 }

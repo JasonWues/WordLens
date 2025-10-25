@@ -17,6 +17,7 @@ using SharpHook.Data;
 using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
+using WordLens.Services.Implementations;
 using WordLens.Util;
 using ZLogger;
 
@@ -175,6 +176,9 @@ public partial class SettingsViewModel : ViewModelBase
         var settings = BuildSettingsFromViewModel();
         await _settingsService.SaveAsync(settings);
         _originalSettings = settings;
+        
+        WeakReferenceMessenger.Default.Send(new CloseWindowMessage());
+
     }
 
     [RelayCommand]
@@ -210,6 +214,9 @@ public partial class SettingsViewModel : ViewModelBase
             ProxyUsername = _originalSettings.Proxy.Username;
             ProxyPassword = _originalSettings.Proxy.Password;
         }
+        
+        WeakReferenceMessenger.Default.Send(new CloseWindowMessage());
+
     }
 
     [RelayCommand]

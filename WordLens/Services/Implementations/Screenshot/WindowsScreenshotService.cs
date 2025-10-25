@@ -8,11 +8,10 @@ using Avalonia.Platform;
 using Microsoft.Extensions.Logging;
 using ScreenCapture.NET;
 
-namespace WordLens.Services;
+namespace WordLens.Services.Implementations.Screenshot;
 
 /// <summary>
 ///     Windows平台截图服务实现
-///     使用 ScreenCapture.NET (DX11) 进行高性能屏幕捕获
 /// </summary>
 public class WindowsScreenshotService : IScreenshotService
 {
@@ -64,6 +63,7 @@ public class WindowsScreenshotService : IScreenshotService
                     _logger.LogWarning($"无效的截图区域: {area}");
                     return null;
                 }
+                
 
                 var captureZone = _screenCapture.RegisterCaptureZone(x, y, width, height);
 

@@ -6,14 +6,11 @@ using Microsoft.Extensions.Logging;
 using WordLens.Models;
 using ZLogger;
 
-namespace WordLens.Services;
+namespace WordLens.Services.Implementations;
 
-public interface ISettingsService
-{
-    Task<AppSettings> LoadAsync();
-    Task SaveAsync(AppSettings settings);
-}
-
+/// <summary>
+/// 应用设置服务实现
+/// </summary>
 public class SettingsService : ISettingsService
 {
     private readonly IEncryptionService _encryptionService;

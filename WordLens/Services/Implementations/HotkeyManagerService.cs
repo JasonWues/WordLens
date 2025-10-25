@@ -7,13 +7,7 @@ using WordLens.Messages;
 using WordLens.Models;
 using ZLogger;
 
-namespace WordLens.Services;
-
-public interface IHotkeyManagerService : IDisposable, IAsyncDisposable
-{
-    Task StartAsync();
-    Task ReloadConfigAsync();
-}
+namespace WordLens.Services.Implementations;
 
 /// <summary>
 ///     热键管理服务

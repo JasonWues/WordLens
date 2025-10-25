@@ -80,6 +80,21 @@ public partial class ApplicationViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ShowHistory()
+    {
+        try
+        {
+            var vm = _services.GetRequiredService<TranslationHistoryViewModel>();
+            var window = new TranslationHistoryView { DataContext = vm };
+            window.Show();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"打开历史记录窗口失败: {e}");
+        }
+    }
+
+    [RelayCommand]
     private void Exit()
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime application)

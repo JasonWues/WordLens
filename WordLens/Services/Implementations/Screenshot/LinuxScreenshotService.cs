@@ -8,7 +8,7 @@ using Avalonia.Platform;
 using Microsoft.Extensions.Logging;
 using ScreenCapture.NET;
 
-namespace WordLens.Services;
+namespace WordLens.Services.Implementations.Screenshot;
 
 /// <summary>
 ///     Linux平台截图服务实现
