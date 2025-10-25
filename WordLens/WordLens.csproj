@@ -1,74 +1,74 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <PublishAot>false</PublishAot>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Copyright>CrimsonNinja</Copyright>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <PublishAot>true</PublishAot>
-    <DebuggerSupport>false</DebuggerSupport>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <AvaloniaResource Include="Assets\**"/>
-  </ItemGroup>
-  
-  
-  <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8" />
-    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.1.0" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.2.25502.107"/>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" />
-    <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0" />
-    <PackageReference Include="ScreenCapture.NET.X11" Version="3.0.0" />
-    <PackageReference Include="Semi.Avalonia" Version="11.3.7"/>
-    <PackageReference Include="SharpHook" Version="7.0.3"/>
-    <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />
-    <PackageReference Include="ZLogger" Version="2.5.10" />
-  </ItemGroup>
-
-  <Target Name="BuildRust" BeforeTargets="Build">
-    <!-- 打印一条消息，方便在构建日志中看到这个过程 -->
-    <Message Text="--- 开始编译 Rust 原生库 ---" Importance="high"/>
-
-    <!-- 1. 定义 Rust 项目相关的变量 -->
     <PropertyGroup>
-      <!-- Rust 项目相对于当前 C# 项目的路径 -->
-      <RustProjectDir>$(SolutionDir)native\</RustProjectDir>
-      <!-- Rust 编译后输出的库文件名 -->
-      <RustLibName>native.dll</RustLibName>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <PublishAot>false</PublishAot>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Copyright>CrimsonNinja</Copyright>
     </PropertyGroup>
 
-    <!-- 2. 根据 C# 的构建配置 (Debug/Release) 来决定 Rust 的构建参数 -->
-    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-      <RustBuildCommand>cargo build --release</RustBuildCommand>
-      <RustOutDir>$(RustProjectDir)target/release/</RustOutDir>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <PublishAot>true</PublishAot>
+        <DebuggerSupport>false</DebuggerSupport>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)' != 'Release'">
-      <RustBuildCommand>cargo build</RustBuildCommand>
-      <RustOutDir>$(RustProjectDir)target/debug/</RustOutDir>
-    </PropertyGroup>
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**"/>
+    </ItemGroup>
 
-    <!-- 3. 执行 cargo build 命令 -->
-    <Exec Command="$(RustBuildCommand)" WorkingDirectory="$(RustProjectDir)"/>
 
-    <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
-          DestinationFolder="$(OutDir)"
-          SkipUnchangedFiles="true"/>
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.3.8"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.8"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.8"/>
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.1.0"/>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.2.25502.107"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107"/>
+        <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0"/>
+        <PackageReference Include="ScreenCapture.NET.X11" Version="3.0.0"/>
+        <PackageReference Include="Semi.Avalonia" Version="11.3.7"/>
+        <PackageReference Include="SharpHook" Version="7.0.3"/>
+        <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta"/>
+        <PackageReference Include="ZLogger" Version="2.5.10"/>
+    </ItemGroup>
 
-    <Message Text="--- Rust 原生库编译并复制完成 ---" Importance="high"/>
-  </Target>
+    <Target Name="BuildRust" BeforeTargets="Build">
+        <!-- 打印一条消息，方便在构建日志中看到这个过程 -->
+        <Message Text="--- 开始编译 Rust 原生库 ---" Importance="high"/>
+
+        <!-- 1. 定义 Rust 项目相关的变量 -->
+        <PropertyGroup>
+            <!-- Rust 项目相对于当前 C# 项目的路径 -->
+            <RustProjectDir>$(SolutionDir)native\</RustProjectDir>
+            <!-- Rust 编译后输出的库文件名 -->
+            <RustLibName>native.dll</RustLibName>
+        </PropertyGroup>
+
+        <!-- 2. 根据 C# 的构建配置 (Debug/Release) 来决定 Rust 的构建参数 -->
+        <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+            <RustBuildCommand>cargo build --release</RustBuildCommand>
+            <RustOutDir>$(RustProjectDir)target/release/</RustOutDir>
+        </PropertyGroup>
+
+        <PropertyGroup Condition="'$(Configuration)' != 'Release'">
+            <RustBuildCommand>cargo build</RustBuildCommand>
+            <RustOutDir>$(RustProjectDir)target/debug/</RustOutDir>
+        </PropertyGroup>
+
+        <!-- 3. 执行 cargo build 命令 -->
+        <Exec Command="$(RustBuildCommand)" WorkingDirectory="$(RustProjectDir)"/>
+
+        <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
+              DestinationFolder="$(OutDir)"
+              SkipUnchangedFiles="true"/>
+
+        <Message Text="--- Rust 原生库编译并复制完成 ---" Importance="high"/>
+    </Target>
 </Project>

@@ -1,24 +1,23 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace WordLens.ViewModels
+namespace WordLens.ViewModels;
+
+public partial class AboutViewModel : ViewModelBase
 {
-    public partial class AboutViewModel : ViewModelBase
-    {
-        public string AppName => "WordLens";
-        
-        public string Version => GetVersion();
-        
-        public string Description => "一个简洁高效的划词翻译工具";
-        
-        public string Copyright => $"© {DateTime.Now.Year} WordLens";
-        
-        public string License => "MIT License";
-        
-        public string LicenseText => @"MIT License
+    public string AppName => "WordLens";
+
+    public string Version => GetVersion();
+
+    public string Description => "一个简洁高效的划词翻译工具";
+
+    public string Copyright => $"© {DateTime.Now.Year} WordLens";
+
+    public string License => "MIT License";
+
+    public string LicenseText => @"MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the ""Software""), to deal
@@ -38,7 +37,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.";
 
-        public string ThirdPartyLibraries => @"本软件使用了以下开源库：
+    public string ThirdPartyLibraries => @"本软件使用了以下开源库：
 
 • Avalonia UI - 跨平台 UI 框架 (MIT License)
 • CommunityToolkit.Mvvm - MVVM 工具包 (MIT License)
@@ -46,30 +45,29 @@ SOFTWARE.";
 • ZLogger - 高性能日志库 (MIT License)
 • Semi.Avalonia - UI 主题库 (MIT License)";
 
-        public string GitHubUrl => "https://github.com/yourusername/WordLens";
-        
-        private string GetVersion()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var version = assembly.GetName().Version;
-            return version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.0.0";
-        }
+    public string GitHubUrl => "https://github.com/yourusername/WordLens";
 
-        [RelayCommand]
-        private void OpenGitHub()
+    private string GetVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var version = assembly.GetName().Version;
+        return version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.0.0";
+    }
+
+    [RelayCommand]
+    private void OpenGitHub()
+    {
+        try
         {
-            try
+            Process.Start(new ProcessStartInfo
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = GitHubUrl,
-                    UseShellExecute = true
-                });
-            }
-            catch
-            {
-                // 静默失败
-            }
+                FileName = GitHubUrl,
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // 静默失败
         }
     }
 }

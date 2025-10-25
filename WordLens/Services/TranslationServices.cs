@@ -12,214 +12,222 @@ using Microsoft.Extensions.Logging;
 using WordLens.Models;
 using ZLogger;
 
-namespace WordLens.Services
+namespace WordLens.Services;
+
+public interface ITranslationProvider
 {
-    public interface ITranslationProvider
+    Task<string> TranslateAsync(string text, string targetLanguage, string sourceLanguage, HttpClient httpClient,
+        CancellationToken ct = default);
+}
+
+public class TranslationService
+{
+    private readonly IEncryptionService _encryptionService;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<TranslationService> _logger;
+    private readonly ISettingsService _settings;
+
+    public TranslationService(
+        ISettingsService settings,
+        IHttpClientFactory httpClientFactory,
+        IEncryptionService encryptionService,
+        ILogger<TranslationService> logger)
     {
-        Task<string> TranslateAsync(string text, string targetLanguage, string sourceLanguage, HttpClient httpClient, CancellationToken ct = default);
+        _settings = settings;
+        _httpClientFactory = httpClientFactory;
+        _encryptionService = encryptionService;
+        _logger = logger;
     }
 
-    public class TranslationService
+    /// <summary>
+    ///     并行翻译文本，使用所有启用的翻译源
+    /// </summary>
+    /// <param name="text">要翻译的文本</param>
+    /// <param name="targetLanguage">目标语言代码</param>
+    /// <param name="sourceLanguage">源语言代码（默认为"auto"自动检测）</param>
+    /// <param name="ct">取消令牌</param>
+    public async Task<List<TranslationResult>> TranslateAsync(
+        string text,
+        string targetLanguage,
+        string sourceLanguage = "auto",
+        CancellationToken ct = default)
     {
-        private readonly ISettingsService _settings;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<TranslationService> _logger;
+        var cfg = await _settings.LoadAsync();
+        var enabledProviders = cfg.Providers.Where(p => p.IsEnabled).ToList();
 
-        public TranslationService(ISettingsService settings, IHttpClientFactory httpClientFactory, ILogger<TranslationService> logger)
+        _logger.ZLogInformation(
+            $"开始翻译，文本长度: {text.Length}，源语言: {sourceLanguage}，目标语言: {targetLanguage}，启用的翻译源数量: {enabledProviders.Count}");
+
+        if (enabledProviders.Count == 0)
         {
-            _settings = settings;
-            _httpClientFactory = httpClientFactory;
-            _logger = logger;
+            _logger.ZLogWarning($"没有启用的翻译源");
+            return new List<TranslationResult>();
         }
 
-        /// <summary>
-        /// 并行翻译文本，使用所有启用的翻译源
-        /// </summary>
-        /// <param name="text">要翻译的文本</param>
-        /// <param name="targetLanguage">目标语言代码</param>
-        /// <param name="sourceLanguage">源语言代码（默认为"auto"自动检测）</param>
-        /// <param name="ct">取消令牌</param>
-        public async Task<List<TranslationResult>> TranslateAsync(
-            string text,
-            string targetLanguage,
-            string sourceLanguage = "auto",
-            CancellationToken ct = default)
-        {
-            var cfg = await _settings.LoadAsync();
-            var enabledProviders = cfg.Providers.Where(p => p.IsEnabled).ToList();
+        // 为每个翻译源创建任务
+        var tasks = enabledProviders.Select(provider =>
+            TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, cfg, ct)
+        ).ToList();
 
-            _logger.ZLogInformation($"开始翻译，文本长度: {text.Length}，源语言: {sourceLanguage}，目标语言: {targetLanguage}，启用的翻译源数量: {enabledProviders.Count}");
+        // 并行执行所有翻译任务
+        var results = await Task.WhenAll(tasks);
 
-            if (enabledProviders.Count == 0)
-            {
-                _logger.ZLogWarning($"没有启用的翻译源");
-                return new List<TranslationResult>();
-            }
+        var successCount = results.Count(r => r.IsSuccess);
+        _logger.ZLogInformation($"翻译完成，成功: {successCount}/{results.Length}");
 
-            // 为每个翻译源创建任务
-            var tasks = enabledProviders.Select(provider =>
-                TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, cfg, ct)
-            ).ToList();
-
-            // 并行执行所有翻译任务
-            var results = await Task.WhenAll(tasks);
-
-            var successCount = results.Count(r => r.IsSuccess);
-            _logger.ZLogInformation($"翻译完成，成功: {successCount}/{results.Length}");
-
-            return results.ToList();
-        }
-
-        /// <summary>
-        /// 单个翻译源的翻译任务
-        /// </summary>
-        private async Task<TranslationResult> TranslateSingleProviderAsync(
-            ProviderConfig providerCfg,
-            string text,
-            string targetLanguage,
-            string sourceLanguage,
-            AppSettings settings,
-            CancellationToken ct)
-        {
-            var result = new TranslationResult
-            {
-                ProviderName = providerCfg.Name,
-                IsLoading = true
-            };
-
-            try
-            {
-                _logger.ZLogInformation($"开始使用 {providerCfg.Name} 翻译");
-
-                ITranslationProvider provider = providerCfg.Type switch
-                {
-                    ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg),
-                    _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
-                };
-
-                var httpClient = CreateHttpClientWithProxy(settings.Proxy);
-                result.Result = await provider.TranslateAsync(
-                    text,
-                    targetLanguage,
-                    sourceLanguage,
-                    httpClient,
-                    ct
-                );
-                result.IsSuccess = true;
-
-                _logger.ZLogInformation($"{providerCfg.Name} 翻译成功，结果长度: {result.Result?.Length ?? 0}");
-            }
-            catch (Exception ex)
-            {
-                result.IsSuccess = false;
-                result.ErrorMessage = ex.Message;
-
-                _logger.ZLogError(ex, $"{providerCfg.Name} 翻译失败: {ex.Message}");
-            }
-            finally
-            {
-                result.IsLoading = false;
-            }
-
-            return result;
-        }
-
-        private HttpClient CreateHttpClientWithProxy(ProxyConfig proxyConfig)
-        {
-            if (!proxyConfig.Enabled)
-            {
-                return _httpClientFactory.CreateClient();
-            }
-
-            var handler = new HttpClientHandler();
-            
-            // 使用系统代理
-            if (proxyConfig.UseSystemProxy)
-            {
-                handler.UseProxy = true;
-                handler.Proxy = null;
-                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                
-                _logger.ZLogInformation($"使用系统代理配置");
-            }
-            else
-            {
-                // 使用自定义代理
-                var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
-                
-                if (proxyConfig.UseAuthentication &&
-                    !string.IsNullOrEmpty(proxyConfig.Username))
-                {
-                    proxy.Credentials = new NetworkCredential(
-                        proxyConfig.Username,
-                        proxyConfig.Password
-                    );
-                }
-
-                handler.Proxy = proxy;
-                handler.UseProxy = true;
-                
-                _logger.ZLogInformation($"使用自定义代理: {proxyConfig.Address}:{proxyConfig.Port}");
-            }
-
-            return new HttpClient(handler);
-        }
+        return results.ToList();
     }
 
-    public class OpenAITranslationProvider : ITranslationProvider
+    /// <summary>
+    ///     单个翻译源的翻译任务
+    /// </summary>
+    private async Task<TranslationResult> TranslateSingleProviderAsync(
+        ProviderConfig providerCfg,
+        string text,
+        string targetLanguage,
+        string sourceLanguage,
+        AppSettings settings,
+        CancellationToken ct)
     {
-        private readonly ProviderConfig _config;
-
-        public OpenAITranslationProvider(ProviderConfig config)
+        var result = new TranslationResult
         {
-            _config = config;
-        }
+            ProviderName = providerCfg.Name,
+            IsLoading = true
+        };
 
-        public async Task<string> TranslateAsync(string text, string targetLanguage, string sourceLanguage, HttpClient httpClient, CancellationToken ct = default)
+        try
         {
-            if (!string.IsNullOrWhiteSpace(_config.ApiKey))
+            _logger.ZLogInformation($"开始使用 {providerCfg.Name} 翻译");
+
+            // 解密API Key
+            var decryptedApiKey = string.IsNullOrEmpty(providerCfg.ApiKey)
+                ? string.Empty
+                : _encryptionService.Decrypt(providerCfg.ApiKey);
+
+            _logger.ZLogDebug($"API Key已解密，长度: {decryptedApiKey.Length}");
+
+            ITranslationProvider provider = providerCfg.Type switch
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config.ApiKey);
-            }
-            if (!string.IsNullOrWhiteSpace(_config.BaseUrl))
-            {
-                httpClient.BaseAddress = new Uri(_config.BaseUrl);
-            }
-            
-            // 构建系统提示，包含源语言和目标语言信息
-            var systemPrompt = sourceLanguage == "auto"
-                ? $"You are a translation engine. Translate to {targetLanguage}. Only return the translation."
-                : $"You are a translation engine. Translate from {sourceLanguage} to {targetLanguage}. Only return the translation.";
-            
-            var payload = new ChatCompletionRequest
-            {
-                Model = _config.Model,
-                Messages = new List<ChatMessage>
-                {
-                    new ChatMessage
-                    {
-                        Role = "system",
-                        Content = systemPrompt
-                    },
-                    new ChatMessage { Role = "user", Content = text }
-                }
+                ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg, decryptedApiKey),
+                _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
             };
 
-            var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions");
-            req.Content = new StringContent(
-                JsonSerializer.Serialize(payload, SourceGenerationContext.Default.ChatCompletionRequest),
-                Encoding.UTF8,
-                "application/json"
+            var httpClient = CreateHttpClientWithProxy(settings.Proxy);
+            result.Result = await provider.TranslateAsync(
+                text,
+                targetLanguage,
+                sourceLanguage,
+                httpClient,
+                ct
             );
+            result.IsSuccess = true;
 
-            using var resp = await httpClient.SendAsync(req, ct);
-            resp.EnsureSuccessStatusCode();
-            
-            await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-            var root = doc.RootElement;
-            var content = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-            return content ?? string.Empty;
+            _logger.ZLogInformation($"{providerCfg.Name} 翻译成功，结果长度: {result.Result?.Length ?? 0}");
         }
+        catch (Exception ex)
+        {
+            result.IsSuccess = false;
+            result.ErrorMessage = ex.Message;
+
+            _logger.ZLogError(ex, $"{providerCfg.Name} 翻译失败: {ex.Message}");
+        }
+        finally
+        {
+            result.IsLoading = false;
+        }
+
+        return result;
+    }
+
+    private HttpClient CreateHttpClientWithProxy(ProxyConfig proxyConfig)
+    {
+        if (!proxyConfig.Enabled) return _httpClientFactory.CreateClient();
+
+        var handler = new HttpClientHandler();
+
+        // 使用系统代理
+        if (proxyConfig.UseSystemProxy)
+        {
+            handler.UseProxy = true;
+            handler.Proxy = null;
+            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+
+            _logger.ZLogInformation($"使用系统代理配置");
+        }
+        else
+        {
+            // 使用自定义代理
+            var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
+
+            if (proxyConfig.UseAuthentication &&
+                !string.IsNullOrEmpty(proxyConfig.Username))
+                proxy.Credentials = new NetworkCredential(
+                    proxyConfig.Username,
+                    proxyConfig.Password
+                );
+
+            handler.Proxy = proxy;
+            handler.UseProxy = true;
+
+            _logger.ZLogInformation($"使用自定义代理: {proxyConfig.Address}:{proxyConfig.Port}");
+        }
+
+        return new HttpClient(handler);
+    }
+}
+
+public class OpenAITranslationProvider : ITranslationProvider
+{
+    private readonly ProviderConfig _config;
+    private readonly string _decryptedApiKey;
+
+    public OpenAITranslationProvider(ProviderConfig config, string decryptedApiKey)
+    {
+        _config = config;
+        _decryptedApiKey = decryptedApiKey;
+    }
+
+    public async Task<string> TranslateAsync(string text, string targetLanguage, string sourceLanguage,
+        HttpClient httpClient, CancellationToken ct = default)
+    {
+        // 使用解密后的API Key
+        if (!string.IsNullOrWhiteSpace(_decryptedApiKey))
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _decryptedApiKey);
+        if (!string.IsNullOrWhiteSpace(_config.BaseUrl)) httpClient.BaseAddress = new Uri(_config.BaseUrl);
+
+        // 构建系统提示，包含源语言和目标语言信息
+        var systemPrompt = sourceLanguage == "auto"
+            ? $"You are a translation engine. Translate to {targetLanguage}. Only return the translation."
+            : $"You are a translation engine. Translate from {sourceLanguage} to {targetLanguage}. Only return the translation.";
+
+        var payload = new ChatCompletionRequest
+        {
+            Model = _config.Model,
+            Messages = new List<ChatMessage>
+            {
+                new()
+                {
+                    Role = "system",
+                    Content = systemPrompt
+                },
+                new() { Role = "user", Content = text }
+            }
+        };
+
+        var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions");
+        req.Content = new StringContent(
+            JsonSerializer.Serialize(payload, SourceGenerationContext.Default.ChatCompletionRequest),
+            Encoding.UTF8,
+            "application/json"
+        );
+
+        using var resp = await httpClient.SendAsync(req, ct);
+        resp.EnsureSuccessStatusCode();
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+        var root = doc.RootElement;
+        var content = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        return content ?? string.Empty;
     }
 }

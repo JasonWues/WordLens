@@ -1,26 +1,25 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using WordLens.Services;
 
-namespace WordLens.ViewModels
+namespace WordLens.ViewModels;
+
+public class MainWindowViewModel : ViewModelBase
 {
-    public class MainWindowViewModel : ViewModelBase
+    public MainWindowViewModel()
     {
-        public SettingsViewModel SettingsViewModel { get; }
-        
-        public AboutViewModel AboutViewModel { get; }
-        
+    }
 
-        public MainWindowViewModel(SettingsViewModel settingsViewModel,AboutViewModel aboutViewModel)
-        {
-            SettingsViewModel = settingsViewModel;
-            AboutViewModel = aboutViewModel;
-        }
+    public MainWindowViewModel(SettingsViewModel settingsViewModel, AboutViewModel aboutViewModel)
+    {
+        SettingsViewModel = settingsViewModel;
+        AboutViewModel = aboutViewModel;
+    }
 
-        public async Task InitializeAsync()
-        {
-            await SettingsViewModel.InitializeAsync();
-        }
+    public SettingsViewModel SettingsViewModel { get; }
+
+    public AboutViewModel AboutViewModel { get; }
+
+    public async Task InitializeAsync()
+    {
+        await SettingsViewModel.InitializeAsync();
     }
 }

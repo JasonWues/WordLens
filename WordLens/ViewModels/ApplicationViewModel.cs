@@ -4,27 +4,25 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
-using ScreenCapture.NET;
 using WordLens.Messages;
 using WordLens.Views;
 
-namespace WordLens.ViewModels
+namespace WordLens.ViewModels;
+
+public partial class ApplicationViewModel : ViewModelBase
 {
-    public partial class ApplicationViewModel : ViewModelBase
+    private readonly IServiceProvider _services;
+
+    public ApplicationViewModel(IServiceProvider services)
     {
-        readonly private IServiceProvider _services;
+        _services = services;
 
-        public ApplicationViewModel(IServiceProvider services)
-        {
-            
-            _services = services;
-
-            // 注册翻译窗口消息
-            WeakReferenceMessenger.Default.Register<TriggerTranslationMessage,string>(this,"text",async (recipient, message) =>
+        // 注册翻译窗口消息
+        WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "text",
+            async (recipient, message) =>
             {
                 await Dispatcher.UIThread.InvokeAsync(async () =>
                 {
@@ -45,49 +43,46 @@ namespace WordLens.ViewModels
                     }
                 });
             });
-            
-            // 注册OCR截图窗口消息
-            WeakReferenceMessenger.Default.Register<TriggerTranslationMessage,string>(this, "ocr",(recipient, message) =>
+
+        // 注册OCR截图窗口消息
+        WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "ocr", (recipient, message) =>
+        {
+            Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Dispatcher.UIThread.InvokeAsync(() =>
+                try
                 {
-                    try
-                    {
-                        using var scope = _services.CreateScope();
-                        
-                        var vm = scope.ServiceProvider.GetRequiredService<ScreenCaptureViewModel>();
-                        
-                        var window = new ScreenCaptureWindow { DataContext = vm };
-                        window.Show();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
-                    }
-                });
+                    using var scope = _services.CreateScope();
+
+                    var vm = scope.ServiceProvider.GetRequiredService<ScreenCaptureViewModel>();
+
+                    var window = new ScreenCaptureWindow { DataContext = vm };
+                    window.Show();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             });
-        }
+        });
+    }
 
-        [RelayCommand]
-        private async Task ShowSettingAsync()
-        {
-            var view = _services.GetRequiredService<MainWindowView>();
-            var viewModel = _services.GetRequiredService<MainWindowViewModel>();
-            view.DataContext = viewModel;
-            view.Show();
-            
-            // 初始化设置
-            await viewModel.InitializeAsync();
-        }
+    [RelayCommand]
+    private async Task ShowSettingAsync()
+    {
+        var view = _services.GetRequiredService<MainWindowView>();
+        var viewModel = _services.GetRequiredService<MainWindowViewModel>();
+        view.DataContext = viewModel;
+        view.Show();
 
-        [RelayCommand]
-        private void Exit()
-        {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime application)
-            {
-                application.TryShutdown();
-            }
-        }
+        // 初始化设置
+        await viewModel.InitializeAsync();
+    }
+
+    [RelayCommand]
+    private void Exit()
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime application)
+            application.TryShutdown();
     }
 }

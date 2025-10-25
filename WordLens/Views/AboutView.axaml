@@ -6,14 +6,14 @@
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="WordLens.Views.AboutView"
              x:DataType="vm:AboutViewModel">
-    
+
     <Design.DataContext>
         <vm:AboutViewModel />
     </Design.DataContext>
 
     <ScrollViewer>
         <StackPanel Spacing="24" Margin="20" MaxWidth="550">
-            
+
             <!-- 应用标题区域 -->
             <Border Background="#F8F9FA"
                     BorderBrush="#E0E0E0"
@@ -30,27 +30,27 @@
                                   Data="{StaticResource translate_regular}"
                                   Foreground="White" />
                     </Border>
-                    
+
                     <!-- 应用名称 -->
                     <TextBlock Text="{Binding AppName}"
                                FontSize="32"
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
                                Foreground="#333" />
-                    
+
                     <!-- 版本号 -->
                     <TextBlock Text="{Binding Version}"
                                FontSize="16"
                                HorizontalAlignment="Center"
                                Foreground="#666" />
-                    
+
                     <!-- 描述 -->
                     <TextBlock Text="{Binding Description}"
                                FontSize="14"
                                HorizontalAlignment="Center"
                                Foreground="#888"
                                Margin="0,8,0,0" />
-                    
+
                     <!-- GitHub 按钮 -->
                     <Button Command="{Binding OpenGitHubCommand}"
                             HorizontalAlignment="Center"

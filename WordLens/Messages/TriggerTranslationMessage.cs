@@ -1,7 +1,6 @@
-﻿namespace WordLens.Messages
+﻿namespace WordLens.Messages;
+
+public class TriggerTranslationMessage(string text)
 {
-    public class TriggerTranslationMessage(string text)
-    {
-        public string SelectedText { get; } = text;
-    }
+    public string SelectedText { get; } = text;
 }

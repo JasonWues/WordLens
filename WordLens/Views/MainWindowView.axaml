@@ -26,54 +26,54 @@
                     <StackPanel Spacing="16" Margin="20" DataContext="{Binding SettingsViewModel}">
                         <!-- 应用界面语言 -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="界面语言" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="界面语言" FontWeight="Bold" FontSize="14" />
                             <ComboBox ItemsSource="{Binding AvailableUILanguages}"
                                       SelectedValue="{Binding UiLanguage}"
                                       SelectedValueBinding="{Binding Code}"
                                       DisplayMemberBinding="{Binding DisplayName}"
                                       Width="300"
-                                      HorizontalAlignment="Left"/>
+                                      HorizontalAlignment="Left" />
                             <TextBlock Text="选择应用界面显示语言（翻译语言请在翻译窗口中选择）"
                                        FontSize="12"
-                                       Opacity="0.6"/>
+                                       Opacity="0.6" />
                         </StackPanel>
 
-                        <Separator/>
+                        <Separator />
 
                         <!-- 快捷键设置 -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="快捷键" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="快捷键" FontWeight="Bold" FontSize="14" />
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBox Text="{Binding HotkeyDisplay}" 
-                                         IsReadOnly="True" 
+                                <TextBox Text="{Binding HotkeyDisplay}"
+                                         IsReadOnly="True"
                                          Width="200"
-                                         VerticalContentAlignment="Center"/>
+                                         VerticalContentAlignment="Center" />
                                 <Button Content="设置快捷键"
                                         Command="{Binding StartCaptureHotkeyCommand}"
                                         CommandParameter="text"
                                         IsEnabled="{Binding !IsCapturingHotkey}"
-                                        MinWidth="100"/>
+                                        MinWidth="100" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBox Text="{Binding OcrHotkeyDisplay}" 
-                                         IsReadOnly="True" 
+                                <TextBox Text="{Binding OcrHotkeyDisplay}"
+                                         IsReadOnly="True"
                                          Width="200"
-                                         VerticalContentAlignment="Center"/>
+                                         VerticalContentAlignment="Center" />
                                 <Button Content="设置OCR快捷键"
                                         Command="{Binding StartCaptureHotkeyCommand}"
                                         CommandParameter="ocr"
                                         IsEnabled="{Binding !IsCapturingHotkey}"
-                                        MinWidth="100"/>
+                                        MinWidth="100" />
                             </StackPanel>
                             <TextBlock IsVisible="{Binding IsCapturingHotkey}"
-                                       Text="请按下想要设置的快捷键组合（按 ESC 取消）" 
-                                       FontSize="12" 
+                                       Text="请按下想要设置的快捷键组合（按 ESC 取消）"
+                                       FontSize="12"
                                        Foreground="Orange"
-                                       FontWeight="Bold"/>
+                                       FontWeight="Bold" />
                             <TextBlock IsVisible="{Binding !IsCapturingHotkey}"
-                                       Text="点击按钮后按下想要设置的快捷键组合" 
-                                       FontSize="12" 
-                                       Opacity="0.6"/>
+                                       Text="点击按钮后按下想要设置的快捷键组合"
+                                       FontSize="12"
+                                       Opacity="0.6" />
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -83,7 +83,7 @@
             <TabItem Header="翻译源">
                 <Grid ColumnDefinitions="*,Auto" Margin="10" DataContext="{Binding SettingsViewModel}">
                     <!-- 左侧列表 -->
-                    <ListBox Grid.Column="0" 
+                    <ListBox Grid.Column="0"
                              ItemsSource="{Binding Providers}"
                              SelectedItem="{Binding SelectedProvider}"
                              Margin="0,0,10,0">
@@ -95,22 +95,22 @@
                                               IsChecked="{Binding IsEnabled}"
                                               VerticalAlignment="Center"
                                               Margin="0,0,8,0"
-                                              ToolTip.Tip="启用/禁用此翻译源"/>
-                                    
+                                              ToolTip.Tip="启用/禁用此翻译源" />
+
                                     <!-- 翻译源信息 -->
                                     <StackPanel Grid.Column="1" Spacing="4">
-                                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                                        <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7"/>
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7" />
                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6"/>
+                                            <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6" />
                                             <TextBlock Text="✓ 已启用"
                                                        FontSize="11"
                                                        Foreground="#4CAF50"
-                                                       IsVisible="{Binding IsEnabled}"/>
+                                                       IsVisible="{Binding IsEnabled}" />
                                             <TextBlock Text="✗ 已禁用"
                                                        FontSize="11"
                                                        Foreground="#9E9E9E"
-                                                       IsVisible="{Binding !IsEnabled}"/>
+                                                       IsVisible="{Binding !IsEnabled}" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -120,50 +120,51 @@
 
                     <!-- 右侧按钮和详情 -->
                     <StackPanel Grid.Column="1" Spacing="10" Width="250">
-                        <Button Content="添加翻译源" 
+                        <Button Content="添加翻译源"
                                 Command="{Binding AddProviderCommand}"
-                                HorizontalAlignment="Stretch"/>
-                        <Button Content="删除" 
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="删除"
                                 Command="{Binding DeleteProviderCommand}"
                                 IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                HorizontalAlignment="Stretch"/>
-                        <Button Content="上移" 
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="上移"
                                 Command="{Binding MoveProviderUpCommand}"
                                 IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                HorizontalAlignment="Stretch"/>
-                        <Button Content="下移" 
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="下移"
                                 Command="{Binding MoveProviderDownCommand}"
                                 IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                HorizontalAlignment="Stretch"/>
+                                HorizontalAlignment="Stretch" />
 
-                        <Separator Margin="0,10"/>
+                        <Separator Margin="0,10" />
 
                         <!-- 翻译源详情编辑 -->
                         <ScrollViewer MaxHeight="300">
-                            <StackPanel Spacing="8" IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                <TextBlock Text="翻译源详情" FontWeight="Bold"/>
-                                
+                            <StackPanel Spacing="8"
+                                        IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <TextBlock Text="翻译源详情" FontWeight="Bold" />
+
                                 <!-- 启用/禁用 -->
                                 <CheckBox Content="启用此翻译源"
                                           IsChecked="{Binding SelectedProvider.IsEnabled}"
                                           FontWeight="SemiBold"
-                                          Margin="0,4"/>
-                                
-                                <Separator/>
-                                
-                                <TextBlock Text="名称"/>
-                                <TextBox Text="{Binding SelectedProvider.Name}" Watermark="翻译源名称"/>
-                                
-                                <TextBlock Text="Base URL"/>
-                                <TextBox Text="{Binding SelectedProvider.BaseUrl}" Watermark="https://api.openai.com"/>
-                                
-                                <TextBlock Text="API Key"/>
+                                          Margin="0,4" />
+
+                                <Separator />
+
+                                <TextBlock Text="名称" />
+                                <TextBox Text="{Binding SelectedProvider.Name}" Watermark="翻译源名称" />
+
+                                <TextBlock Text="Base URL" />
+                                <TextBox Text="{Binding SelectedProvider.BaseUrl}" Watermark="https://api.openai.com" />
+
+                                <TextBlock Text="API Key" />
                                 <TextBox Text="{Binding SelectedProvider.ApiKey}"
                                          Watermark="输入 API Key"
-                                         PasswordChar="●"/>
-                                
-                                <TextBlock Text="Model"/>
-                                
+                                         PasswordChar="●" />
+
+                                <TextBlock Text="Model" />
+
                                 <!-- 模型选择区域 -->
                                 <Grid ColumnDefinitions="*,Auto">
                                     <!-- 模型下拉选择 -->
@@ -176,12 +177,13 @@
                                               Margin="0,0,4,0">
                                         <ComboBox.IsVisible>
                                             <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                <Binding Path="SelectedProvider.AvailableModels" Converter="{x:Static ObjectConverters.IsNotNull}"/>
-                                                <Binding Path="!IsLoadingModels"/>
+                                                <Binding Path="SelectedProvider.AvailableModels"
+                                                         Converter="{x:Static ObjectConverters.IsNotNull}" />
+                                                <Binding Path="!IsLoadingModels" />
                                             </MultiBinding>
                                         </ComboBox.IsVisible>
                                     </ComboBox>
-                                    
+
                                     <!-- 刷新按钮 -->
                                     <Button Grid.Column="1"
                                             Content="🔄"
@@ -189,9 +191,9 @@
                                             CommandParameter="{Binding SelectedProvider}"
                                             ToolTip.Tip="刷新模型列表"
                                             IsEnabled="{Binding !IsLoadingModels}"
-                                            Width="40"/>
+                                            Width="40" />
                                 </Grid>
-                                
+
                                 <!-- 加载状态 -->
                                 <Border Background="#FFF3E0"
                                         Padding="8"
@@ -199,13 +201,13 @@
                                         IsVisible="{Binding IsLoadingModels}"
                                         Margin="0,4,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="⏳" FontSize="14"/>
+                                        <TextBlock Text="⏳" FontSize="14" />
                                         <TextBlock Text="正在获取模型列表..."
                                                    VerticalAlignment="Center"
-                                                   FontSize="12"/>
+                                                   FontSize="12" />
                                     </StackPanel>
                                 </Border>
-                                
+
                                 <!-- 错误提示 -->
                                 <Border Background="#FFEBEE"
                                         Padding="8"
@@ -214,31 +216,31 @@
                                         Margin="0,4,0,0">
                                     <StackPanel Spacing="4">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="⚠️" FontSize="14"/>
+                                            <TextBlock Text="⚠️" FontSize="14" />
                                             <TextBlock Text="无法获取模型列表"
                                                        VerticalAlignment="Center"
                                                        FontWeight="Bold"
-                                                       FontSize="12"/>
+                                                       FontSize="12" />
                                         </StackPanel>
                                         <TextBlock Text="{Binding ModelLoadErrorMessage}"
                                                    FontSize="11"
                                                    TextWrapping="Wrap"
-                                                   Opacity="0.8"/>
+                                                   Opacity="0.8" />
                                         <TextBlock Text="请检查API Key和网络连接，或使用下方手动输入"
                                                    FontSize="11"
-                                                   Opacity="0.6"/>
+                                                   Opacity="0.6" />
                                     </StackPanel>
                                 </Border>
-                                
+
                                 <!-- 手动输入模式 -->
                                 <TextBlock Text="或手动输入模型名称:"
                                            FontSize="11"
                                            Opacity="0.7"
                                            Margin="0,8,0,4"
-                                           IsVisible="{Binding SelectedProvider.AllowManualModelInput}"/>
+                                           IsVisible="{Binding SelectedProvider.AllowManualModelInput}" />
                                 <TextBox Text="{Binding SelectedProvider.Model}"
                                          Watermark="gpt-4o-mini"
-                                         IsVisible="{Binding SelectedProvider.AllowManualModelInput}"/>
+                                         IsVisible="{Binding SelectedProvider.AllowManualModelInput}" />
                             </StackPanel>
                         </ScrollViewer>
                     </StackPanel>
@@ -250,65 +252,65 @@
                 <ScrollViewer>
                     <StackPanel Spacing="16" Margin="20" MaxWidth="500" DataContext="{Binding SettingsViewModel}">
                         <!-- 启用代理 -->
-                        <CheckBox Content="启用 HTTP 代理" IsChecked="{Binding ProxyEnabled}"/>
+                        <CheckBox Content="启用 HTTP 代理" IsChecked="{Binding ProxyEnabled}" />
 
                         <StackPanel Spacing="12" IsEnabled="{Binding ProxyEnabled}">
                             <!-- 使用系统代理 -->
                             <CheckBox Content="使用系统代理"
                                       IsChecked="{Binding ProxyUseSystemProxy}"
-                                      ToolTip.Tip="使用操作系统配置的代理设置"/>
-                            
+                                      ToolTip.Tip="使用操作系统配置的代理设置" />
+
                             <TextBlock Text="启用后将自动使用系统代理设置，无需手动配置地址和端口"
                                        FontSize="12"
                                        Opacity="0.6"
                                        TextWrapping="Wrap"
-                                       IsVisible="{Binding ProxyUseSystemProxy}"/>
+                                       IsVisible="{Binding ProxyUseSystemProxy}" />
 
-                            <Separator IsVisible="{Binding ProxyUseSystemProxy}"/>
+                            <Separator IsVisible="{Binding ProxyUseSystemProxy}" />
 
                             <!-- 自定义代理配置区域 -->
                             <StackPanel Spacing="12" IsEnabled="{Binding !ProxyUseSystemProxy}">
-                            <!-- 代理地址 -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="代理地址" FontWeight="Bold"/>
-                                <TextBox Text="{Binding ProxyAddress}" 
-                                         Watermark="http://127.0.0.1"/>
-                                <TextBlock Text="HTTP 代理服务器地址" 
-                                           FontSize="12" 
-                                           Opacity="0.6"/>
-                            </StackPanel>
-
-                            <!-- 代理端口 -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="端口" FontWeight="Bold"/>
-                                <NumericUpDown Value="{Binding ProxyPort}" 
-                                               Minimum="1" 
-                                               Maximum="65535"
-                                               Width="200"
-                                               HorizontalAlignment="Left"/>
-                            </StackPanel>
-
-                            <Separator/>
-
-                            <!-- 需要认证 -->
-                            <CheckBox Content="需要身份验证" IsChecked="{Binding ProxyUseAuthentication}"/>
-
-                            <StackPanel Spacing="12" IsEnabled="{Binding ProxyUseAuthentication}">
-                                <!-- 用户名 -->
+                                <!-- 代理地址 -->
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="用户名" FontWeight="Bold"/>
-                                    <TextBox Text="{Binding ProxyUsername}" 
-                                             Watermark="代理用户名"/>
+                                    <TextBlock Text="代理地址" FontWeight="Bold" />
+                                    <TextBox Text="{Binding ProxyAddress}"
+                                             Watermark="http://127.0.0.1" />
+                                    <TextBlock Text="HTTP 代理服务器地址"
+                                               FontSize="12"
+                                               Opacity="0.6" />
                                 </StackPanel>
 
-                                <!-- 密码 -->
+                                <!-- 代理端口 -->
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="密码" FontWeight="Bold"/>
-                                    <TextBox Text="{Binding ProxyPassword}" 
-                                             Watermark="代理密码"
-                                             PasswordChar="●"/>
+                                    <TextBlock Text="端口" FontWeight="Bold" />
+                                    <NumericUpDown Value="{Binding ProxyPort}"
+                                                   Minimum="1"
+                                                   Maximum="65535"
+                                                   Width="200"
+                                                   HorizontalAlignment="Left" />
                                 </StackPanel>
-                            </StackPanel>
+
+                                <Separator />
+
+                                <!-- 需要认证 -->
+                                <CheckBox Content="需要身份验证" IsChecked="{Binding ProxyUseAuthentication}" />
+
+                                <StackPanel Spacing="12" IsEnabled="{Binding ProxyUseAuthentication}">
+                                    <!-- 用户名 -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="用户名" FontWeight="Bold" />
+                                        <TextBox Text="{Binding ProxyUsername}"
+                                                 Watermark="代理用户名" />
+                                    </StackPanel>
+
+                                    <!-- 密码 -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="密码" FontWeight="Bold" />
+                                        <TextBox Text="{Binding ProxyPassword}"
+                                                 Watermark="代理密码"
+                                                 PasswordChar="●" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -322,24 +324,24 @@
         </TabControl>
 
         <!-- 底部按钮栏 -->
-        <Border Grid.Row="1" 
+        <Border Grid.Row="1"
                 Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="15,10">
-            <StackPanel Orientation="Horizontal" 
-                        HorizontalAlignment="Right" 
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
                         Spacing="10"
                         DataContext="{Binding SettingsViewModel}">
-                <Button Content="保存" 
+                <Button Content="保存"
                         Command="{Binding SaveSettingsCommand}"
-                        MinWidth="80"/>
-                <Button Content="应用" 
+                        MinWidth="80" />
+                <Button Content="应用"
                         Command="{Binding ApplySettingsCommand}"
-                        MinWidth="80"/>
-                <Button Content="取消" 
+                        MinWidth="80" />
+                <Button Content="取消"
                         Command="{Binding CancelSettingsCommand}"
-                        MinWidth="80"/>
+                        MinWidth="80" />
             </StackPanel>
         </Border>
     </Grid>

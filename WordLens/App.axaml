@@ -21,9 +21,9 @@
             <TrayIcon Icon="/Assets/avalonia-logo.ico" Command="{Binding ShowSettingCommand}">
                 <TrayIcon.Menu>
                     <NativeMenu>
-                        <NativeMenuItem Header="监听剪贴板"/>
+                        <NativeMenuItem Header="监听剪贴板" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="软件设置" Command="{Binding ShowSettingCommand}"/>
+                        <NativeMenuItem Header="软件设置" Command="{Binding ShowSettingCommand}" />
                         <NativeMenuItemSeparator />
                         <NativeMenuItem Header="退出程序" Command="{Binding ExitCommand}" />
                     </NativeMenu>

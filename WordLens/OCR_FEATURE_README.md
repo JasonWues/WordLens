@@ -9,37 +9,37 @@ WordLens现在支持OCR屏幕截图功能！用户可以通过快捷键触发全
 ### ✅ 已完成功能
 
 1. **跨平台架构设计**
-   - 抽象的截图服务接口（`IScreenshotService`）
-   - Windows平台完整实现
-   - Linux/macOS平台接口预留
+    - 抽象的截图服务接口（`IScreenshotService`）
+    - Windows平台完整实现
+    - Linux/macOS平台接口预留
 
 2. **屏幕捕获窗口**
-   - 全屏透明遮罩
-   - 鼠标拖拽选择区域
-   - 实时显示选区尺寸
-   - ESC键取消功能
+    - 全屏透明遮罩
+    - 鼠标拖拽选择区域
+    - 实时显示选区尺寸
+    - ESC键取消功能
 
 3. **截图功能**
-   - 支持多显示器
-   - DPI缩放适配
-   - 截图自动保存到临时目录
+    - 支持多显示器
+    - DPI缩放适配
+    - 截图自动保存到临时目录
 
 4. **集成流程**
-   - OCR快捷键触发（默认：Ctrl+Shift+O）
-   - 与现有热键系统无缝集成
+    - OCR快捷键触发（默认：Ctrl+Shift+O）
+    - 与现有热键系统无缝集成
 
 ### ⏳ 待实现功能
 
 1. **OCR文字识别**
-   - OCR服务接口已预留（`IOcrService`）
-   - 可选实现方案：
-     - Windows.Media.Ocr（推荐）
-     - Tesseract
-     - 在线OCR服务
+    - OCR服务接口已预留（`IOcrService`）
+    - 可选实现方案：
+        - Windows.Media.Ocr（推荐）
+        - Tesseract
+        - 在线OCR服务
 
 2. **平台扩展**
-   - Linux截图实现（X11/Wayland）
-   - macOS截图实现（CGImage）
+    - Linux截图实现（X11/Wayland）
+    - macOS截图实现（CGImage）
 
 ## 使用方法
 
@@ -55,6 +55,7 @@ WordLens现在支持OCR屏幕截图功能！用户可以通过快捷键触发全
 ### 自定义快捷键
 
 在设置界面可以修改OCR快捷键：
+
 1. 打开主窗口设置
 2. 找到"OCR快捷键"设置项
 3. 点击"设置OCR快捷键"按钮
@@ -63,6 +64,7 @@ WordLens现在支持OCR屏幕截图功能！用户可以通过快捷键触发全
 ### 截图保存位置
 
 截图自动保存在：
+
 ```
 Windows: %APPDATA%\WordLens\Screenshots\
 Linux:   ~/.config/WordLens/Screenshots/
@@ -206,16 +208,16 @@ public async Task<WriteableBitmap?> CaptureAreaAsync(Rect area)
 ## 已知问题和限制
 
 1. **Linux和macOS暂未实现**
-   - 仅Windows平台可用
-   - 其他平台需要额外实现
+    - 仅Windows平台可用
+    - 其他平台需要额外实现
 
 2. **OCR识别未实现**
-   - 截图功能完整
-   - 需要手动添加OCR引擎
+    - 截图功能完整
+    - 需要手动添加OCR引擎
 
 3. **高DPI支持**
-   - 已处理DPI缩放
-   - 某些极端情况可能需要调整
+    - 已处理DPI缩放
+    - 某些极端情况可能需要调整
 
 ## 性能优化建议
 

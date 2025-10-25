@@ -18,7 +18,7 @@
 
     <Window.Styles>
         <StyleInclude Source="/Assets/Icons.axaml" />
-        
+
         <!-- 按钮样式 -->
         <Style Selector="Button.icon-button">
             <Setter Property="Background" Value="Transparent" />
@@ -27,11 +27,11 @@
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
-        
+
         <Style Selector="Button.icon-button:pointerover">
             <Setter Property="Background" Value="#10000000" />
         </Style>
-        
+
         <Style Selector="Button.icon-button:pressed">
             <Setter Property="Background" Value="#20000000" />
         </Style>
@@ -45,7 +45,7 @@
         <Style Selector="Button.icon-button.topmost-active">
             <Setter Property="Background" Value="#20409EFF" />
         </Style>
-        
+
         <Style Selector="Button.icon-button.topmost-active:pointerover">
             <Setter Property="Background" Value="#30409EFF" />
         </Style>
@@ -82,7 +82,7 @@
 
     <Border Padding="16">
         <Grid RowDefinitions="Auto,12,Auto,12,Auto,*,12,Auto,*">
-            
+
             <!-- 顶部工具栏 -->
             <Border Grid.Row="0"
                     Background="#F5F5F5"
@@ -99,9 +99,10 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <PathIcon Width="16" Height="16"
                                       Data="{StaticResource pin_regular}" />
-                            <TextBlock Text="{Binding IsTopmost, Converter={x:Static conv:BoolToTextConverter.BoolToParameterTextConverter }, ConverterParameter='已置顶|置顶'}" 
-                                       VerticalAlignment="Center"
-                                       FontSize="12" />
+                            <TextBlock
+                                Text="{Binding IsTopmost, Converter={x:Static conv:BoolToTextConverter.BoolToParameterTextConverter }, ConverterParameter='已置顶|置顶'}"
+                                VerticalAlignment="Center"
+                                FontSize="12" />
                         </StackPanel>
                     </Button>
 
@@ -115,7 +116,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <PathIcon Width="14" Height="14"
                                       Data="{StaticResource dismiss_regular}" />
-                            <TextBlock Text="清空" 
+                            <TextBlock Text="清空"
                                        VerticalAlignment="Center"
                                        FontSize="12" />
                         </StackPanel>
@@ -203,19 +204,19 @@
 
             <!-- 原文标题 -->
             <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto">
-                <TextBlock Grid.Column="0" 
-                           Text="原文" 
-                           FontWeight="SemiBold" 
+                <TextBlock Grid.Column="0"
+                           Text="原文"
+                           FontWeight="SemiBold"
                            FontSize="14"
                            VerticalAlignment="Center" />
-                
+
                 <TextBlock Grid.Column="1"
                            Text="{Binding SourceText.Length, StringFormat='({0} 字符)'}"
                            FontSize="11"
                            Foreground="#666"
                            Margin="8,0,0,0"
                            VerticalAlignment="Center" />
-                
+
                 <!-- 复制原文按钮 -->
                 <Button Grid.Column="2"
                         Classes="icon-button"
@@ -253,12 +254,12 @@
 
             <!-- 翻译结果标题 -->
             <Grid Grid.Row="7" ColumnDefinitions="Auto,*">
-                <TextBlock Grid.Column="0" 
-                           Text="翻译结果" 
-                           FontWeight="SemiBold" 
+                <TextBlock Grid.Column="0"
+                           Text="翻译结果"
+                           FontWeight="SemiBold"
                            FontSize="14"
                            VerticalAlignment="Center" />
-                
+
                 <TextBlock Grid.Column="1"
                            Text="{Binding TranslationResults.Count, StringFormat='({0} 个翻译源)'}"
                            FontSize="11"
@@ -284,45 +285,45 @@
                                                    FontWeight="SemiBold"
                                                    FontSize="13"
                                                    VerticalAlignment="Center" />
-                                        
+
                                         <!-- 加载中指示器 -->
-                                        <StackPanel Grid.Column="1" 
+                                        <StackPanel Grid.Column="1"
                                                     Orientation="Horizontal"
                                                     Spacing="6"
                                                     IsVisible="{Binding IsLoading}">
-                                            <TextBlock Text="翻译中..." 
+                                            <TextBlock Text="翻译中..."
                                                        FontSize="11"
                                                        Foreground="#2196F3"
                                                        VerticalAlignment="Center" />
 
                                         </StackPanel>
-                                        
+
                                         <!-- 成功图标 -->
                                         <StackPanel Grid.Column="1"
                                                     Orientation="Horizontal"
                                                     Spacing="4"
                                                     IsVisible="{Binding IsSuccess}">
-                                            <TextBlock Text="成功" 
+                                            <TextBlock Text="成功"
                                                        FontSize="11"
                                                        Foreground="#4CAF50"
                                                        VerticalAlignment="Center" />
-                                            <Ellipse Width="8" Height="8" 
-                                                    Fill="#4CAF50" 
-                                                    VerticalAlignment="Center" />
+                                            <Ellipse Width="8" Height="8"
+                                                     Fill="#4CAF50"
+                                                     VerticalAlignment="Center" />
                                         </StackPanel>
-                                        
+
                                         <!-- 失败图标 -->
                                         <StackPanel Grid.Column="1"
                                                     Orientation="Horizontal"
                                                     Spacing="4"
                                                     IsVisible="{Binding !IsSuccess}">
-                                            <TextBlock Text="失败" 
+                                            <TextBlock Text="失败"
                                                        FontSize="11"
                                                        Foreground="#F44336"
                                                        VerticalAlignment="Center" />
-                                            <Ellipse Width="8" Height="8" 
-                                                    Fill="#F44336" 
-                                                    VerticalAlignment="Center" />
+                                            <Ellipse Width="8" Height="8"
+                                                     Fill="#F44336"
+                                                     VerticalAlignment="Center" />
                                         </StackPanel>
 
                                         <!-- 复制按钮 -->
@@ -336,7 +337,7 @@
                                                       Data="{StaticResource copy_regular}" />
                                         </Button>
                                     </Grid>
-                                    
+
                                     <!-- 翻译结果或错误信息 -->
                                     <TextBlock Grid.Row="2"
                                                Text="{Binding Result}"
@@ -344,7 +345,7 @@
                                                TextWrapping="Wrap"
                                                LineHeight="20"
                                                FontSize="13" />
-                                    
+
                                     <Border Grid.Row="2"
                                             Background="#FFEBEE"
                                             BorderBrush="#F44336"
