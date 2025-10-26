@@ -45,10 +45,16 @@
 
         <!-- 1. 定义 Rust 项目相关的变量 -->
         <PropertyGroup>
-            <!-- Rust 项目相对于当前 C# 项目的路径 -->
             <RustProjectDir>$(SolutionDir)native\</RustProjectDir>
-            <!-- Rust 编译后输出的库文件名 -->
-            <RustLibName>native.dll</RustLibName>
+
+            <!-- 跨平台库文件名定义 -->
+            <RustLibPrefix Condition="'$(OS)' != 'Windows_NT'">lib</RustLibPrefix>
+
+            <RustLibExt Condition="'$(OS)' == 'Windows_NT'">.dll</RustLibExt>
+            <RustLibExt Condition="$([MSBuild]::IsOSPlatform('Linux'))">.so</RustLibExt>
+            <RustLibExt Condition="$([MSBuild]::IsOSPlatform('OSX'))">.dylib</RustLibExt>
+
+            <RustLibName>$(RustLibPrefix)native$(RustLibExt)</RustLibName>
         </PropertyGroup>
 
         <!-- 2. 根据 C# 的构建配置 (Debug/Release) 来决定 Rust 的构建参数 -->
