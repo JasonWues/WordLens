@@ -23,6 +23,11 @@ public class AppSettings
     public string? SelectedProvider { get; set; } = "OpenAI";
     public ProxyConfig Proxy { get; set; } = new();
 
+    /// <summary>
+    ///     流式输出配置
+    /// </summary>
+    public StreamingConfig Streaming { get; set; } = new();
+
     public List<ProviderConfig> Providers { get; set; } = new()
     {
         new ProviderConfig
@@ -80,6 +85,27 @@ public class ProviderConfig
     /// </summary>
     [JsonIgnore]
     public List<ModelInfo>? AvailableModels { get; set; }
+}
+
+/// <summary>
+///     流式输出配置
+/// </summary>
+public class StreamingConfig
+{
+    /// <summary>
+    ///     是否启用流式输出（默认启用）
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    ///     打字机效果延迟（毫秒，0表示无延迟）
+    /// </summary>
+    public int TypewriterDelayMs { get; set; } = 0;
+
+    /// <summary>
+    ///     每次显示的字符数（1=逐字，0=实时无延迟）
+    /// </summary>
+    public int CharsPerUpdate { get; set; } = 1;
 }
 
 public class ProxyConfig

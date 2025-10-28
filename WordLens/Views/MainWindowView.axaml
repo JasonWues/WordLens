@@ -4,6 +4,7 @@
         xmlns:views="using:WordLens.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="using:WordLens.Converter"
         mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="550"
         x:Class="WordLens.Views.MainWindowView"
         x:DataType="vm:MainWindowViewModel"
@@ -74,6 +75,61 @@
                                        Text="点击按钮后按下想要设置的快捷键组合"
                                        FontSize="12"
                                        Opacity="0.6" />
+                        </StackPanel>
+
+                        <Separator />
+
+                        <!-- 流式输出设置 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="流式输出" FontWeight="Bold" FontSize="14" />
+                            
+                            <CheckBox Content="启用流式输出（实时显示翻译结果）"
+                                      IsChecked="{Binding StreamingEnabled}"
+                                      ToolTip.Tip="启用后翻译内容将实时逐步显示，提供更好的用户体验" />
+                            
+                            <StackPanel Spacing="12"
+                                        IsEnabled="{Binding StreamingEnabled}"
+                                        Margin="24,8,0,0"
+                                        Opacity="{Binding StreamingEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
+                                
+                                <!-- 打字机效果延迟 -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="打字机效果延迟（毫秒）" FontSize="13" />
+                                    <NumericUpDown Value="{Binding TypewriterDelayMs}"
+                                                   Minimum="0"
+                                                   Maximum="200"
+                                                   Increment="10"
+                                                   Width="200"
+                                                   HorizontalAlignment="Left"
+                                                   ToolTip.Tip="每个字符显示之间的延迟时间" />
+                                    <TextBlock Text="0 = 无延迟，实时显示；推荐值：30-50毫秒"
+                                               FontSize="11"
+                                               Opacity="0.6"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                                
+                                <!-- 每次显示字符数 -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="每次显示字符数" FontSize="13" />
+                                    <NumericUpDown Value="{Binding CharsPerUpdate}"
+                                                   Minimum="1"
+                                                   Maximum="10"
+                                                   Increment="1"
+                                                   Width="200"
+                                                   HorizontalAlignment="Left"
+                                                   ToolTip.Tip="一次性显示的字符数量" />
+                                    <TextBlock Text="1 = 逐字显示；较大值可加快显示速度"
+                                               FontSize="11"
+                                               Opacity="0.6"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <TextBlock Text="提示：流式输出可以让翻译过程更加流畅，但如果网络不稳定可以关闭此功能"
+                                       FontSize="11"
+                                       Opacity="0.6"
+                                       TextWrapping="Wrap"
+                                       Margin="0,4,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

@@ -77,6 +77,13 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] private string uiLanguage = "zh-CN";
 
+    // 流式输出配置
+    [ObservableProperty] private bool streamingEnabled = true;
+
+    [ObservableProperty] private int typewriterDelayMs = 0;
+
+    [ObservableProperty] private int charsPerUpdate = 1;
+
 
     public SettingsViewModel(
         ISettingsService settingsService,
@@ -129,6 +136,11 @@ public partial class SettingsViewModel : ViewModelBase
         _ocrHotkeyConfig = settings.OcrHotkey;
         UpdateHotkeyDisplay();
         UpdateOcrHotkeyDisplay();
+
+        // 加载流式输出配置
+        StreamingEnabled = settings.Streaming.Enabled;
+        TypewriterDelayMs = settings.Streaming.TypewriterDelayMs;
+        CharsPerUpdate = settings.Streaming.CharsPerUpdate;
 
         // 加载翻译源
         Providers.Clear();
@@ -200,6 +212,11 @@ public partial class SettingsViewModel : ViewModelBase
             _ocrHotkeyConfig = _originalSettings.OcrHotkey;
             UpdateHotkeyDisplay();
             UpdateOcrHotkeyDisplay();
+
+            // 恢复流式输出配置
+            StreamingEnabled = _originalSettings.Streaming.Enabled;
+            TypewriterDelayMs = _originalSettings.Streaming.TypewriterDelayMs;
+            CharsPerUpdate = _originalSettings.Streaming.CharsPerUpdate;
 
             Providers.Clear();
             foreach (var provider in _originalSettings.Providers) Providers.Add(provider);
@@ -443,6 +460,12 @@ public partial class SettingsViewModel : ViewModelBase
             OcrHotkey = _ocrHotkeyConfig,
             SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
             Providers = Providers.ToList(),
+            Streaming = new StreamingConfig
+            {
+                Enabled = StreamingEnabled,
+                TypewriterDelayMs = TypewriterDelayMs,
+                CharsPerUpdate = CharsPerUpdate
+            },
             Proxy = new ProxyConfig
             {
                 Enabled = ProxyEnabled,
