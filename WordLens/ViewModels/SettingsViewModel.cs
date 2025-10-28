@@ -414,12 +414,14 @@ public partial class SettingsViewModel : ViewModelBase
                 models.Insert(0, new ModelInfo { Id = provider.Model, OwnedBy = "custom" });
                 _logger?.ZLogInformation($"当前模型 {provider.Model} 不在列表中，已添加");
             }
+            
+            foreach (var modelInfo in models)
+            {
+                provider.AvailableModels.Add(modelInfo);
 
-            provider.AvailableModels = models;
+            }
             _logger?.ZLogInformation($"成功获取 {models.Count} 个模型");
 
-            // 触发UI更新
-            OnPropertyChanged(nameof(Providers));
         }
         catch (ArgumentException ex)
         {

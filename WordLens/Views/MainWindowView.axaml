@@ -229,15 +229,9 @@
                                               SelectedItem="{Binding SelectedModelInfo}"
                                               DisplayMemberBinding="{Binding Id}"
                                               IsEnabled="{Binding !IsLoadingModels}"
+                                              IsEditable="{Binding SelectedProvider.AllowManualModelInput}"
                                               PlaceholderText="选择模型或手动输入"
                                               Margin="0,0,4,0">
-                                        <ComboBox.IsVisible>
-                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                <Binding Path="SelectedProvider.AvailableModels"
-                                                         Converter="{x:Static ObjectConverters.IsNotNull}" />
-                                                <Binding Path="!IsLoadingModels" />
-                                            </MultiBinding>
-                                        </ComboBox.IsVisible>
                                     </ComboBox>
 
                                     <!-- 刷新按钮 -->
@@ -282,21 +276,12 @@
                                                    FontSize="11"
                                                    TextWrapping="Wrap"
                                                    Opacity="0.8" />
-                                        <TextBlock Text="请检查API Key和网络连接，或使用下方手动输入"
+                                        <TextBlock Text="请检查API Key和网络连接，或手动输入"
                                                    FontSize="11"
                                                    Opacity="0.6" />
                                     </StackPanel>
                                 </Border>
-
-                                <!-- 手动输入模式 -->
-                                <TextBlock Text="或手动输入模型名称:"
-                                           FontSize="11"
-                                           Opacity="0.7"
-                                           Margin="0,8,0,4"
-                                           IsVisible="{Binding SelectedProvider.AllowManualModelInput}" />
-                                <TextBox Text="{Binding SelectedProvider.Model}"
-                                         Watermark="gpt-4o-mini"
-                                         IsVisible="{Binding SelectedProvider.AllowManualModelInput}" />
+                                
                             </StackPanel>
                         </ScrollViewer>
                     </StackPanel>

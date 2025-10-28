@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -29,6 +31,9 @@ public partial class ScreenCaptureWindow : Window
         _captureCanvas = this.FindControl<Canvas>("CaptureCanvas");
         _sizeHintBorder = this.FindControl<Border>("SizeHintBorder");
 
+        // 拦截窗口关闭事件
+        Closing += OnWindowClosing;
+
         // 窗口加载完成后设置焦点
         Opened += (s, e) =>
         {
@@ -43,6 +48,15 @@ public partial class ScreenCaptureWindow : Window
                 Height = bounds.Height;
             }
         };
+    }
+
+    private void OnWindowClosing(object? sender, CancelEventArgs e)
+    {
+        // 取消关闭操作
+        e.Cancel = true;
+        
+        // 隐藏窗口而不是关闭
+        Hide();
     }
 
     /// <summary>
@@ -84,12 +98,12 @@ public partial class ScreenCaptureWindow : Window
         var point = e.GetPosition(_captureCanvas);
         var success = await vm.CompleteSelectionAsync(point);
 
-        // 如果截图成功，关闭窗口
+        // 如果截图成功，隐藏窗口
         if (success)
         {
             // 给用户一点时间看到选择矩形
             await Task.Delay(100);
-            Close();
+            Hide();
         }
     }
 
@@ -101,7 +115,14 @@ public partial class ScreenCaptureWindow : Window
         if (e.Key == Key.Escape)
         {
             if (DataContext is ScreenCaptureViewModel vm) vm.CancelSelection();
-            Close();
+            Hide();
         }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        // 清理事件订阅
+        Closing -= OnWindowClosing;
+        base.OnClosed(e);
     }
 }

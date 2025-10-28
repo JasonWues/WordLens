@@ -51,7 +51,13 @@ public class App : Application
             var hotkeyManager = _services.GetRequiredService<IHotkeyManagerService>();
             _ = hotkeyManager.StartAsync();
 
-            desktop.ShutdownRequested += (s, e) => { hotkeyManager.Dispose(); };
+            var windowManager = _services.GetRequiredService<IWindowManagerService>();
+
+            desktop.ShutdownRequested += (s, e) =>
+            {
+                hotkeyManager.Dispose();
+                windowManager.CloseAllWindows();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -71,18 +77,17 @@ public class App : Application
     {
         // ViewModels
         services.AddSingleton<ApplicationViewModel>();
-        services.AddTransient<MainWindowViewModel>();
-        services.AddTransient<SettingsViewModel>();
-        services.AddSingleton<PopupWindowViewModel>();
-        services.AddSingleton<ScreenCaptureViewModel>();
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<SettingsViewModel>();
+        services.AddTransient<PopupWindowViewModel>();
+        services.AddTransient<ScreenCaptureViewModel>();
         services.AddSingleton<AboutViewModel>();
         services.AddSingleton<TranslationHistoryViewModel>();
 
-
-        // Views
-        services.AddTransient<MainWindowView>();
+        services.AddSingleton<MainWindowView>();
 
         // Services
+        services.AddSingleton<IWindowManagerService, WindowManagerService>();
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();

@@ -69,13 +69,11 @@ public class TranslationService
     /// <param name="text">要翻译的文本</param>
     /// <param name="targetLanguage">目标语言代码</param>
     /// <param name="sourceLanguage">源语言代码（默认为"auto"自动检测）</param>
-    /// <param name="translationResults">翻译结果</param>
     /// <param name="ct">取消令牌</param>
     public async Task<List<TranslationResult>> TranslateAsync(
         string text,
         string targetLanguage,
         string sourceLanguage = "auto",
-        ObservableCollection<TranslationResult>? translationResults = null,
         CancellationToken ct = default)
     {
         var cfg = await _settings.LoadAsync();
@@ -94,7 +92,7 @@ public class TranslationService
         if (cfg.Streaming.Enabled)
         {
             _logger.ZLogInformation($"使用流式翻译模式");
-            return await TranslateStreamAsync(text, targetLanguage, sourceLanguage, cfg,translationResults, ct);
+            return await TranslateStreamAsync(text, targetLanguage, sourceLanguage, cfg, ct);
         }
         else
         {
@@ -122,10 +120,11 @@ public class TranslationService
         string targetLanguage,
         string sourceLanguage,
         AppSettings settings,
-        ObservableCollection<TranslationResult>? translationResults = null,
         CancellationToken ct = default)
     {
         var enabledProviders = settings.Providers.Where(p => p.IsEnabled).ToList();
+
+        var results = new List<TranslationResult>();
 
         // 为每个提供商创建结果对象
         foreach (var provider in enabledProviders)
@@ -136,7 +135,7 @@ public class TranslationService
                 IsLoading = true,
                 Result = "" // 初始为空，将通过流式更新
             };
-            translationResults.Add(result);
+            results.Add(result);
         }
 
         // 在后台启动所有流式翻译任务（不等待完成）
@@ -151,14 +150,14 @@ public class TranslationService
                         targetLanguage,
                         sourceLanguage,
                         settings,
-                        translationResults[index],
+                        results[index],
                         ct)
                 ).ToList();
 
                 await Task.WhenAll(tasks);
 
-                var successCount = translationResults.Count(r => r.IsSuccess);
-                _logger.ZLogInformation($"流式翻译完成，成功: {successCount}/{translationResults.Count}");
+                var successCount = results.Count(r => r.IsSuccess);
+                _logger.ZLogInformation($"流式翻译完成，成功: {successCount}/{results.Count}");
             }
             catch (Exception ex)
             {
@@ -167,7 +166,7 @@ public class TranslationService
         }, ct);
 
         // 立即返回results，让ViewModel可以显示并接收实时更新
-        return Task.FromResult(new List<TranslationResult>());
+        return Task.FromResult(results);
     }
 
     /// <summary>

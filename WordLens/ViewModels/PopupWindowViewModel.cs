@@ -137,10 +137,9 @@ public partial class PopupWindowViewModel : ViewModelBase
                 SourceText!,
                 SelectedTargetLanguage!.Code,
                 SelectedSourceLanguage?.Code ?? "auto",
-                TranslationResults,
                 cancellationToken);
 
-            //foreach (var result in results) TranslationResults.Add(result);
+            foreach (var result in results) TranslationResults.Add(result);
 
             _logger.ZLogInformation($"翻译结果已添加到UI，共 {results.Count} 个");
 

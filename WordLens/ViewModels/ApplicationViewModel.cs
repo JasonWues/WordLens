@@ -1,24 +1,24 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Extensions.DependencyInjection;
 using WordLens.Messages;
-using WordLens.Views;
+using WordLens.Services;
 
 namespace WordLens.ViewModels;
 
 public partial class ApplicationViewModel : ViewModelBase
 {
-    private readonly IServiceProvider _services;
+    private readonly IWindowManagerService _windowManager;
+    private readonly IHotkeyManagerService _hotkeyManager;
 
-    public ApplicationViewModel(IServiceProvider services)
+    public ApplicationViewModel(IWindowManagerService windowManager,IHotkeyManagerService hotkeyManager)
     {
-        _services = services;
+        _windowManager = windowManager;
+        _hotkeyManager = hotkeyManager;
 
         // 注册翻译窗口消息
         WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "text",
@@ -28,13 +28,7 @@ public partial class ApplicationViewModel : ViewModelBase
                 {
                     try
                     {
-                        using var scope = _services.CreateScope();
-                        var vm = scope.ServiceProvider.GetRequiredService<PopupWindowViewModel>();
-                        vm.SourceText = message.SelectedText;
-
-                        var window = new PopupWindowView { DataContext = vm };
-                        window.Show();
-                        await vm.TranslateAsync(CancellationToken.None);
+                        await _windowManager.ShowTranslationWindowAsync(message.SelectedText);
                     }
                     catch (Exception e)
                     {
@@ -51,12 +45,7 @@ public partial class ApplicationViewModel : ViewModelBase
             {
                 try
                 {
-                    using var scope = _services.CreateScope();
-
-                    var vm = scope.ServiceProvider.GetRequiredService<ScreenCaptureViewModel>();
-
-                    var window = new ScreenCaptureWindow { DataContext = vm };
-                    window.Show();
+                    _windowManager.ShowScreenCaptureWindow();
                 }
                 catch (Exception e)
                 {
@@ -70,13 +59,7 @@ public partial class ApplicationViewModel : ViewModelBase
     [RelayCommand]
     private async Task ShowSettingAsync()
     {
-        var view = _services.GetRequiredService<MainWindowView>();
-        var viewModel = _services.GetRequiredService<MainWindowViewModel>();
-        view.DataContext = viewModel;
-        view.Show();
-
-        // 初始化设置
-        await viewModel.InitializeAsync();
+        await _windowManager.ShowSettingsWindowAsync();
     }
 
     [RelayCommand]
@@ -84,9 +67,7 @@ public partial class ApplicationViewModel : ViewModelBase
     {
         try
         {
-            var vm = _services.GetRequiredService<TranslationHistoryViewModel>();
-            var window = new TranslationHistoryView { DataContext = vm };
-            window.Show();
+            _windowManager.ShowHistoryWindow();
         }
         catch (Exception e)
         {
@@ -98,6 +79,9 @@ public partial class ApplicationViewModel : ViewModelBase
     private void Exit()
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime application)
-            application.TryShutdown();
+        {
+            _hotkeyManager.Dispose();
+            application.Shutdown();
+        }
     }
 }

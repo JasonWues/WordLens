@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using SharpHook.Data;
 
@@ -84,7 +85,7 @@ public class ProviderConfig
     ///     可用模型列表（运行时缓存，不持久化）
     /// </summary>
     [JsonIgnore]
-    public List<ModelInfo>? AvailableModels { get; set; }
+    public ObservableCollection<ModelInfo>? AvailableModels { get; set; } = new ObservableCollection<ModelInfo>();
 }
 
 /// <summary>

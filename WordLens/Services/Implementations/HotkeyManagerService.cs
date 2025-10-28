@@ -65,30 +65,6 @@ public class HotkeyManagerService : IHotkeyManagerService
         _logger.ZLogInformation($"热键配置已重新加载");
     }
 
-    public void Dispose()
-    {
-        if (_globalHook != null)
-        {
-            _globalHook.KeyPressed -= OnGlobalKeyPressed;
-            if (_globalHook.IsRunning) _globalHook.Stop();
-            _globalHook.Dispose();
-            _logger.ZLogInformation($"翻译热键服务已释放");
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_globalHook != null)
-        {
-            _globalHook.KeyPressed -= OnGlobalKeyPressed;
-            if (_globalHook.IsRunning) _globalHook.Stop();
-            _globalHook.Dispose();
-            _logger.ZLogInformation($"翻译热键服务已释放");
-        }
-
-        await Task.CompletedTask;
-    }
-
     /// <summary>
     ///     全局键盘事件处理
     /// </summary>
@@ -144,5 +120,29 @@ public class HotkeyManagerService : IHotkeyManagerService
 
         // 发送消息打开屏幕捕获窗口
         WeakReferenceMessenger.Default.Send(new TriggerTranslationMessage(string.Empty), "ocr");
+    }
+    
+    public void Dispose()
+    {
+        if (_globalHook != null)
+        {
+            _globalHook.KeyPressed -= OnGlobalKeyPressed;
+            if (_globalHook.IsRunning) _globalHook.Stop();
+            _globalHook.Dispose();
+            _logger.ZLogInformation($"翻译热键服务已释放");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_globalHook != null)
+        {
+            _globalHook.KeyPressed -= OnGlobalKeyPressed;
+            if (_globalHook.IsRunning) _globalHook.Stop();
+            _globalHook.Dispose();
+            _logger.ZLogInformation($"翻译热键服务已释放");
+        }
+
+        await Task.CompletedTask;
     }
 }
