@@ -85,7 +85,7 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: 📦 Publish
-      run: dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 --self-contained -o ./publish/win-x64
+      run: dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v4
@@ -135,7 +135,7 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: 📦 Publish
-      run: dotnet publish WordLens/WordLens.csproj -c Release -r linux-x64 --self-contained -o ./publish/linux-x64
+      run: dotnet publish WordLens/WordLens.csproj -c Release -r linux-x64 -o ./publish/linux-x64
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v4
@@ -180,10 +180,10 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: 📦 Publish (x64)
-      run: dotnet publish WordLens/WordLens.csproj -c Release -r osx-x64 --self-contained -o ./publish/osx-x64
+      run: dotnet publish WordLens/WordLens.csproj -c Release -r osx-x64 -o ./publish/osx-x64
 
     - name: 📦 Publish (arm64)
-      run: dotnet publish WordLens/WordLens.csproj -c Release -r osx-arm64 --self-contained -o ./publish/osx-arm64
+      run: dotnet publish WordLens/WordLens.csproj -c Release -r osx-arm64 -o ./publish/osx-arm64
 
     - name: 📤 Upload x64 artifact
       uses: actions/upload-artifact@v4

@@ -45,7 +45,7 @@
 
         <!-- 1. 定义 Rust 项目相关的变量 -->
         <PropertyGroup>
-            <RustProjectDir>$(SolutionDir)native\</RustProjectDir>
+            <RustProjectDir>$(MSBuildProjectDirectory)\..\native\</RustProjectDir>
 
             <!-- 跨平台库文件名定义 -->
             <RustLibPrefix Condition="'$(OS)' != 'Windows_NT'">lib</RustLibPrefix>
@@ -71,9 +71,16 @@
         <!-- 3. 执行 cargo build 命令 -->
         <Exec Command="$(RustBuildCommand)" WorkingDirectory="$(RustProjectDir)"/>
 
+        <!-- 4. 复制文件到输出目录 (为了 dotnet build 和本地调试) -->
         <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
               DestinationFolder="$(OutDir)"
               SkipUnchangedFiles="true"/>
+
+        <!-- 5. 如果正在执行 publish，则额外复制到发布目录 -->
+        <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
+              DestinationFolder="$(PublishDir)"
+              SkipUnchangedFiles="true"
+              Condition="'$(PublishDir)' != ''" />
 
         <Message Text="--- Rust 原生库编译并复制完成 ---" Importance="high"/>
     </Target>

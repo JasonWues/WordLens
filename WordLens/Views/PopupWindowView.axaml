@@ -339,12 +339,12 @@
                                     </Grid>
 
                                     <!-- 翻译结果或错误信息 -->
-                                    <TextBlock Grid.Row="2"
-                                               Text="{Binding Result}"
-                                               IsVisible="{Binding IsSuccess}"
-                                               TextWrapping="Wrap"
-                                               LineHeight="20"
-                                               FontSize="13" />
+                                    <TextBox Grid.Row="2"
+                                             Text="{Binding Result}"
+                                             IsVisible="{Binding IsSuccess}"
+                                             TextWrapping="Wrap"
+                                             LineHeight="20"
+                                             FontSize="13" />
 
                                     <Border Grid.Row="2"
                                             Background="#FFEBEE"
