@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -96,7 +95,7 @@ public class LinuxScreenshotService : IScreenshotService
         return new Rect(0, 0, 1920, 1080); // 临时返回默认值
     }
 
-    private WriteableBitmap? ConvertBufferToWriteableBitmap(ReadOnlySpan<byte> rawBuffer, int width, int height)
+    private unsafe WriteableBitmap? ConvertBufferToWriteableBitmap(ReadOnlySpan<byte> rawBuffer, int width, int height)
     {
         try
         {
@@ -108,7 +107,10 @@ public class LinuxScreenshotService : IScreenshotService
 
             using (var buffer = writeableBitmap.Lock())
             {
-                Marshal.Copy(rawBuffer.ToArray(), 0, buffer.Address, rawBuffer.Length);
+                fixed (byte* source = rawBuffer)
+                {
+                    Buffer.MemoryCopy(source, buffer.Address.ToPointer(), rawBuffer.Length, rawBuffer.Length);
+                }
             }
 
             return writeableBitmap;

@@ -301,41 +301,29 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void UpdateHotkeyDisplay()
     {
-        var parts = new List<string>();
-
-        if (_hotkeyConfig.Modifiers.HasFlag(EventMask.LeftCtrl) || _hotkeyConfig.Modifiers.HasFlag(EventMask.RightCtrl))
-            parts.Add("Ctrl");
-        if (_hotkeyConfig.Modifiers.HasFlag(EventMask.LeftShift) ||
-            _hotkeyConfig.Modifiers.HasFlag(EventMask.RightShift))
-            parts.Add("Shift");
-        if (_hotkeyConfig.Modifiers.HasFlag(EventMask.LeftAlt) || _hotkeyConfig.Modifiers.HasFlag(EventMask.RightAlt))
-            parts.Add("Alt");
-        if (_hotkeyConfig.Modifiers.HasFlag(EventMask.LeftMeta) || _hotkeyConfig.Modifiers.HasFlag(EventMask.RightMeta))
-            parts.Add("Win");
-
-        parts.Add(KeyCodeUtil.GetKeyName(_hotkeyConfig.Key));
-        HotkeyDisplay = string.Join("+", parts);
+        HotkeyDisplay = FormatHotkey(_hotkeyConfig);
     }
 
     private void UpdateOcrHotkeyDisplay()
     {
+        OcrHotkeyDisplay = FormatHotkey(_ocrHotkeyConfig);
+    }
+
+    private static string FormatHotkey(HotkeyConfig config)
+    {
         var parts = new List<string>();
 
-        if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftCtrl) ||
-            _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightCtrl))
+        if (config.Modifiers.HasFlag(EventMask.LeftCtrl) || config.Modifiers.HasFlag(EventMask.RightCtrl))
             parts.Add("Ctrl");
-        if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftShift) ||
-            _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightShift))
+        if (config.Modifiers.HasFlag(EventMask.LeftShift) || config.Modifiers.HasFlag(EventMask.RightShift))
             parts.Add("Shift");
-        if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftAlt) ||
-            _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightAlt))
+        if (config.Modifiers.HasFlag(EventMask.LeftAlt) || config.Modifiers.HasFlag(EventMask.RightAlt))
             parts.Add("Alt");
-        if (_ocrHotkeyConfig.Modifiers.HasFlag(EventMask.LeftMeta) ||
-            _ocrHotkeyConfig.Modifiers.HasFlag(EventMask.RightMeta))
+        if (config.Modifiers.HasFlag(EventMask.LeftMeta) || config.Modifiers.HasFlag(EventMask.RightMeta))
             parts.Add("Win");
 
-        parts.Add(KeyCodeUtil.GetKeyName(_ocrHotkeyConfig.Key));
-        OcrHotkeyDisplay = string.Join("+", parts);
+        parts.Add(KeyCodeUtil.GetKeyName(config.Key));
+        return string.Join("+", parts);
     }
 
     [RelayCommand]
@@ -425,11 +413,11 @@ public partial class SettingsViewModel : ViewModelBase
                 _logger?.ZLogInformation($"当前模型 {provider.Model} 不在列表中，已添加");
             }
             
+            provider.AvailableModels ??= new ObservableCollection<ModelInfo>();
+            provider.AvailableModels.Clear();
             foreach (var modelInfo in models)
-            {
                 provider.AvailableModels.Add(modelInfo);
 
-            }
             _logger?.ZLogInformation($"成功获取 {models.Count} 个模型");
 
         }

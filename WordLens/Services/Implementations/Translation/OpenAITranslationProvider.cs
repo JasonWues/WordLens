@@ -47,7 +47,7 @@ public class OpenAITranslationProvider : ITranslationProvider
             }
         };
 
-        var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions");
+        using var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions");
         req.Content = new StringContent(
             JsonSerializer.Serialize(payload, SourceGenerationContext.Default.ChatCompletionRequest),
             Encoding.UTF8,
@@ -99,7 +99,7 @@ public class OpenAITranslationProvider : ITranslationProvider
             }
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions")
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions")
         {
             Content = new StringContent(
                 JsonSerializer.Serialize(payload, SourceGenerationContext.Default.ChatCompletionRequest),
@@ -108,7 +108,7 @@ public class OpenAITranslationProvider : ITranslationProvider
         };
 
         // 发送请求，使用ResponseHeadersRead立即返回，不等待全部内容
-        var response = await httpClient.SendAsync(
+        using var response = await httpClient.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
             ct);
@@ -136,7 +136,9 @@ public class OpenAITranslationProvider : ITranslationProvider
                 try
                 {
                     // 解析JSON
-                    var chunk = JsonSerializer.Deserialize<StreamChunk>(jsonData);
+                    var chunk = JsonSerializer.Deserialize(
+                        jsonData,
+                        SourceGenerationContext.Default.StreamChunk);
                     var content = chunk?.Choices?.FirstOrDefault()?.Delta?.Content;
 
                     if (!string.IsNullOrEmpty(content))

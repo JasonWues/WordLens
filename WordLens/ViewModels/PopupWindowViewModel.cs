@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -278,8 +279,16 @@ public partial class PopupWindowViewModel : ViewModelBase
             }
 
             // 将翻译结果序列化为JSON
-            var resultsJson = System.Text.Json.JsonSerializer.Serialize(
-                successResults.Select(r => new { r.ProviderName, r.Result }).ToList());
+            var historyResults = successResults
+                .Select(static r => new TranslationHistoryResult
+                {
+                    ProviderName = r.ProviderName,
+                    Result = r.Result
+                })
+                .ToList();
+            var resultsJson = JsonSerializer.Serialize(
+                historyResults,
+                SourceGenerationContext.Default.ListTranslationHistoryResult);
 
             // 获取提供商名称列表
             var providerNames = string.Join(", ", successResults.Select(r => r.ProviderName));

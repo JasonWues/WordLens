@@ -260,7 +260,9 @@ public partial class TranslationHistoryViewModel : ViewModelBase
             if (string.IsNullOrEmpty(history.ResultsJson))
                 return "无翻译结果";
 
-            var results = JsonSerializer.Deserialize<List<TranslationResultDto>>(history.ResultsJson);
+            var results = JsonSerializer.Deserialize(
+                history.ResultsJson,
+                SourceGenerationContext.Default.ListTranslationHistoryResult);
             if (results == null || results.Count == 0)
                 return "无翻译结果";
 
@@ -272,14 +274,5 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         {
             return "解析结果失败";
         }
-    }
-
-    /// <summary>
-    /// 用于JSON反序列化的DTO
-    /// </summary>
-    private class TranslationResultDto
-    {
-        public string? ProviderName { get; set; }
-        public string? Result { get; set; }
     }
 }

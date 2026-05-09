@@ -1,12 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -196,7 +191,7 @@ public class TranslationService
                 _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
             };
 
-            var httpClient = CreateHttpClientWithProxy(settings.Proxy);
+            using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
 
             // 流式翻译，通过回调实时更新result
             var fullResult = await provider.TranslateStreamAsync(
@@ -296,7 +291,7 @@ public class TranslationService
                 _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
             };
 
-            var httpClient = CreateHttpClientWithProxy(settings.Proxy);
+            using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
             result.Result = await provider.TranslateAsync(
                 text,
                 targetLanguage,
@@ -321,41 +316,5 @@ public class TranslationService
         }
 
         return result;
-    }
-
-    private HttpClient CreateHttpClientWithProxy(ProxyConfig proxyConfig)
-    {
-        if (!proxyConfig.Enabled) return _httpClientFactory.CreateClient();
-
-        var handler = new HttpClientHandler();
-
-        // 使用系统代理
-        if (proxyConfig.UseSystemProxy)
-        {
-            handler.UseProxy = true;
-            handler.Proxy = null;
-            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-
-            _logger.ZLogInformation($"使用系统代理配置");
-        }
-        else
-        {
-            // 使用自定义代理
-            var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
-
-            if (proxyConfig.UseAuthentication &&
-                !string.IsNullOrEmpty(proxyConfig.Username))
-                proxy.Credentials = new NetworkCredential(
-                    proxyConfig.Username,
-                    proxyConfig.Password
-                );
-
-            handler.Proxy = proxy;
-            handler.UseProxy = true;
-
-            _logger.ZLogInformation($"使用自定义代理: {proxyConfig.Address}:{proxyConfig.Port}");
-        }
-
-        return new HttpClient(handler);
     }
 }

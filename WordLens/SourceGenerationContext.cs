@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using System.Collections.Generic;
 using WordLens.Models;
 
 namespace WordLens;
@@ -9,6 +10,8 @@ namespace WordLens;
 [JsonSerializable(typeof(OcrChatCompletionRequest))]
 [JsonSerializable(typeof(ModelInfo))]
 [JsonSerializable(typeof(OpenAIModelResponse))]
+[JsonSerializable(typeof(StreamChunk))]
+[JsonSerializable(typeof(List<TranslationHistoryResult>))]
 public partial class SourceGenerationContext : JsonSerializerContext
 {
 }

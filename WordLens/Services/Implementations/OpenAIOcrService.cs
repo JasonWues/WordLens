@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -54,7 +53,7 @@ public class OpenAIOcrService : IOcrService
             ? string.Empty
             : _encryptionService.Decrypt(provider.ApiKey);
 
-        using var httpClient = CreateHttpClientWithProxy(settings.Proxy);
+        using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
         if (!string.IsNullOrWhiteSpace(apiKey))
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
@@ -129,33 +128,6 @@ public class OpenAIOcrService : IOcrService
     public Task<string[]> GetSupportedLanguagesAsync()
     {
         return Task.FromResult(new[] { "auto", "zh-CN", "en-US", "ja-JP", "ko-KR" });
-    }
-
-    private HttpClient CreateHttpClientWithProxy(ProxyConfig proxyConfig)
-    {
-        if (!proxyConfig.Enabled) return _httpClientFactory.CreateClient();
-
-        var handler = new HttpClientHandler();
-        if (proxyConfig.UseSystemProxy)
-        {
-            handler.UseProxy = true;
-            handler.Proxy = null;
-            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-        }
-        else
-        {
-            var proxy = new WebProxy(proxyConfig.Address, proxyConfig.Port);
-            if (proxyConfig.UseAuthentication &&
-                !string.IsNullOrEmpty(proxyConfig.Username))
-                proxy.Credentials = new NetworkCredential(
-                    proxyConfig.Username,
-                    proxyConfig.Password);
-
-            handler.Proxy = proxy;
-            handler.UseProxy = true;
-        }
-
-        return new HttpClient(handler);
     }
 
     private static string CreatePngDataUrl(WriteableBitmap bitmap)

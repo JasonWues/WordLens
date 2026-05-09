@@ -15,6 +15,7 @@ namespace WordLens.Services.Implementations;
 public class TranslationHistoryService : ITranslationHistoryService
 {
     private readonly SQLiteAsyncConnection _database;
+    private readonly Task _initializeTask;
     private readonly ILogger<TranslationHistoryService> _logger;
 
     public TranslationHistoryService(ILogger<TranslationHistoryService> logger)
@@ -33,7 +34,7 @@ public class TranslationHistoryService : ITranslationHistoryService
         _database = new SQLiteAsyncConnection(dbPath);
 
         // 创建表（如果不存在）
-        _ = InitializeDatabaseAsync();
+        _initializeTask = InitializeDatabaseAsync();
     }
 
     /// <summary>
@@ -58,6 +59,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             if (history.Id == 0)
             {
                 // 新记录，插入
@@ -83,6 +86,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var histories = await _database.Table<TranslationHistory>()
                 .OrderByDescending(h => h.CreatedAt)
                 .ToListAsync();
@@ -102,6 +107,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var histories = await _database.Table<TranslationHistory>()
                 .OrderByDescending(h => h.CreatedAt)
                 .Skip(skip)
@@ -123,6 +130,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 return await GetAllAsync();
@@ -149,6 +158,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var history = await _database.Table<TranslationHistory>()
                 .Where(h => h.Id == id)
                 .FirstOrDefaultAsync();
@@ -176,6 +187,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var history = await GetByIdAsync(id);
             if (history != null)
             {
@@ -199,6 +212,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             await _database.DeleteAllAsync<TranslationHistory>();
             _logger.ZLogInformation($"清空所有历史记录成功");
         }
@@ -214,6 +229,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var count = await _database.Table<TranslationHistory>().CountAsync();
             _logger.ZLogDebug($"获取历史记录总数: {count}");
             return count;
@@ -230,6 +247,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var history = await GetByIdAsync(id);
             if (history != null)
             {
@@ -250,6 +269,8 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
+            await _initializeTask;
+
             var favorites = await _database.Table<TranslationHistory>()
                 .Where(h => h.IsFavorite)
                 .OrderByDescending(h => h.CreatedAt)

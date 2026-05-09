@@ -101,7 +101,7 @@ public class WindowsScreenshotService : IScreenshotService
         return new Rect(x / scale, y / scale, width / scale, height / scale);
     }
 
-    private WriteableBitmap? ConvertBufferToWriteableBitmap(ReadOnlySpan<byte> rawBuffer, int width, int height)
+    private unsafe WriteableBitmap? ConvertBufferToWriteableBitmap(ReadOnlySpan<byte> rawBuffer, int width, int height)
     {
         try
         {
@@ -113,7 +113,10 @@ public class WindowsScreenshotService : IScreenshotService
 
             using (var buffer = writeableBitmap.Lock())
             {
-                Marshal.Copy(rawBuffer.ToArray(), 0, buffer.Address, rawBuffer.Length);
+                fixed (byte* source = rawBuffer)
+                {
+                    Buffer.MemoryCopy(source, buffer.Address.ToPointer(), rawBuffer.Length, rawBuffer.Length);
+                }
             }
 
             return writeableBitmap;
