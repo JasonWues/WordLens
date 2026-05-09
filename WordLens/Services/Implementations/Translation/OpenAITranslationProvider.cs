@@ -69,7 +69,7 @@ public class OpenAITranslationProvider : ITranslationProvider
         string targetLanguage,
         string sourceLanguage,
         HttpClient httpClient,
-        Action<string> onUpdate,
+        Func<string, Task> onUpdate,
         CancellationToken ct = default)
     {
         // 配置请求头
@@ -142,7 +142,7 @@ public class OpenAITranslationProvider : ITranslationProvider
                     if (!string.IsNullOrEmpty(content))
                     {
                         fullContent.Append(content);
-                        onUpdate(content); // 回调通知UI更新
+                        await onUpdate(content); // 回调通知UI更新
                     }
                 }
                 catch (JsonException)

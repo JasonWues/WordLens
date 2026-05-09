@@ -40,7 +40,7 @@ public interface ITranslationProvider
         string targetLanguage,
         string sourceLanguage,
         HttpClient httpClient,
-        Action<string> onUpdate,
+        Func<string, Task> onUpdate,
         CancellationToken ct = default);
 }
 
@@ -204,35 +204,61 @@ public class TranslationService
                 targetLanguage,
                 sourceLanguage,
                 httpClient,
-                content =>
-                {
-                    // 必须在UI线程更新，避免跨线程问题
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        result.Result += content;
-                    });
-                },
+                content => AppendStreamContentAsync(result, content, settings.Streaming, ct),
                 ct
             );
 
-            result.IsSuccess = true;
+            await Dispatcher.UIThread.InvokeAsync(() => result.IsSuccess = true);
             _logger.ZLogInformation($"{providerCfg.Name} 流式翻译成功，最终长度: {fullResult?.Length ?? 0}");
         }
         catch (OperationCanceledException)
         {
-            result.IsSuccess = false;
-            result.ErrorMessage = "翻译已取消";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                result.IsSuccess = false;
+                result.ErrorMessage = "翻译已取消";
+            });
             _logger.ZLogInformation($"{providerCfg.Name} 流式翻译被取消");
         }
         catch (Exception ex)
         {
-            result.IsSuccess = false;
-            result.ErrorMessage = ex.Message;
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                result.IsSuccess = false;
+                result.ErrorMessage = ex.Message;
+            });
             _logger.ZLogError(ex, $"{providerCfg.Name} 流式翻译失败: {ex.Message}");
         }
         finally
         {
-            result.IsLoading = false;
+            await Dispatcher.UIThread.InvokeAsync(() => result.IsLoading = false);
+        }
+    }
+
+    private static async Task AppendStreamContentAsync(
+        TranslationResult result,
+        string content,
+        StreamingConfig streaming,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(content)) return;
+
+        var charsPerUpdate = Math.Max(1, streaming.CharsPerUpdate);
+        var delayMs = Math.Max(0, streaming.TypewriterDelayMs);
+
+        for (var i = 0; i < content.Length; i += charsPerUpdate)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var length = Math.Min(charsPerUpdate, content.Length - i);
+            var segment = content.Substring(i, length);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                result.Result += segment;
+            });
+
+            if (delayMs > 0) await Task.Delay(delayMs, ct);
         }
     }
 

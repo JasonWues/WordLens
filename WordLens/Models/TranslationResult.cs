@@ -7,6 +7,10 @@ namespace WordLens.Models;
 /// </summary>
 public partial class TranslationResult : ObservableObject
 {
+    public bool HasVisibleResult => !string.IsNullOrEmpty(Result) && (IsLoading || IsSuccess);
+
+    public bool IsError => !IsLoading && !IsSuccess;
+
     /// <summary>
     ///     错误信息（如果失败）
     /// </summary>
@@ -31,4 +35,21 @@ public partial class TranslationResult : ObservableObject
     ///     翻译结果文本
     /// </summary>
     [ObservableProperty] private string? result;
+
+    partial void OnIsLoadingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HasVisibleResult));
+        OnPropertyChanged(nameof(IsError));
+    }
+
+    partial void OnIsSuccessChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HasVisibleResult));
+        OnPropertyChanged(nameof(IsError));
+    }
+
+    partial void OnResultChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasVisibleResult));
+    }
 }

@@ -275,7 +275,7 @@
                         <DataTemplate DataType="models:TranslationResult">
                             <Border Classes="translation-card"
                                     Classes.success="{Binding IsSuccess}"
-                                    Classes.error="{Binding !IsSuccess}"
+                                    Classes.error="{Binding IsError}"
                                     Classes.loading="{Binding IsLoading}">
                                 <Grid RowDefinitions="Auto,8,Auto">
                                     <!-- 翻译源名称和状态 -->
@@ -316,7 +316,7 @@
                                         <StackPanel Grid.Column="1"
                                                     Orientation="Horizontal"
                                                     Spacing="4"
-                                                    IsVisible="{Binding !IsSuccess}">
+                                                    IsVisible="{Binding IsError}">
                                             <TextBlock Text="失败"
                                                        FontSize="11"
                                                        Foreground="#F44336"
@@ -341,7 +341,7 @@
                                     <!-- 翻译结果或错误信息 -->
                                     <TextBox Grid.Row="2"
                                              Text="{Binding Result}"
-                                             IsVisible="{Binding IsSuccess}"
+                                             IsVisible="{Binding HasVisibleResult}"
                                              TextWrapping="Wrap"
                                              LineHeight="20"
                                              FontSize="13" />
@@ -352,7 +352,7 @@
                                             BorderThickness="1"
                                             CornerRadius="4"
                                             Padding="8"
-                                            IsVisible="{Binding !IsSuccess}">
+                                            IsVisible="{Binding IsError}">
                                         <TextBlock Text="{Binding ErrorMessage}"
                                                    TextWrapping="Wrap"
                                                    Foreground="#D32F2F"

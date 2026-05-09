@@ -19,6 +19,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly ITranslationHistoryService _historyService;
     private readonly TranslationService _translationService;
+    private readonly Task _languageInitializationTask = Task.CompletedTask;
+    private bool _isInitializingLanguages;
 
     [ObservableProperty] private bool isBusy;
 
@@ -43,7 +45,10 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         _translationService = null!;
         _settingsService = null!;
+        _historyService = null!;
         _logger = null!;
+
+        InitializeLanguageCollections();
     }
 
     public PopupWindowViewModel(
@@ -58,30 +63,44 @@ public partial class PopupWindowViewModel : ViewModelBase
         _logger = logger;
 
         // 初始化语言列表
-        InitializeLanguages();
+        _languageInitializationTask = InitializeLanguagesAsync();
     }
 
     public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
 
     public bool HasTranslationResults => TranslationResults.Count > 0;
 
-    private async void InitializeLanguages()
+    private void InitializeLanguageCollections()
     {
-        try
+        if (SourceLanguages.Count == 0)
         {
             // 加载源语言列表（包含自动检测）
             foreach (var lang in LanguageInfo.GetCommonLanguages()) SourceLanguages.Add(lang);
+        }
 
+        if (TargetLanguages.Count == 0)
+        {
             // 加载目标语言列表（不包含自动检测）
             foreach (var lang in LanguageInfo.GetTargetLanguages()) TargetLanguages.Add(lang);
+        }
 
-            // 设置默认源语言为自动检测
-            SelectedSourceLanguage = SourceLanguages.FirstOrDefault(l => l.Code == "auto");
+        // 先设置同步默认值，避免首次快捷键触发时异步设置尚未加载完成。
+        SelectedSourceLanguage ??= SourceLanguages.FirstOrDefault(l => l.Code == "auto");
+        SelectedTargetLanguage ??= TargetLanguages.FirstOrDefault(l => l.Code == "en") ?? TargetLanguages.FirstOrDefault();
+    }
+
+    private async Task InitializeLanguagesAsync()
+    {
+        _isInitializingLanguages = true;
+        try
+        {
+            InitializeLanguageCollections();
 
             // 从设置中加载上次选择的目标语言
             var settings = await _settingsService.LoadAsync();
             SelectedTargetLanguage = TargetLanguages.FirstOrDefault(l => l.Code == settings.LastTargetLanguage) ??
-                                     TargetLanguages.FirstOrDefault(l => l.Code == "en");
+                                     TargetLanguages.FirstOrDefault(l => l.Code == "en") ??
+                                     TargetLanguages.FirstOrDefault();
 
             _logger.ZLogInformation(
                 $"语言初始化完成，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
@@ -89,6 +108,10 @@ public partial class PopupWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"初始化语言列表失败");
+        }
+        finally
+        {
+            _isInitializingLanguages = false;
         }
     }
 
@@ -105,7 +128,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     partial void OnSelectedTargetLanguageChanged(LanguageInfo? value)
     {
         // 保存用户的选择
-        if (value != null) _ = SaveLastTargetLanguageAsync(value.Code);
+        if (value != null && !_isInitializingLanguages && _settingsService != null)
+            _ = SaveLastTargetLanguageAsync(value.Code);
     }
 
     private async Task SaveLastTargetLanguageAsync(string languageCode)
@@ -131,12 +155,33 @@ public partial class PopupWindowViewModel : ViewModelBase
 
         try
         {
-            _logger.ZLogInformation($"开始翻译，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
+            await _languageInitializationTask;
+
+            var sourceText = SourceText;
+            if (string.IsNullOrWhiteSpace(sourceText))
+            {
+                _logger.ZLogWarning($"原文为空，跳过翻译");
+                return;
+            }
+
+            var targetLanguage = SelectedTargetLanguage ??
+                                 TargetLanguages.FirstOrDefault(l => l.Code == "en") ??
+                                 TargetLanguages.FirstOrDefault();
+            if (targetLanguage == null)
+            {
+                _logger.ZLogWarning($"目标语言未初始化，跳过翻译");
+                return;
+            }
+
+            var sourceLanguageCode = SelectedSourceLanguage?.Code ?? "auto";
+            var targetLanguageCode = targetLanguage.Code;
+
+            _logger.ZLogInformation($"开始翻译，源语言: {sourceLanguageCode}, 目标语言: {targetLanguageCode}");
 
             var results = await _translationService.TranslateAsync(
-                SourceText!,
-                SelectedTargetLanguage!.Code,
-                SelectedSourceLanguage?.Code ?? "auto",
+                sourceText,
+                targetLanguageCode,
+                sourceLanguageCode,
                 cancellationToken);
 
             foreach (var result in results) TranslationResults.Add(result);
@@ -144,7 +189,7 @@ public partial class PopupWindowViewModel : ViewModelBase
             _logger.ZLogInformation($"翻译结果已添加到UI，共 {results.Count} 个");
 
             // 保存到历史记录
-            await SaveToHistoryAsync(results);
+            await SaveToHistoryAsync(results, sourceText, sourceLanguageCode, targetLanguageCode);
         }
         catch (Exception ex)
         {
@@ -159,7 +204,11 @@ public partial class PopupWindowViewModel : ViewModelBase
     /// <summary>
     /// 保存翻译结果到历史记录
     /// </summary>
-    private async Task SaveToHistoryAsync(List<TranslationResult> results)
+    private async Task SaveToHistoryAsync(
+        List<TranslationResult> results,
+        string sourceText,
+        string sourceLanguageCode,
+        string targetLanguageCode)
     {
         try
         {
@@ -180,9 +229,9 @@ public partial class PopupWindowViewModel : ViewModelBase
 
             var history = new Models.TranslationHistory
             {
-                SourceText = SourceText!,
-                SourceLanguage = SelectedSourceLanguage?.Code ?? "auto",
-                TargetLanguage = SelectedTargetLanguage!.Code,
+                SourceText = sourceText,
+                SourceLanguage = sourceLanguageCode,
+                TargetLanguage = targetLanguageCode,
                 ResultsJson = resultsJson,
                 ProviderNames = providerNames,
                 CreatedAt = DateTime.Now,
