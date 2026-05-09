@@ -1,0 +1,240 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WordLens.ViewModels"
+        x:Class="WordLens.Views.OcrResultWindowView"
+        x:DataType="vm:OcrResultViewModel"
+        Width="920"
+        Height="560"
+        MinWidth="720"
+        MinHeight="420"
+        CanResize="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        ExtendClientAreaToDecorationsHint="True"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        Title="WordLens - OCR">
+    <Design.DataContext>
+        <vm:OcrResultViewModel />
+    </Design.DataContext>
+
+    <Window.Styles>
+        <StyleInclude Source="/Assets/Icons.axaml" />
+
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinWidth" Value="32" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+
+        <Style Selector="Button.icon-button:pointerover">
+            <Setter Property="Background" Value="#12000000" />
+        </Style>
+
+        <Style Selector="Button.icon-button.close:pointerover">
+            <Setter Property="Background" Value="#E5484D" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.primary-action">
+            <Setter Property="Background" Value="#1F7A68" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="MinHeight" Value="36" />
+        </Style>
+
+        <Style Selector="Button.primary-action:pointerover">
+            <Setter Property="Background" Value="#238874" />
+        </Style>
+
+        <Style Selector="Button.secondary-action">
+            <Setter Property="Background" Value="#F3F6F8" />
+            <Setter Property="BorderBrush" Value="#DDE4EA" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="MinHeight" Value="36" />
+        </Style>
+
+        <Style Selector="Button.secondary-action:pointerover">
+            <Setter Property="Background" Value="#EAF0F4" />
+        </Style>
+
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.55" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+
+        <Style Selector="Border.panel">
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E4E9EE" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style Selector="TextBox.ocr-editor">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+        </Style>
+
+        <Style Selector="TextBlock.status-error">
+            <Setter Property="Foreground" Value="#B42318" />
+        </Style>
+    </Window.Styles>
+
+    <Border Margin="10"
+            Background="#F7F9FB"
+            BorderBrush="#DCE3E9"
+            BorderThickness="1"
+            CornerRadius="10"
+            ClipToBounds="True"
+            BoxShadow="0 18 48 0 #26000000">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0"
+                    Background="#FFFFFF"
+                    BorderBrush="#E4E9EE"
+                    BorderThickness="0,0,0,1"
+                    PointerPressed="TitleBar_PointerPressed">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                      Height="48"
+                      Margin="12,0,8,0">
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                VerticalAlignment="Center">
+                        <Border Width="28"
+                                Height="28"
+                                Background="#E8F3F0"
+                                CornerRadius="7">
+                            <PathIcon Width="16"
+                                      Height="16"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Foreground="#1F7A68"
+                                      Data="{StaticResource translate_regular}" />
+                        </Border>
+                        <TextBlock Text="OCR 翻译"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <ProgressBar Grid.Column="1"
+                                 Width="160"
+                                 Height="3"
+                                 Margin="0,0,12,0"
+                                 HorizontalAlignment="Right"
+                                 VerticalAlignment="Center"
+                                 IsIndeterminate="True"
+                                 IsVisible="{Binding IsBusy}" />
+
+                    <Button Grid.Column="2"
+                            Classes="icon-button"
+                            Click="Minimize_Click"
+                            ToolTip.Tip="最小化">
+                        <PathIcon Width="15"
+                                  Height="15"
+                                  Data="{StaticResource subtract_regular}" />
+                    </Button>
+
+                    <Button Grid.Column="3"
+                            Classes="icon-button close"
+                            Click="Close_Click"
+                            ToolTip.Tip="关闭">
+                        <PathIcon Width="15"
+                                  Height="15"
+                                  Data="{StaticResource dismiss_regular}" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="*,4,*"
+                  Margin="16"
+                  MinHeight="280">
+                <Border Grid.Column="0"
+                        Classes="panel"
+                        ClipToBounds="True">
+                    <Grid>
+                        <Image Source="{Binding Screenshot}"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"
+                               IsVisible="{Binding HasScreenshot}" />
+                        <TextBlock Text="暂无截图"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="#66727C"
+                                   IsVisible="{Binding !HasScreenshot}" />
+                    </Grid>
+                </Border>
+
+                <GridSplitter Grid.Column="1"
+                              ResizeDirection="Columns"
+                              Background="Transparent" />
+
+                <Border Grid.Column="2"
+                        Classes="panel">
+                    <TextBox Classes="ocr-editor"
+                             Text="{Binding RecognizedText}"
+                             PlaceholderText="识别到的文字会显示在这里，也可以手动修正后再翻译"
+                             HorizontalAlignment="Stretch"
+                             VerticalAlignment="Stretch" />
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="2"
+                    Background="#FFFFFF"
+                    BorderBrush="#E4E9EE"
+                    BorderThickness="0,1,0,0"
+                    Padding="16,12">
+                <Grid ColumnDefinitions="*,Auto,Auto"
+                      ColumnSpacing="10">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusText}"
+                               Classes.status-error="{Binding HasError}"
+                               VerticalAlignment="Center"
+                               Foreground="#66727C"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <Button Grid.Column="1"
+                            Classes="secondary-action"
+                            Command="{Binding ReRecognizeCommand}">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <PathIcon Width="15"
+                                      Height="15"
+                                      Data="{StaticResource arrow_turn_up_regular}" />
+                            <TextBlock Text="重新识别" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="2"
+                            Classes="primary-action"
+                            Command="{Binding TranslateCommand}">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <PathIcon Width="15"
+                                      Height="15"
+                                      Data="{StaticResource translate_regular}" />
+                            <TextBlock Text="翻译" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,7 @@ public class WindowManagerService : IWindowManagerService
     private Window? _translationWindow;
     private Window? _settingsWindow;
     private Window? _screenCaptureWindow;
+    private Window? _ocrResultWindow;
     private Window? _historyWindow;
 
     public WindowManagerService(
@@ -219,6 +221,64 @@ public class WindowManagerService : IWindowManagerService
     }
 
     /// <summary>
+    /// 显示或激活 OCR 结果窗口
+    /// </summary>
+    public Window ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null)
+    {
+        _semaphore.Wait();
+        try
+        {
+            return Dispatcher.UIThread.Invoke(() =>
+            {
+                if (_ocrResultWindow == null)
+                {
+                    _logger.ZLogInformation($"创建新的 OCR 结果窗口");
+
+                    using var scope = _serviceProvider.CreateScope();
+                    var viewModel = scope.ServiceProvider.GetRequiredService<OcrResultViewModel>();
+                    viewModel.LoadScreenshot(screenshot, recognizedText);
+
+                    _ocrResultWindow = new OcrResultWindowView
+                    {
+                        DataContext = viewModel
+                    };
+
+                    _ocrResultWindow.Closed += (s, e) =>
+                    {
+                        _semaphore.Wait();
+                        try
+                        {
+                            _logger.ZLogInformation($"OCR 结果窗口已关闭，清理引用");
+                            _ocrResultWindow = null;
+                        }
+                        finally
+                        {
+                            _semaphore.Release();
+                        }
+                    };
+
+                    _ocrResultWindow.Show();
+                }
+                else
+                {
+                    _logger.ZLogInformation($"OCR 结果窗口已存在，更新内容并激活");
+
+                    if (_ocrResultWindow.DataContext is OcrResultViewModel vm)
+                        vm.LoadScreenshot(screenshot, recognizedText);
+
+                    ActivateWindow(_ocrResultWindow);
+                }
+
+                return _ocrResultWindow;
+            });
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <summary>
     /// 显示或激活历史记录窗口
     /// </summary>
     public Window ShowHistoryWindow()
@@ -291,6 +351,7 @@ public class WindowManagerService : IWindowManagerService
                 _translationWindow,
                 _settingsWindow,
                 _screenCaptureWindow,
+                _ocrResultWindow,
                 _historyWindow
             };
 
@@ -313,6 +374,7 @@ public class WindowManagerService : IWindowManagerService
             _translationWindow = null;
             _settingsWindow = null;
             _screenCaptureWindow = null;
+            _ocrResultWindow = null;
             _historyWindow = null;
         }
         finally

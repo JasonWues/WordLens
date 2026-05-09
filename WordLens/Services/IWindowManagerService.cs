@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 
 namespace WordLens.Services;
 
@@ -31,6 +32,14 @@ public interface IWindowManagerService
     /// </summary>
     /// <returns>截图窗口实例</returns>
     Window ShowScreenCaptureWindow();
+
+    /// <summary>
+    /// 显示或激活 OCR 结果窗口
+    /// </summary>
+    /// <param name="screenshot">已截取的图片</param>
+    /// <param name="recognizedText">可选的初始识别文本</param>
+    /// <returns>OCR 结果窗口实例</returns>
+    Window ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null);
 
     /// <summary>
     /// 显示或激活历史记录窗口

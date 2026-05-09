@@ -96,14 +96,15 @@ public partial class ScreenCaptureWindow : Window
         if (DataContext is not ScreenCaptureViewModel vm) return;
 
         var point = e.GetPosition(_captureCanvas);
-        var success = await vm.CompleteSelectionAsync(point);
+        var success = vm.CompleteSelection(point);
 
         // 如果截图成功，隐藏窗口
         if (success)
         {
-            // 给用户一点时间看到选择矩形
-            await Task.Delay(100);
+            // 先隐藏遮罩，避免 OCR 截图包含半透明遮罩和选区边框。
             Hide();
+            await Task.Delay(100);
+            await vm.CaptureSelectionAsync();
         }
     }
 

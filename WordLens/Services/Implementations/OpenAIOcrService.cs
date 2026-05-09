@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.Logging;
 using WordLens.Models;
+using WordLens.Native;
 using ZLogger;
 
 namespace WordLens.Services.Implementations;
@@ -57,7 +58,7 @@ public class OpenAIOcrService : IOcrService
         if (!string.IsNullOrWhiteSpace(apiKey))
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
-        var imageDataUrl = CreatePngDataUrl(bitmap);
+        var imageDataUrl = CreateOcrPngDataUrl(bitmap);
         var request = new OcrChatCompletionRequest
         {
             Model = provider.Model,
@@ -128,6 +129,27 @@ public class OpenAIOcrService : IOcrService
     public Task<string[]> GetSupportedLanguagesAsync()
     {
         return Task.FromResult(new[] { "auto", "zh-CN", "en-US", "ja-JP", "ko-KR" });
+    }
+
+    private string CreateOcrPngDataUrl(WriteableBitmap bitmap)
+    {
+        try
+        {
+            using var framebuffer = bitmap.Lock();
+            var png = OcrImageNative.PreprocessBgraToPng(
+                framebuffer.Address,
+                bitmap.PixelSize.Width,
+                bitmap.PixelSize.Height,
+                framebuffer.RowBytes);
+
+            _logger.ZLogDebug($"OCR 图片预处理完成，PNG大小: {png.Length} bytes");
+            return $"data:image/png;base64,{Convert.ToBase64String(png)}";
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogWarning(ex, $"OCR 图片预处理失败，回退到原始截图编码: {ex.Message}");
+            return CreatePngDataUrl(bitmap);
+        }
     }
 
     private static string CreatePngDataUrl(WriteableBitmap bitmap)

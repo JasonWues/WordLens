@@ -70,6 +70,7 @@ public class App : Application
         services.AddSingleton<SettingsViewModel>();
         services.AddTransient<PopupWindowViewModel>();
         services.AddTransient<ScreenCaptureViewModel>();
+        services.AddTransient<OcrResultViewModel>();
         services.AddSingleton<AboutViewModel>();
         services.AddSingleton<TranslationHistoryViewModel>();
 
