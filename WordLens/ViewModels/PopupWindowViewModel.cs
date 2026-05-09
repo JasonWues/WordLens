@@ -23,7 +23,9 @@ public partial class PopupWindowViewModel : ViewModelBase
     private readonly ITranslationHistoryService _historyService;
     private readonly TranslationService _translationService;
     private readonly Task _languageInitializationTask = Task.CompletedTask;
+    private PendingHistorySave? _pendingHistorySave;
     private bool _isInitializingLanguages;
+    private bool _isSavingPendingHistory;
     private ObservableCollection<TranslationResult>? _trackedTranslationResults;
 
     [ObservableProperty] private bool isBusy;
@@ -175,6 +177,9 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         if (e.PropertyName is nameof(TranslationResult.IsSuccess) or nameof(TranslationResult.Result))
             NotifyTranslationResultsStateChanged();
+
+        if (e.PropertyName is nameof(TranslationResult.IsLoading) or nameof(TranslationResult.IsSuccess))
+            _ = TrySavePendingHistoryAsync();
     }
 
     private void NotifyTranslationResultsStateChanged()
@@ -209,6 +214,7 @@ public partial class PopupWindowViewModel : ViewModelBase
     public async Task TranslateAsync(CancellationToken cancellationToken)
     {
         IsBusy = true;
+        _pendingHistorySave = null;
         TranslationResults.Clear();
 
         try
@@ -246,8 +252,15 @@ public partial class PopupWindowViewModel : ViewModelBase
 
             _logger.ZLogInformation($"翻译结果已添加到UI，共 {results.Count} 个");
 
-            // 保存到历史记录
-            await SaveToHistoryAsync(results, sourceText, sourceLanguageCode, targetLanguageCode);
+            if (results.Any(static r => r.IsLoading))
+            {
+                _pendingHistorySave = new PendingHistorySave(sourceText, sourceLanguageCode, targetLanguageCode);
+                await TrySavePendingHistoryAsync();
+            }
+            else
+            {
+                await SaveToHistoryAsync(results, sourceText, sourceLanguageCode, targetLanguageCode);
+            }
         }
         catch (Exception ex)
         {
@@ -256,6 +269,33 @@ public partial class PopupWindowViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task TrySavePendingHistoryAsync()
+    {
+        if (_pendingHistorySave == null ||
+            _isSavingPendingHistory ||
+            TranslationResults.Any(static r => r.IsLoading))
+        {
+            return;
+        }
+
+        var pending = _pendingHistorySave;
+        _pendingHistorySave = null;
+        _isSavingPendingHistory = true;
+
+        try
+        {
+            await SaveToHistoryAsync(
+                TranslationResults.ToList(),
+                pending.SourceText,
+                pending.SourceLanguageCode,
+                pending.TargetLanguageCode);
+        }
+        finally
+        {
+            _isSavingPendingHistory = false;
         }
     }
 
@@ -313,6 +353,11 @@ public partial class PopupWindowViewModel : ViewModelBase
             // 不抛出异常，避免影响正常翻译流程
         }
     }
+
+    private sealed record PendingHistorySave(
+        string SourceText,
+        string SourceLanguageCode,
+        string TargetLanguageCode);
 
     [RelayCommand]
     public void ToggleTopmost()

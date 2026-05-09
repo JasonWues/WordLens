@@ -137,11 +137,19 @@ public class TranslationHistoryService : ITranslationHistoryService
                 return await GetAllAsync();
             }
 
-            // SQLite 查询，使用 LIKE 进行模糊搜索
-            var histories = await _database.Table<TranslationHistory>()
-                .Where(h => h.SourceText.Contains(keyword))
-                .OrderByDescending(h => h.CreatedAt)
-                .ToListAsync();
+            var pattern = $"%{keyword.Trim()}%";
+            var histories = await _database.QueryAsync<TranslationHistory>(
+                """
+                SELECT *
+                FROM TranslationHistory
+                WHERE SourceText LIKE ?
+                   OR ResultsJson LIKE ?
+                   OR ProviderNames LIKE ?
+                ORDER BY CreatedAt DESC
+                """,
+                pattern,
+                pattern,
+                pattern);
 
             _logger.ZLogInformation($"搜索历史记录成功，关键词: '{keyword}'，找到 {histories.Count} 条");
             return histories;

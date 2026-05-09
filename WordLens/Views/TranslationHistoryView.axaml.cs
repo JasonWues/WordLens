@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using Avalonia.Controls;
-using WordLens.ViewModels;
 
 namespace WordLens.Views;
 
@@ -13,15 +12,6 @@ public partial class TranslationHistoryView : Window
         
         // 拦截窗口关闭事件
         Closing += OnWindowClosing;
-        
-        // 窗口加载时初始化ViewModel
-        Loaded += async (s, e) =>
-        {
-            if (DataContext is TranslationHistoryViewModel vm)
-            {
-                await vm.InitializeAsync();
-            }
-        };
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)

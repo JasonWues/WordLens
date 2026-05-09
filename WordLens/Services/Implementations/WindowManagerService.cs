@@ -255,6 +255,7 @@ public class WindowManagerService : IWindowManagerService
                     };
 
                     _historyWindow.Show();
+                    _ = viewModel.InitializeAsync();
                 }
                 else
                 {
@@ -262,6 +263,8 @@ public class WindowManagerService : IWindowManagerService
                     
                     // 激活窗口
                     ActivateWindow(_historyWindow);
+                    if (_historyWindow.DataContext is TranslationHistoryViewModel vm)
+                        _ = vm.InitializeAsync();
                 }
 
                 return _historyWindow;

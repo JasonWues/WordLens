@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -89,11 +87,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Histories.Clear();
-                foreach (var history in historyList)
-                {
-                    Histories.Add(history);
-                }
+                Histories = new ObservableCollection<TranslationHistory>(historyList);
             });
 
             TotalCount = await _historyService.GetCountAsync();
@@ -196,7 +190,6 @@ public partial class TranslationHistoryViewModel : ViewModelBase
             _logger.ZLogInformation($"切换收藏状态，ID: {history.Id}");
             await _historyService.ToggleFavoriteAsync(history.Id);
 
-            // 更新UI中的状态
             history.IsFavorite = !history.IsFavorite;
 
             // 如果当前是仅显示收藏模式，且取消了收藏，则从列表中移除

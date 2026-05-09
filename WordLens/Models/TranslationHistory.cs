@@ -1,4 +1,5 @@
 using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SQLite;
 
 namespace WordLens.Models;
@@ -7,8 +8,10 @@ namespace WordLens.Models;
 /// 翻译历史记录模型
 /// </summary>
 [Table("TranslationHistory")]
-public class TranslationHistory
+public class TranslationHistory : ObservableObject
 {
+    private bool _isFavorite;
+
     /// <summary>
     /// 主键，自增
     /// </summary>
@@ -54,5 +57,9 @@ public class TranslationHistory
     /// <summary>
     /// 是否收藏
     /// </summary>
-    public bool IsFavorite { get; set; }
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set => SetProperty(ref _isFavorite, value);
+    }
 }

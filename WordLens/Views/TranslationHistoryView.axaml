@@ -267,7 +267,7 @@
                                                 Padding="8">
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBlock Grid.Column="0"
-                                                           Text="{Binding ResultsJson}"
+                                                           Text="{Binding ResultsJson, Converter={x:Static conv:TranslationResultSummaryConverter.Summary}}"
                                                            TextWrapping="Wrap"
                                                            MaxLines="2"
                                                            TextTrimming="CharacterEllipsis"
