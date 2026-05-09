@@ -33,8 +33,6 @@
         <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.3.26207.106" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.3.26207.106" />
-        <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0" />
-        <PackageReference Include="ScreenCapture.NET.X11" Version="3.0.0" />
         <PackageReference Include="Semi.Avalonia" Version="12.0.1" />
         <PackageReference Include="SharpHook" Version="7.1.1" />
         <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />

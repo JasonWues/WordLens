@@ -8,7 +8,6 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ScreenCapture.NET;
 using SharpHook;
 using WordLens.Services;
 using WordLens.Services.Implementations;
@@ -89,21 +88,8 @@ public class App : Application
         services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
         services.AddHttpClient();
 
-        // 截图服务 - 根据平台注册不同实现
-        if (OperatingSystem.IsWindows())
-        {
-            services.AddSingleton<IScreenCaptureService, DX11ScreenCaptureService>();
-            services.AddSingleton<IScreenshotService, WindowsScreenshotService>();
-        }
-        else if (OperatingSystem.IsLinux())
-        {
-            services.AddSingleton<IScreenCaptureService, X11ScreenCaptureService>();
-            services.AddSingleton<IScreenshotService, LinuxScreenshotService>();
-        }
-        else if (OperatingSystem.IsMacOS())
-        {
-            services.AddSingleton<IScreenshotService, MacScreenshotService>();
-        }
+        // 截图服务 - Rust xcap 跨平台实现
+        services.AddSingleton<IScreenshotService, XcapScreenshotService>();
 
         // 配置日志
         services.AddLogging(logging =>

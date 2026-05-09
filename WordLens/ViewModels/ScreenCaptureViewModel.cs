@@ -151,7 +151,13 @@ public partial class ScreenCaptureViewModel : ViewModelBase
 
 
             // 执行截图
-            var bitmap = await _screenshotService.CaptureAreaAsync(SelectionRect);
+            var virtualBounds = _screenshotService.GetVirtualScreenBounds();
+            var captureRect = new Rect(
+                virtualBounds.X + SelectionRect.X,
+                virtualBounds.Y + SelectionRect.Y,
+                SelectionRect.Width,
+                SelectionRect.Height);
+            var bitmap = await _screenshotService.CaptureAreaAsync(captureRect);
 
             if (bitmap == null)
             {
