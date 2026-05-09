@@ -188,20 +188,26 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveSettingsAsync()
     {
-        var settings = BuildSettingsFromViewModel();
-        await _settingsService.SaveAsync(settings);
-        _originalSettings = settings;
-        
+        await SaveSettingsCoreAsync();
         WeakReferenceMessenger.Default.Send(new CloseWindowMessage());
-
     }
 
     [RelayCommand]
     private async Task ApplySettingsAsync()
     {
-        await SaveSettingsAsync();
+        await SaveSettingsCoreAsync();
         // 重新加载快捷键配置
         if (_hotkeyManagerService != null) await _hotkeyManagerService.ReloadConfigAsync();
+    }
+
+    private async Task SaveSettingsCoreAsync()
+    {
+        if (_settingsService == null) return;
+
+        var settings = BuildSettingsFromViewModel();
+        var savedSnapshot = CloneSettings(settings);
+        await _settingsService.SaveAsync(settings);
+        _originalSettings = savedSnapshot;
     }
 
     [RelayCommand]
@@ -462,10 +468,11 @@ public partial class SettingsViewModel : ViewModelBase
         return new AppSettings
         {
             UILanguage = UiLanguage,
+            LastTargetLanguage = _originalSettings?.LastTargetLanguage ?? "en",
             Hotkey = _hotkeyConfig,
             OcrHotkey = _ocrHotkeyConfig,
             SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
-            Providers = Providers.ToList(),
+            Providers = Providers.Select(CloneProviderForPersistence).ToList(),
             OcrProvider = CloneOcrProviderForPersistence(OcrProvider),
             Streaming = new StreamingConfig
             {
@@ -519,6 +526,50 @@ public partial class SettingsViewModel : ViewModelBase
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
             AllowManualModelInput = provider.AllowManualModelInput
+        };
+    }
+
+    private static ProviderConfig CloneProviderForPersistence(ProviderConfig provider)
+    {
+        return new ProviderConfig
+        {
+            Name = provider.Name,
+            Type = provider.Type,
+            BaseUrl = provider.BaseUrl,
+            ApiKey = provider.ApiKey,
+            Model = provider.Model,
+            IsEnabled = provider.IsEnabled,
+            AllowManualModelInput = provider.AllowManualModelInput
+        };
+    }
+
+    private static AppSettings CloneSettings(AppSettings settings)
+    {
+        return new AppSettings
+        {
+            UILanguage = settings.UILanguage,
+            LastTargetLanguage = settings.LastTargetLanguage,
+            Hotkey = settings.Hotkey,
+            OcrHotkey = settings.OcrHotkey,
+            SelectedProvider = settings.SelectedProvider,
+            Providers = settings.Providers.Select(CloneProviderForPersistence).ToList(),
+            OcrProvider = CloneOcrProviderForPersistence(settings.OcrProvider),
+            Streaming = new StreamingConfig
+            {
+                Enabled = settings.Streaming.Enabled,
+                TypewriterDelayMs = settings.Streaming.TypewriterDelayMs,
+                CharsPerUpdate = settings.Streaming.CharsPerUpdate
+            },
+            Proxy = new ProxyConfig
+            {
+                Enabled = settings.Proxy.Enabled,
+                UseSystemProxy = settings.Proxy.UseSystemProxy,
+                Address = settings.Proxy.Address,
+                Port = settings.Proxy.Port,
+                UseAuthentication = settings.Proxy.UseAuthentication,
+                Username = settings.Proxy.Username,
+                Password = settings.Proxy.Password
+            }
         };
     }
 

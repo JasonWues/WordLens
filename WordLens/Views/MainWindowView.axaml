@@ -175,27 +175,34 @@
                     </ListBox>
 
                     <!-- 右侧按钮和详情 -->
-                    <StackPanel Grid.Column="1" Spacing="10" Width="250">
-                        <Button Content="添加翻译源"
-                                Command="{Binding AddProviderCommand}"
-                                HorizontalAlignment="Stretch" />
-                        <Button Content="删除"
-                                Command="{Binding DeleteProviderCommand}"
-                                IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                HorizontalAlignment="Stretch" />
-                        <Button Content="上移"
-                                Command="{Binding MoveProviderUpCommand}"
-                                IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                HorizontalAlignment="Stretch" />
-                        <Button Content="下移"
-                                Command="{Binding MoveProviderDownCommand}"
-                                IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                HorizontalAlignment="Stretch" />
+                    <Grid Grid.Column="1"
+                          RowDefinitions="Auto,Auto,*"
+                          Width="250"
+                          MinHeight="0">
+                        <StackPanel Grid.Row="0" Spacing="10">
+                            <Button Content="添加翻译源"
+                                    Command="{Binding AddProviderCommand}"
+                                    HorizontalAlignment="Stretch" />
+                            <Button Content="删除"
+                                    Command="{Binding DeleteProviderCommand}"
+                                    IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    HorizontalAlignment="Stretch" />
+                            <Button Content="上移"
+                                    Command="{Binding MoveProviderUpCommand}"
+                                    IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    HorizontalAlignment="Stretch" />
+                            <Button Content="下移"
+                                    Command="{Binding MoveProviderDownCommand}"
+                                    IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    HorizontalAlignment="Stretch" />
+                        </StackPanel>
 
-                        <Separator Margin="0,10" />
+                        <Separator Grid.Row="1" Margin="0,10" />
 
                         <!-- 翻译源详情编辑 -->
-                        <ScrollViewer MaxHeight="300">
+                        <ScrollViewer Grid.Row="2"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Spacing="8"
                                         IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
                                 <TextBlock Text="翻译源详情" FontWeight="Bold" />
@@ -284,7 +291,7 @@
                                 
                             </StackPanel>
                         </ScrollViewer>
-                    </StackPanel>
+                    </Grid>
                 </Grid>
             </TabItem>
 
