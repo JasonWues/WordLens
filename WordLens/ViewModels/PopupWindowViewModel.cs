@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +23,7 @@ public partial class PopupWindowViewModel : ViewModelBase
     private readonly TranslationService _translationService;
     private readonly Task _languageInitializationTask = Task.CompletedTask;
     private bool _isInitializingLanguages;
+    private ObservableCollection<TranslationResult>? _trackedTranslationResults;
 
     [ObservableProperty] private bool isBusy;
 
@@ -49,6 +52,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         _logger = null!;
 
         InitializeLanguageCollections();
+        TrackTranslationResults(TranslationResults);
     }
 
     public PopupWindowViewModel(
@@ -64,11 +68,17 @@ public partial class PopupWindowViewModel : ViewModelBase
 
         // 初始化语言列表
         _languageInitializationTask = InitializeLanguagesAsync();
+        TrackTranslationResults(TranslationResults);
     }
 
     public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
 
+    public bool CanUseTranslationAsSource =>
+        TranslationResults.Any(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
+
     public bool HasTranslationResults => TranslationResults.Count > 0;
+
+    public int SourceCharacterCount => SourceText?.Length ?? 0;
 
     private void InitializeLanguageCollections()
     {
@@ -118,11 +128,58 @@ public partial class PopupWindowViewModel : ViewModelBase
     partial void OnSourceTextChanged(string? value)
     {
         OnPropertyChanged(nameof(CanCopySource));
+        OnPropertyChanged(nameof(SourceCharacterCount));
     }
 
     partial void OnTranslationResultsChanged(ObservableCollection<TranslationResult> value)
     {
+        TrackTranslationResults(value);
+    }
+
+    private void TrackTranslationResults(ObservableCollection<TranslationResult>? results)
+    {
+        if (_trackedTranslationResults != null)
+        {
+            _trackedTranslationResults.CollectionChanged -= OnTranslationResultsCollectionChanged;
+            foreach (var result in _trackedTranslationResults)
+                result.PropertyChanged -= OnTranslationResultPropertyChanged;
+        }
+
+        _trackedTranslationResults = results;
+
+        if (_trackedTranslationResults != null)
+        {
+            _trackedTranslationResults.CollectionChanged += OnTranslationResultsCollectionChanged;
+            foreach (var result in _trackedTranslationResults)
+                result.PropertyChanged += OnTranslationResultPropertyChanged;
+        }
+
+        NotifyTranslationResultsStateChanged();
+    }
+
+    private void OnTranslationResultsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems != null)
+            foreach (TranslationResult result in e.OldItems)
+                result.PropertyChanged -= OnTranslationResultPropertyChanged;
+
+        if (e.NewItems != null)
+            foreach (TranslationResult result in e.NewItems)
+                result.PropertyChanged += OnTranslationResultPropertyChanged;
+
+        NotifyTranslationResultsStateChanged();
+    }
+
+    private void OnTranslationResultPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(TranslationResult.IsSuccess) or nameof(TranslationResult.Result))
+            NotifyTranslationResultsStateChanged();
+    }
+
+    private void NotifyTranslationResultsStateChanged()
+    {
         OnPropertyChanged(nameof(HasTranslationResults));
+        OnPropertyChanged(nameof(CanUseTranslationAsSource));
     }
 
     partial void OnSelectedTargetLanguageChanged(LanguageInfo? value)
@@ -259,6 +316,26 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         SourceText = string.Empty;
         TranslationResults.Clear();
+    }
+
+    [RelayCommand]
+    public void UseTranslationAsSource()
+    {
+        var result = TranslationResults.FirstOrDefault(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
+        if (result?.Result == null)
+        {
+            _logger?.ZLogWarning($"没有可用译文，无法转为原文");
+            return;
+        }
+
+        SourceText = result.Result;
+        TranslationResults.Clear();
+
+        if (SelectedTargetLanguage != null)
+            SelectedSourceLanguage = SourceLanguages.FirstOrDefault(l => l.Code == SelectedTargetLanguage.Code) ??
+                                     SelectedSourceLanguage;
+
+        _logger?.ZLogInformation($"已将译文转为原文，长度: {SourceText.Length}");
     }
 
     [RelayCommand]

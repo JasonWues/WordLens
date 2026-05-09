@@ -64,6 +64,14 @@ public class SettingsService : ISettingsService
                     needsSave = true;
                 }
 
+            if (!string.IsNullOrEmpty(settings.OcrProvider.ApiKey) &&
+                !_encryptionService.IsEncrypted(settings.OcrProvider.ApiKey))
+            {
+                _logger.ZLogInformation($"检测到未加密的OCR API Key，正在加密: {settings.OcrProvider.Name}");
+                settings.OcrProvider.ApiKey = _encryptionService.Encrypt(settings.OcrProvider.ApiKey);
+                needsSave = true;
+            }
+
             // 如果有未加密的配置，自动保存加密后的版本
             if (needsSave)
             {
@@ -96,6 +104,13 @@ public class SettingsService : ISettingsService
                     _logger.ZLogDebug($"保存前加密API Key: {provider.Name}");
                     provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
                 }
+
+            if (!string.IsNullOrEmpty(settings.OcrProvider.ApiKey) &&
+                !_encryptionService.IsEncrypted(settings.OcrProvider.ApiKey))
+            {
+                _logger.ZLogDebug($"保存前加密OCR API Key: {settings.OcrProvider.Name}");
+                settings.OcrProvider.ApiKey = _encryptionService.Encrypt(settings.OcrProvider.ApiKey);
+            }
 
             var json = JsonSerializer.Serialize(settings, SourceGenerationContext.Default.AppSettings);
             await File.WriteAllTextAsync(_path, json);

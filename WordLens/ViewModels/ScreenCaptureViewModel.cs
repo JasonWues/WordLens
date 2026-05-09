@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using WordLens.Messages;
 using WordLens.Services;
 using ZLogger;
 
@@ -17,6 +19,7 @@ namespace WordLens.ViewModels;
 public partial class ScreenCaptureViewModel : ViewModelBase
 {
     private readonly ILogger<ScreenCaptureViewModel> _logger;
+    private readonly IOcrService _ocrService;
     private readonly IScreenshotService _screenshotService;
 
     /// <summary>
@@ -38,15 +41,18 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     {
         // 设计时构造函数
         _screenshotService = null!;
+        _ocrService = null!;
         _logger = null!;
         _tempScreenshotDir = string.Empty;
     }
 
     public ScreenCaptureViewModel(
         IScreenshotService screenshotService,
+        IOcrService ocrService,
         ILogger<ScreenCaptureViewModel> logger)
     {
         _screenshotService = screenshotService;
+        _ocrService = ocrService;
         _logger = logger;
 
         // 创建临时截图目录
@@ -163,12 +169,31 @@ public partial class ScreenCaptureViewModel : ViewModelBase
             SaveBitmap(bitmap, filepath);
             _logger.ZLogInformation($"截图已保存: {filepath}");
 
-
-            _logger.ZLogInformation($"截图完成，等待OCR功能实现");
+            _ = RecognizeAndTranslateAsync(bitmap);
         }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"截图或保存过程中发生错误");
+        }
+    }
+
+    private async Task RecognizeAndTranslateAsync(WriteableBitmap bitmap)
+    {
+        try
+        {
+            _logger.ZLogInformation($"开始OCR识别");
+            var text = await _ocrService.RecognizeTextAsync(bitmap, "auto");
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                _logger.ZLogWarning($"OCR未识别到文本");
+                return;
+            }
+
+            WeakReferenceMessenger.Default.Send(new TriggerTranslationMessage(text), "text");
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"OCR识别失败: {ex.Message}");
         }
     }
 

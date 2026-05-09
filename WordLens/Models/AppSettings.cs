@@ -22,6 +22,17 @@ public class AppSettings
     public string LastTargetLanguage { get; set; } = "en";
 
     public string? SelectedProvider { get; set; } = "OpenAI";
+
+    public ProviderConfig OcrProvider { get; set; } = new()
+    {
+        Name = "OpenAI OCR",
+        BaseUrl = "https://api.openai.com",
+        ApiKey = null,
+        Model = "gpt-4o-mini",
+        Type = ProviderType.OpenAI,
+        IsEnabled = true
+    };
+
     public ProxyConfig Proxy { get; set; } = new();
 
     /// <summary>

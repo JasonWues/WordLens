@@ -288,6 +288,59 @@
                 </Grid>
             </TabItem>
 
+            <!-- OCR源配置标签页 -->
+            <TabItem Header="OCR">
+                <ScrollViewer>
+                    <StackPanel Spacing="16" Margin="20" MaxWidth="560" DataContext="{Binding SettingsViewModel}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="OCR 源" FontWeight="Bold" FontSize="14" />
+                            <TextBlock Text="截图 OCR 使用单独的 OpenAI 兼容接口配置，不占用翻译源列表。"
+                                       FontSize="12"
+                                       Opacity="0.6"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <CheckBox Content="启用 OCR"
+                                  IsChecked="{Binding OcrProvider.IsEnabled}" />
+
+                        <StackPanel Spacing="12" IsEnabled="{Binding OcrProvider.IsEnabled}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="名称" FontWeight="Bold" />
+                                <TextBox Text="{Binding OcrProvider.Name}"
+                                         PlaceholderText="OCR 源名称" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="API URL" FontWeight="Bold" />
+                                <TextBox Text="{Binding OcrProvider.BaseUrl}"
+                                         PlaceholderText="https://api.openai.com 或 https://api.openai.com/v1/chat/completions" />
+                                <TextBlock Text="可填写 OpenAI 兼容 Base URL，也可直接填写 /v1/chat/completions 完整地址。"
+                                           FontSize="12"
+                                           Opacity="0.6"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="API Key" FontWeight="Bold" />
+                                <TextBox Text="{Binding OcrProvider.ApiKey}"
+                                         PlaceholderText="输入 OCR API Key"
+                                         PasswordChar="●" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Model" FontWeight="Bold" />
+                                <TextBox Text="{Binding OcrProvider.Model}"
+                                         PlaceholderText="gpt-4o-mini" />
+                                <TextBlock Text="请选择支持图片输入的 OpenAI 兼容模型。"
+                                           FontSize="12"
+                                           Opacity="0.6"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- 网络代理标签页 -->
             <TabItem Header="网络代理">
                 <ScrollViewer>

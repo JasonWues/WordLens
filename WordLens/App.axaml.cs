@@ -82,10 +82,11 @@ public class App : Application
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IOcrService, OpenAIOcrService>();
         services.AddSingleton<TranslationService>();
         services.AddSingleton<ISelectionService, SelectionService>();
         services.AddSingleton<ITranslationHistoryService, TranslationHistoryService>();
-        services.AddSingleton<IGlobalHook, TaskPoolGlobalHook>();
+        services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
         services.AddHttpClient();
 
         // 截图服务 - 根据平台注册不同实现

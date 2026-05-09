@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using WordLens.ViewModels;
@@ -24,6 +25,22 @@ public partial class PopupWindowView : Window
         e.Cancel = true;
         
         // 隐藏窗口而不是关闭
+        Hide();
+    }
+
+    private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
+    }
+
+    private void Minimize_Click(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void Close_Click(object? sender, RoutedEventArgs e)
+    {
         Hide();
     }
 

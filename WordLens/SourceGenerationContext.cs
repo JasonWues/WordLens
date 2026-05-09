@@ -6,6 +6,7 @@ namespace WordLens;
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(AppSettings))]
 [JsonSerializable(typeof(ChatCompletionRequest))]
+[JsonSerializable(typeof(OcrChatCompletionRequest))]
 [JsonSerializable(typeof(ModelInfo))]
 [JsonSerializable(typeof(OpenAIModelResponse))]
 public partial class SourceGenerationContext : JsonSerializerContext

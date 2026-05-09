@@ -52,6 +52,8 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] private string ocrHotkeyDisplay = "Ctrl+Shift+W";
 
+    [ObservableProperty] private ProviderConfig ocrProvider = new();
+
     [ObservableProperty] private ObservableCollection<ProviderConfig> providers = new();
 
     [ObservableProperty] private string proxyAddress = "http://127.0.0.1";
@@ -147,6 +149,7 @@ public partial class SettingsViewModel : ViewModelBase
         foreach (var provider in settings.Providers) Providers.Add(provider);
         SelectedProviderName = settings.SelectedProvider;
         SelectedProvider = Providers.FirstOrDefault(p => p.Name == settings.SelectedProvider);
+        OcrProvider = CloneOcrProviderForEditing(settings.OcrProvider);
 
         // 加载代理设置
         ProxyEnabled = settings.Proxy.Enabled;
@@ -222,6 +225,7 @@ public partial class SettingsViewModel : ViewModelBase
             foreach (var provider in _originalSettings.Providers) Providers.Add(provider);
             SelectedProviderName = _originalSettings.SelectedProvider;
             SelectedProvider = Providers.FirstOrDefault(p => p.Name == _originalSettings.SelectedProvider);
+            OcrProvider = CloneOcrProviderForEditing(_originalSettings.OcrProvider);
 
             ProxyEnabled = _originalSettings.Proxy.Enabled;
             ProxyUseSystemProxy = _originalSettings.Proxy.UseSystemProxy;
@@ -462,6 +466,7 @@ public partial class SettingsViewModel : ViewModelBase
             OcrHotkey = _ocrHotkeyConfig,
             SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
             Providers = Providers.ToList(),
+            OcrProvider = CloneOcrProviderForPersistence(OcrProvider),
             Streaming = new StreamingConfig
             {
                 Enabled = StreamingEnabled,
@@ -485,6 +490,36 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (!string.IsNullOrEmpty(value))
             SemiTheme.OverrideLocaleResources(Application.Current, new CultureInfo(value));
+    }
+
+    private ProviderConfig CloneOcrProviderForEditing(ProviderConfig provider)
+    {
+        return new ProviderConfig
+        {
+            Name = provider.Name,
+            Type = provider.Type,
+            BaseUrl = provider.BaseUrl,
+            ApiKey = string.IsNullOrEmpty(provider.ApiKey) || _encryptionService == null
+                ? provider.ApiKey
+                : _encryptionService.Decrypt(provider.ApiKey),
+            Model = provider.Model,
+            IsEnabled = provider.IsEnabled,
+            AllowManualModelInput = provider.AllowManualModelInput
+        };
+    }
+
+    private static ProviderConfig CloneOcrProviderForPersistence(ProviderConfig provider)
+    {
+        return new ProviderConfig
+        {
+            Name = provider.Name,
+            Type = provider.Type,
+            BaseUrl = provider.BaseUrl,
+            ApiKey = provider.ApiKey,
+            Model = provider.Model,
+            IsEnabled = provider.IsEnabled,
+            AllowManualModelInput = provider.AllowManualModelInput
+        };
     }
 
     /// <summary>

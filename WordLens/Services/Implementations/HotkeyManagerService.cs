@@ -73,16 +73,18 @@ public class HotkeyManagerService : IHotkeyManagerService
         // 检查翻译快捷键
         if (IsHotkeyMatch(e, _translationHotkey))
         {
+            e.SuppressEvent = true;
             _logger.ZLogInformation($"翻译热键被触发");
-            OnTranslationHotkeyTriggered();
+            _ = Task.Run(OnTranslationHotkeyTriggered);
             return;
         }
 
         // 检查 OCR 快捷键
         if (IsHotkeyMatch(e, _ocrHotkey))
         {
+            e.SuppressEvent = true;
             _logger.ZLogInformation($"OCR热键被触发");
-            OnOcrHotkeyTriggered();
+            _ = Task.Run(OnOcrHotkeyTriggered);
         }
     }
 
