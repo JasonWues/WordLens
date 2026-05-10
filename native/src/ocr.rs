@@ -173,3 +173,139 @@ fn encode_png_luma(image: &GrayImage) -> Result<Vec<u8>, String> {
 
     Ok(png)
 }
+
+#[cfg(test)]
+mod tests {
+    use image::{ImageFormat, Luma};
+
+    use super::*;
+
+    fn unwrap_preprocess_err(result: Result<ByteBuffer, String>) -> String {
+        match result {
+            Ok(buffer) => {
+                drop(buffer.into_vec());
+                panic!("expected preprocessing to fail");
+            }
+            Err(err) => err,
+        }
+    }
+
+    #[test]
+    fn preprocess_rejects_invalid_inputs() {
+        let pixels = [0_u8; 4];
+
+        assert_eq!(
+            unwrap_preprocess_err(preprocess_bgra_to_png(std::ptr::null(), 1, 1, 4)),
+            "Input pixel pointer is null"
+        );
+        assert_eq!(
+            unwrap_preprocess_err(preprocess_bgra_to_png(pixels.as_ptr(), 0, 1, 4)),
+            "Input image width and height must be greater than zero"
+        );
+        assert_eq!(
+            unwrap_preprocess_err(preprocess_bgra_to_png(pixels.as_ptr(), 1, 1, 3)),
+            "Input image stride is smaller than width * 4"
+        );
+    }
+
+    #[test]
+    fn preprocess_outputs_scaled_png() {
+        let pixels = [
+            0, 0, 0, 255, 255, 255, 255, 255, 99, 99, 99, 99, 0, 0, 255, 255, 255, 0, 0, 255, 88,
+            88, 88, 88,
+        ];
+
+        let buffer = preprocess_bgra_to_png(pixels.as_ptr(), 2, 2, 12).unwrap();
+        let png = buffer.into_vec();
+        let image = image::load_from_memory_with_format(&png, ImageFormat::Png).unwrap();
+
+        assert_eq!(image.width(), 6);
+        assert_eq!(image.height(), 6);
+        assert_eq!(image.color(), image::ColorType::L8);
+    }
+
+    #[test]
+    fn bgra_to_luma_uses_stride_and_alpha_composites_over_white() {
+        let source = [
+            0, 0, 255, 255, 0, 0, 0, 128, 1, 2, 3, 4, 255, 255, 255, 255, 255, 0, 0, 255, 5, 6,
+            7, 8,
+        ];
+
+        let luma = bgra_to_luma(&source, 2, 2, 12, 8);
+
+        assert_eq!(luma, vec![76, 127, 255, 28]);
+    }
+
+    #[test]
+    fn percentile_from_histogram_handles_empty_and_ranked_values() {
+        let empty = [0_u32; 256];
+        assert_eq!(percentile_from_histogram(&empty, 0, 0.5), 0);
+
+        let mut histogram = [0_u32; 256];
+        histogram[10] = 1;
+        histogram[20] = 1;
+        histogram[30] = 1;
+        histogram[40] = 1;
+
+        assert_eq!(percentile_from_histogram(&histogram, 4, 0.0), 10);
+        assert_eq!(percentile_from_histogram(&histogram, 4, 1.0), 40);
+    }
+
+    #[test]
+    fn stretch_contrast_expands_dynamic_range() {
+        let mut buffer = [10, 20, 30, 40];
+
+        stretch_contrast(&mut buffer);
+
+        assert_eq!(buffer, [0, 85, 170, 255]);
+    }
+
+    #[test]
+    fn stretch_contrast_leaves_low_range_buffer_unchanged() {
+        let mut buffer = [100, 101, 102, 103];
+
+        stretch_contrast(&mut buffer);
+
+        assert_eq!(buffer, [100, 101, 102, 103]);
+    }
+
+    #[test]
+    fn sharpen_luma_skips_images_without_interior_pixels() {
+        let mut buffer = [10, 20, 30, 40];
+
+        sharpen_luma(&mut buffer, 2, 2);
+
+        assert_eq!(buffer, [10, 20, 30, 40]);
+    }
+
+    #[test]
+    fn sharpen_luma_enhances_center_pixel() {
+        let mut buffer = [100, 100, 100, 100, 200, 100, 100, 100, 100];
+
+        sharpen_luma(&mut buffer, 3, 3);
+
+        assert_eq!(buffer[4], 255);
+    }
+
+    #[test]
+    fn scale_for_ocr_scales_small_images_by_three() {
+        let image = GrayImage::from_pixel(10, 20, Luma([128]));
+
+        let scaled = scale_for_ocr(image);
+
+        assert_eq!(scaled.width(), 30);
+        assert_eq!(scaled.height(), 60);
+    }
+
+    #[test]
+    fn encode_png_luma_writes_valid_png() {
+        let image = GrayImage::from_pixel(2, 1, Luma([200]));
+
+        let png = encode_png_luma(&image).unwrap();
+        let decoded = image::load_from_memory_with_format(&png, ImageFormat::Png).unwrap();
+
+        assert_eq!(decoded.width(), 2);
+        assert_eq!(decoded.height(), 1);
+        assert_eq!(decoded.color(), image::ColorType::L8);
+    }
+}

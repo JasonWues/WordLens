@@ -5,7 +5,7 @@
         x:DataType="vm:ScreenCaptureViewModel"
         WindowState="Maximized"
         WindowStartupLocation="Manual"
-        SystemDecorations="None"
+        WindowDecorations="None"
         Background="#80000000"
         Topmost="True"
         ShowInTaskbar="False"

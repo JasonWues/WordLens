@@ -132,7 +132,7 @@
                     
                     <TextBox Grid.Column="1"
                              Text="{Binding SearchKeyword}"
-                             Watermark="搜索源文本..."
+                             PlaceholderText="搜索源文本..."
                              BorderThickness="0"
                              Background="Transparent"
                              VerticalAlignment="Center" />

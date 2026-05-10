@@ -42,3 +42,42 @@ pub(crate) fn get_last_native_error() -> *mut c_char {
 
     string_to_c_ptr(message)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::CStr;
+
+    use super::*;
+
+    fn ptr_to_string(ptr: *mut c_char) -> String {
+        let text = unsafe { CStr::from_ptr(ptr) }
+            .to_string_lossy()
+            .into_owned();
+        free_c_string(ptr);
+        text
+    }
+
+    #[test]
+    fn string_to_c_ptr_removes_interior_nul_bytes() {
+        let ptr = string_to_c_ptr("ab\0cd".to_string());
+
+        assert!(!ptr.is_null());
+        assert_eq!(ptr_to_string(ptr), "abcd");
+    }
+
+    #[test]
+    fn last_error_can_be_set_read_and_cleared() {
+        set_last_error("native failure");
+
+        assert_eq!(ptr_to_string(get_last_native_error()), "native failure");
+
+        clear_last_error();
+
+        assert_eq!(ptr_to_string(get_last_native_error()), "");
+    }
+
+    #[test]
+    fn free_c_string_accepts_null() {
+        free_c_string(std::ptr::null_mut());
+    }
+}

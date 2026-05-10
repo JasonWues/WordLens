@@ -216,14 +216,14 @@
                                 <Separator />
 
                                 <TextBlock Text="名称" />
-                                <TextBox Text="{Binding SelectedProvider.Name}" Watermark="翻译源名称" />
+                                <TextBox Text="{Binding SelectedProvider.Name}" PlaceholderText="翻译源名称" />
 
                                 <TextBlock Text="Base URL" />
-                                <TextBox Text="{Binding SelectedProvider.BaseUrl}" Watermark="https://api.openai.com" />
+                                <TextBox Text="{Binding SelectedProvider.BaseUrl}" PlaceholderText="https://api.openai.com" />
 
                                 <TextBlock Text="API Key" />
                                 <TextBox Text="{Binding SelectedProvider.ApiKey}"
-                                         Watermark="输入 API Key"
+                                         PlaceholderText="输入 API Key"
                                          PasswordChar="●" />
 
                                 <TextBlock Text="Model" />
@@ -399,7 +399,7 @@
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="代理地址" FontWeight="Bold" />
                                     <TextBox Text="{Binding ProxyAddress}"
-                                             Watermark="http://127.0.0.1" />
+                                             PlaceholderText="http://127.0.0.1" />
                                     <TextBlock Text="HTTP 代理服务器地址"
                                                FontSize="12"
                                                Opacity="0.6" />
@@ -425,14 +425,14 @@
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="用户名" FontWeight="Bold" />
                                         <TextBox Text="{Binding ProxyUsername}"
-                                                 Watermark="代理用户名" />
+                                                 PlaceholderText="代理用户名" />
                                     </StackPanel>
 
                                     <!-- 密码 -->
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="密码" FontWeight="Bold" />
                                         <TextBox Text="{Binding ProxyPassword}"
-                                                 Watermark="代理密码"
+                                                 PlaceholderText="代理密码"
                                                  PasswordChar="●" />
                                     </StackPanel>
                                 </StackPanel>

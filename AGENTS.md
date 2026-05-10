@@ -2,31 +2,44 @@
 
 ## Project Structure & Module Organization
 
-WordLens is an Avalonia desktop app backed by a Rust native library. The main C# project lives in `WordLens/`: UI in `Views/*.axaml`, view models in `ViewModels/`, models in `Models/`, services in `Services/`, converters in `Converter/`, and embedded resources in `Assets/`. The Rust helper crate is in `native/` and builds a `cdylib` consumed by the app. CI configuration is under `.github/workflows/`. There are no dedicated test projects yet.
+WordLens is a desktop translation app built with Avalonia UI and a Rust native helper library. The solution entry is `WordLens.slnx`.
+
+- `WordLens/` contains the .NET 10 Avalonia application.
+- `WordLens/Views/` stores `.axaml` views and code-behind files.
+- `WordLens/ViewModels/` contains MVVM state and commands.
+- `WordLens/Models/`, `Services/`, `Messages/`, `Converter/`, `Util/`, and `Native/` hold domain models, service interfaces/implementations, messaging types, converters, helpers, and C# native bindings.
+- `WordLens/Assets/` contains Avalonia resources such as icons.
+- `native/` is the Rust `cdylib` crate for screenshot, selection, and OCR preprocessing.
+- `.github/workflows/main.yml` defines CI checks and platform builds.
+
+There is no dedicated test project yet. Add one as `WordLens.Tests/` when introducing testable behavior.
 
 ## Build, Test, and Development Commands
 
-- `dotnet build` builds the Avalonia app and automatically runs `cargo build` for `native/` through the MSBuild `BuildRust` target.
+- `dotnet build` builds the app and automatically runs `cargo build` for `native/`.
 - `dotnet run --project WordLens` runs the desktop app locally.
-- `dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64` creates a Windows release build; CI also uses `linux-x64`, `osx-x64`, and `osx-arm64`.
-- `cargo build` from `native/` builds only the Rust library.
+- `dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64` publishes Windows x64.
+- `cd native; cargo build` builds only the Rust library.
+- `cd native; cargo fmt --all -- --check` checks Rust formatting.
+- `cd native; cargo clippy -- -D warnings` runs Rust lint checks.
+- `dotnet format --verify-no-changes --verbosity diagnostic` checks C# formatting.
+
+After adding tests, run `dotnet test`.
 
 ## Coding Style & Naming Conventions
 
-Use C# nullable annotations and the existing MVVM pattern. Keep UI composition in `.axaml` views, state and commands in `*ViewModel.cs`, and external behavior behind service interfaces. Prefer CommunityToolkit.Mvvm attributes for observable properties and commands. Avalonia files use `.axaml`, compiled bindings, and `x:DataType`; avoid WPF-only APIs such as `DependencyProperty`, `Visibility`, and `pack://` resources. Use four-space indentation for C# and `cargo fmt` for Rust.
+Use nullable-aware C# with 4-space indentation. Name Avalonia views `*View.axaml` or `*WindowView.axaml`, with matching `.axaml.cs` files. Name view models `*ViewModel` and derive them from `ViewModelBase`. Prefer `[ObservableProperty]` and `[RelayCommand]` for MVVM boilerplate. Use compiled bindings with `x:DataType` in AXAML.
+
+Rust uses edition 2024 and `cargo fmt`. Keep FFI-facing behavior small and isolated under `native/src/`.
 
 ## Testing Guidelines
 
-No automated test suite is currently checked in. Before submitting changes, run `dotnet build` and, for Rust changes, `cargo test` from `native/` if tests are added. Name future C# test projects with a `.Tests` suffix, for example `WordLens.Tests` with `SettingsServiceTests`.
-
-## Formatting and Quality Checks
-
-CI runs `dotnet format --verify-no-changes --verbosity diagnostic`, `cargo fmt --all -- --check`, and `cargo clippy -- -D warnings`. Run relevant checks locally before opening a pull request.
+No coverage threshold is enforced. For .NET, prefer focused unit tests around services, models, converters, and view-model command behavior. Name test files after the subject, for example `SettingsServiceTests.cs`. For Rust, add unit tests near the relevant module and run `cargo test` from `native/`.
 
 ## Commit & Pull Request Guidelines
 
-Recent history mixes Conventional Commit style (`refactor(window): ...`) with short imperative messages in English and Chinese. Prefer `type(scope): summary`, such as `fix(settings): encrypt imported api keys`. Pull requests should describe the change, list verification commands, link issues, and include screenshots for UI changes.
+Recent commits use short Chinese summaries, for example `更新readme` and `完善翻译历史`. Keep subjects concise and action-oriented. Pull requests should include a description, affected areas, verification steps, linked issues when applicable, and screenshots or recordings for UI changes. Mention Windows, Linux, or macOS testing when relevant.
 
 ## Security & Configuration Tips
 
-Do not commit API keys, proxy credentials, logs, publish output, or local IDE settings. Runtime settings are stored in user profile locations such as `%APPDATA%/WordLens/settings.json` on Windows, and logs are written outside the repository.
+Do not commit API keys, proxy credentials, local settings, `bin/`, `obj/`, `native/target/`, or publish outputs. Keep secrets in local configuration and avoid logging sensitive request data.
