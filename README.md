@@ -1,332 +1,415 @@
-# WordLens - 智能划词翻译工具
+# WordLens
 
-WordLens 是一个基于 Avalonia UI 开发的跨平台划词翻译工具，支持多翻译源并行请求、OCR识别（预留）以及详细的日志记录功能。
+WordLens is a cross-platform desktop translation tool built with Avalonia UI and a Rust native helper library.
 
-## ✨ 主要特性
+WordLens 是一个基于 Avalonia UI 和 Rust 原生辅助库构建的跨平台桌面翻译工具。
 
-### 🚀 核心功能
-- **快捷键翻译**：通过自定义快捷键快速翻译选中的文本
-- **多翻译源支持**：可配置多个翻译API，并行请求获得更全面的翻译结果
-- **OCR热键**：预留OCR功能接口，支持未来扩展图像文字识别
-- **智能翻译窗口**：美观的翻译结果展示，支持垂直列表显示多个翻译源结果
+## 中文说明
 
-### 🛠️ 高级特性
-- **翻译源管理**：
-  - 添加、删除、排序翻译源
-  - 独立启用/禁用每个翻译源
-  - 自定义API配置（BaseURL、API Key、Model）
-- **代理支持**：HTTP代理配置，支持带认证的代理
-- **结构化日志**：使用 ZLogger 记录所有关键操作和异常
-- **MVVM架构**：清晰的代码结构，易于维护和扩展
+### 项目简介
 
-## 📦 安装要求
+WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以通过全局快捷键翻译当前选中的文本，也可以通过 OCR 快捷键框选屏幕区域，识别图片中的文字后再翻译。
 
-- .NET 10.0 或更高版本
-- Windows 11 / macOS / Linux
+当前项目包含：
 
-## 🚀 快速开始
+- 划词翻译
+- 区域截图 OCR
+- OCR 结果确认窗口
+- 多翻译源并行请求
+- 流式翻译输出
+- 翻译历史记录
+- HTTP 代理配置
+- Rust 原生截图、选中文本获取和 OCR 图片预处理
+- 日志记录
 
-### 1. 克隆项目
+### 主要功能
+
+#### 划词翻译
+
+在任意应用中选中文本，按下翻译快捷键后，WordLens 会读取当前选中文本并打开翻译窗口。
+
+翻译窗口支持：
+
+- 源语言和目标语言选择
+- 多翻译源结果并列显示
+- 流式输出
+- 原文复制
+- 单条译文复制
+- 窗口置顶
+- 将译文作为新的原文继续翻译
+- 交换源语言和目标语言
+
+#### OCR 翻译
+
+按下 OCR 快捷键后，WordLens 会打开屏幕区域选择遮罩。框选区域后会弹出 OCR 结果窗口：
+
+- 左侧显示截取的图片
+- 右侧显示识别到的文字
+- 可手动修正识别文本
+- 可重新识别
+- 可将识别文本发送到翻译窗口
+
+OCR 使用单独的 OpenAI 兼容接口配置，不占用翻译源列表。
+
+#### Rust OCR 预处理
+
+OCR 请求前会通过 Rust native 模块对截图做预处理：
+
+- BGRA 转灰度
+- 对比度拉伸
+- 轻量锐化
+- 小图放大
+- PNG 编码
+
+如果预处理失败，程序会自动回退到原始截图编码，不会阻断 OCR 流程。
+
+#### 多翻译源
+
+WordLens 支持配置多个 OpenAI 兼容翻译源。触发翻译时，所有已启用的翻译源会并行请求，单个翻译源失败不会影响其他翻译源。
+
+可配置项包括：
+
+- 名称
+- Base URL
+- API Key
+- 模型名称
+- 是否启用
+
+#### 翻译历史
+
+成功翻译后会写入本地历史记录。历史窗口支持：
+
+- 查看历史
+- 搜索历史
+- 删除记录
+- 清空历史
+- 收藏记录
+- 从历史记录重新翻译
+
+### 构建要求
+
+- .NET 10 SDK
+- Rust toolchain
+- Windows / macOS / Linux
+
+项目构建时会通过 MSBuild 自动执行 `cargo build`，并把 native 动态库复制到输出目录。
+
+### 构建和运行
 
 ```bash
-git clone <repository-url>
-cd WordLens
-```
-
-### 2. 构建项目
-
-```bash
-# 构建项目（包含 Rust 原生库）
 dotnet build
-
-# 或发布为独立应用
-dotnet publish -c Release
-```
-
-### 3. 运行
-
-```bash
 dotnet run --project WordLens
 ```
 
-## 📖 使用指南
+仅构建 Rust native 模块：
 
-### 基本使用
-
-1. **启动应用**：首次启动时会在系统托盘显示图标
-2. **设置快捷键**：
-   - 右键托盘图标 → "设置"
-   - 在"常规"标签页设置翻译快捷键（默认：Ctrl+Shift+T）
-   - 设置OCR快捷键（默认：Ctrl+Shift+W，功能预留）
-3. **配置翻译源**：
-   - 切换到"翻译源"标签页
-   - 添加或编辑翻译源配置
-   - 使用复选框启用/禁用特定翻译源
-4. **开始翻译**：
-   - 在任何应用中选中文本
-   - 按下设置的快捷键
-   - 翻译窗口会自动弹出并显示所有已启用翻译源的结果
-
-### 翻译源配置
-
-#### 支持的翻译源类型
-
-目前支持 **OpenAI 兼容接口**，可配置：
-
-- **OpenAI**：官方 API
-- **其他兼容服务**：任何提供 OpenAI 兼容接口的服务
-
-#### 配置示例
-
-```json
-{
-  "Name": "OpenAI",
-  "Type": "OpenAI",
-  "BaseUrl": "https://api.openai.com",
-  "ApiKey": "your-api-key-here",
-  "Model": "gpt-4o-mini",
-  "IsEnabled": true
-}
+```bash
+cd native
+cargo build
 ```
 
-#### 添加新翻译源
+发布 Windows 版本示例：
 
-1. 点击"翻译源"标签页
-2. 点击"添加翻译源"按钮
-3. 填写配置信息：
-   - **名称**：翻译源的显示名称
-   - **Base URL**：API 基础地址
-   - **API Key**：认证密钥
-   - **Model**：使用的模型名称
-4. 勾选"启用此翻译源"
-5. 点击"应用"保存设置
-
-### 多翻译源并行请求
-
-WordLens 支持同时使用多个翻译源：
-
-1. 配置多个翻译源并全部启用
-2. 触发翻译时，所有启用的翻译源会**并行请求**
-3. 翻译窗口会实时显示每个翻译源的结果
-4. 每个翻译源独立显示：
-   - ✓ 成功：显示翻译结果
-   - ✗ 失败：显示错误信息
-
-**优势**：
-- ⚡ 更快的响应速度（并行而非串行）
-- 📊 对比不同翻译引擎的结果
-- 🛡️ 某个翻译源失败不影响其他源
-
-### 网络代理配置
-
-如果需要通过代理访问翻译API：
-
-1. 切换到"网络代理"标签页
-2. 勾选"启用 HTTP 代理"
-3. 配置代理信息：
-   - 代理地址：如 `http://127.0.0.1`
-   - 端口：如 `8080`
-   - 如需认证，勾选"需要身份验证"并填写用户名密码
-4. 点击"应用"保存
-
-### 翻译窗口功能
-
-翻译窗口提供以下功能：
-
-- **置顶窗口**：点击按钮可切换窗口置顶状态
-- **复制原文**：快速复制选中的原始文本
-- **复制翻译**：每个翻译结果都有独立的复制按钮
-- **清空内容**：清除当前显示的内容
-- **滚动查看**：支持滚动查看多个翻译结果
-
-## 📁 配置文件
-
-配置文件位置：`%APPDATA%/WordLens/settings.json` (Windows)
-
-示例配置：
-
-```json
-{
-  "Hotkey": {
-    "Modifiers": "LeftCtrl, LeftShift",
-    "Key": "VcT"
-  },
-  "OcrHotkey": {
-    "Modifiers": "LeftCtrl, LeftShift",
-    "Key": "VcW"
-  },
-  "TargetLanguage": "zh-CN",
-  "SelectedProvider": "OpenAI",
-  "Providers": [
-    {
-      "Name": "OpenAI",
-      "Type": "OpenAI",
-      "BaseUrl": "https://api.openai.com",
-      "ApiKey": "sk-...",
-      "Model": "gpt-4o-mini",
-      "IsEnabled": true
-    },
-    {
-      "Name": "DeepSeek",
-      "Type": "OpenAI",
-      "BaseUrl": "https://api.deepseek.com",
-      "ApiKey": "sk-...",
-      "Model": "deepseek-chat",
-      "IsEnabled": true
-    }
-  ],
-  "Proxy": {
-    "Enabled": false,
-    "Address": "http://127.0.0.1",
-    "Port": 8080,
-    "UseAuthentication": false,
-    "Username": null,
-    "Password": null
-  }
-}
+```bash
+dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64
 ```
 
-## 📝 日志系统
+### 使用步骤
 
-WordLens 使用 ZLogger 记录详细的运行日志。
+1. 启动应用后，在系统托盘中找到 WordLens。
+2. 右键托盘图标，打开“设置”。
+3. 在“常规”页配置翻译快捷键和 OCR 快捷键。
+4. 在“翻译源”页配置至少一个启用的翻译源。
+5. 在“OCR”页配置 OCR 源。
+6. 在任意应用中选中文本并按翻译快捷键，或按 OCR 快捷键框选屏幕区域。
 
-### 日志位置
+### 配置和数据位置
+
+运行时配置保存在用户目录下：
+
+- Windows: `%APPDATA%/WordLens/settings.json`
+- macOS: `~/Library/Application Support/WordLens/settings.json`
+- Linux: `~/.config/WordLens/settings.json`
+
+日志目录：
 
 - Windows: `%APPDATA%/WordLens/logs/`
 - macOS: `~/Library/Application Support/WordLens/logs/`
 - Linux: `~/.config/WordLens/logs/`
 
-### 日志文件命名
+翻译历史数据库：
 
-- 格式：`wordlens-yyyy-MM-dd_index.log`
-- 示例：`wordlens-2025-01-20_0.log`
+- Windows: `%APPDATA%/WordLens/translation_history.db`
+- macOS: `~/Library/Application Support/WordLens/translation_history.db`
+- Linux: `~/.config/WordLens/translation_history.db`
 
-### 日志级别
+截图临时文件：
 
-- **Information**：正常操作日志
-- **Warning**：警告信息（如无启用的翻译源）
-- **Error**：错误信息（如API请求失败）
+- Windows: `%APPDATA%/WordLens/Screenshots/`
 
-### 日志保留策略
+### 技术架构
 
-- 按日期自动轮转
-- 单个文件最大 10MB
-- 默认保留 30 天
+#### C# / Avalonia
 
-### 查看日志
+- UI 和窗口：`WordLens/Views/`
+- ViewModel：`WordLens/ViewModels/`
+- 服务接口：`WordLens/Services/`
+- 服务实现：`WordLens/Services/Implementations/`
+- 数据模型：`WordLens/Models/`
+- Native P/Invoke wrapper：`WordLens/Native/`
 
-日志记录以下关键事件：
+#### Rust native
 
-```
-[Info] 设置服务初始化，配置文件路径: C:\Users\...\settings.json
-[Info] 翻译热键服务启动，快捷键配置: Modifiers=LeftCtrl, LeftShift, Key=VcT
-[Info] OCR热键服务启动，快捷键配置: Modifiers=LeftCtrl, LeftShift, Key=VcW
-[Info] 热键管理服务启动
-[Info] 翻译热键被触发
-[Info] 获取到选中文本，长度: 25
-[Info] 开始翻译，文本长度: 25，启用的翻译源数量: 2
-[Info] 开始使用 OpenAI 翻译
-[Info] OpenAI 翻译成功，结果长度: 23
-[Info] 开始使用 DeepSeek 翻译
-[Info] DeepSeek 翻译成功，结果长度: 25
-[Info] 翻译完成，成功: 2/2
-```
+Rust crate 位于 `native/`，当前拆分为：
 
-## 🔧 技术架构
+- `lib.rs`：FFI 导出入口
+- `buffers.rs`：FFI buffer 和内存释放
+- `error.rs`：native error 和 C string 管理
+- `selection_text.rs`：选中文本获取
+- `screenshot.rs`：跨平台截图和虚拟屏幕边界
+- `ocr.rs`：OCR 图片预处理和 PNG 编码
 
 ### 技术栈
 
-- **UI框架**：Avalonia UI 11.3.7
-- **MVVM框架**：CommunityToolkit.Mvvm 8.4.0
-- **日志框架**：ZLogger 2.5.10
-- **热键管理**：SharpHook 7.0.3
-- **HTTP客户端**：Microsoft.Extensions.Http
-- **原生模块**：Rust (用于文本选择)
+- Avalonia 12
+- CommunityToolkit.Mvvm
+- Microsoft.Extensions.DependencyInjection
+- Microsoft.Extensions.Http
+- SharpHook
+- SQLite
+- ZLogger
+- Rust `xcap`
+- Rust `selection`
+- Rust `image`
 
-### 项目结构
+### 当前限制
 
-```
-WordLens/
-├── Models/              # 数据模型
-│   ├── AppSettings.cs
-│   └── TranslationResult.cs
-├── Services/            # 服务层
-│   ├── HotkeyService.cs
-│   ├── OcrHotkeyService.cs
-│   ├── HotkeyManagerService.cs
-│   ├── TranslationServices.cs
-│   ├── SettingsService.cs
-│   └── SelectionService.cs
-├── ViewModels/          # 视图模型
-│   ├── ApplicationViewModel.cs
-│   ├── MainWindowViewModel.cs
-│   ├── SettingsViewModel.cs
-│   └── PopupWindowViewModel.cs
-├── Views/               # 视图
-│   ├── MainWindowView.axaml
-│   └── PopupWindowView.axaml
-├── Messages/            # 消息传递
-└── Util/                # 工具类
+- OCR 和翻译依赖 OpenAI 兼容接口，需要自行配置可用服务。
+- API Key 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
+- 项目目前没有独立测试项目。
+- Rust 格式化和 clippy 需要本机安装 `rustfmt` 和 `clippy` 组件。
 
-native/                  # Rust 原生模块
-├── src/
-│   └── lib.rs
-└── Cargo.toml
+### 开发建议
+
+提交前建议运行：
+
+```bash
+dotnet build
+dotnet format --verify-no-changes --verbosity diagnostic
+cd native
+cargo build
+cargo fmt --all -- --check
+cargo clippy -- -D warnings
 ```
 
-### 核心流程
+如果本机没有安装 Rust 格式化或 clippy 组件，可通过 rustup 安装：
 
-1. **热键触发** → `HotkeyService` 检测快捷键
-2. **文本获取** → `SelectionService` 获取选中文本
-3. **消息发送** → `ShowPopupMessage` 通知应用
-4. **并行翻译** → `TranslationService` 并行请求所有已启用翻译源
-5. **结果显示** → `PopupWindowView` 显示多个翻译结果
+```bash
+rustup component add rustfmt clippy
+```
 
-## 🔮 未来计划
+## English
 
-### 即将推出
-- [ ] OCR 功能实现（Tesseract/PaddleOCR）
-- [ ] 更多翻译源支持（Google、DeepL、百度）
-- [ ] 翻译历史记录
-- [ ] 自定义翻译规则
-- [ ] 主题定制
+### Overview
 
-### 长期规划
-- [ ] 浏览器扩展
-- [ ] 移动端支持
-- [ ] 离线翻译
-- [ ] AI 辅助翻译优化
+WordLens is a desktop translation tool for reading, writing, and working with multilingual content. It can translate selected text through a global hotkey, and it can also capture a screen region, run OCR, let you review the recognized text, and send it to the translation window.
 
-## 🤝 贡献
+Current features include:
 
-欢迎提交 Issue 和 Pull Request！
+- Selected-text translation
+- Region screenshot OCR
+- OCR result review window
+- Parallel translation with multiple providers
+- Streaming translation output
+- Translation history
+- HTTP proxy support
+- Rust native screenshot, selected-text extraction, and OCR image preprocessing
+- Structured logging
 
-### 开发指南
+### Selected-Text Translation
 
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+Select text in any application and press the translation hotkey. WordLens reads the selected text and opens the translation window.
 
-## 📄 许可证
+The translation window supports:
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+- Source and target language selection
+- Multiple provider results
+- Streaming output
+- Copy source text
+- Copy individual translations
+- Always-on-top mode
+- Use a translation as the new source text
+- Swap source and target languages
 
-## 🙏 致谢
+### OCR Translation
 
-- [Avalonia UI](https://avaloniaui.net/) - 跨平台UI框架
-- [SharpHook](https://github.com/TolikPylypchuk/SharpHook) - 全局热键管理
-- [ZLogger](https://github.com/Cysharp/ZLogger) - 高性能日志框架
+Press the OCR hotkey to open the screen capture overlay. After selecting a region, WordLens opens an OCR result window:
 
-## 📧 联系方式
+- The captured image is shown on the left
+- Recognized text is shown on the right
+- Recognized text can be edited before translation
+- OCR can be run again on the same image
+- The recognized text can be sent to the translation window
 
-如有问题或建议，欢迎通过以下方式联系：
+OCR uses a separate OpenAI-compatible provider configuration and does not consume entries from the translation provider list.
 
-- 提交 Issue
-- 发送邮件
-- 加入讨论组
+### Rust OCR Preprocessing
 
----
+Before sending an image to OCR, WordLens preprocesses it in the Rust native module:
 
-**WordLens** - 让翻译更简单、更智能 🌍✨
+- BGRA to grayscale conversion
+- Contrast stretching
+- Light sharpening
+- Upscaling for small images
+- PNG encoding
+
+If preprocessing fails, WordLens falls back to the original screenshot encoding so OCR remains usable.
+
+### Multiple Translation Providers
+
+WordLens supports multiple OpenAI-compatible translation providers. When translation starts, all enabled providers are requested in parallel. A failure in one provider does not block the others.
+
+Provider configuration includes:
+
+- Name
+- Base URL
+- API key
+- Model name
+- Enabled state
+
+### Translation History
+
+Successful translations are saved locally. The history window supports:
+
+- Browsing history
+- Searching history
+- Deleting entries
+- Clearing all entries
+- Favorites
+- Translating again from history
+
+### Requirements
+
+- .NET 10 SDK
+- Rust toolchain
+- Windows / macOS / Linux
+
+The C# project automatically runs `cargo build` through MSBuild and copies the native dynamic library to the output directory.
+
+### Build and Run
+
+```bash
+dotnet build
+dotnet run --project WordLens
+```
+
+Build only the Rust native module:
+
+```bash
+cd native
+cargo build
+```
+
+Publish example for Windows:
+
+```bash
+dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64
+```
+
+### Usage
+
+1. Start WordLens and find it in the system tray.
+2. Right-click the tray icon and open Settings.
+3. Configure the translation hotkey and OCR hotkey in the General tab.
+4. Configure at least one enabled translation provider in the Providers tab.
+5. Configure the OCR provider in the OCR tab.
+6. Select text in any app and press the translation hotkey, or press the OCR hotkey and select a screen region.
+
+### Config and Data Locations
+
+Settings:
+
+- Windows: `%APPDATA%/WordLens/settings.json`
+- macOS: `~/Library/Application Support/WordLens/settings.json`
+- Linux: `~/.config/WordLens/settings.json`
+
+Logs:
+
+- Windows: `%APPDATA%/WordLens/logs/`
+- macOS: `~/Library/Application Support/WordLens/logs/`
+- Linux: `~/.config/WordLens/logs/`
+
+Translation history database:
+
+- Windows: `%APPDATA%/WordLens/translation_history.db`
+- macOS: `~/Library/Application Support/WordLens/translation_history.db`
+- Linux: `~/.config/WordLens/translation_history.db`
+
+Temporary screenshots:
+
+- Windows: `%APPDATA%/WordLens/Screenshots/`
+
+### Architecture
+
+#### C# / Avalonia
+
+- UI and windows: `WordLens/Views/`
+- ViewModels: `WordLens/ViewModels/`
+- Service interfaces: `WordLens/Services/`
+- Service implementations: `WordLens/Services/Implementations/`
+- Models: `WordLens/Models/`
+- Native P/Invoke wrappers: `WordLens/Native/`
+
+#### Rust Native Module
+
+The Rust crate lives in `native/` and is split into:
+
+- `lib.rs`: FFI export layer
+- `buffers.rs`: FFI buffers and memory release
+- `error.rs`: native error and C string management
+- `selection_text.rs`: selected-text extraction
+- `screenshot.rs`: cross-platform screenshots and virtual screen bounds
+- `ocr.rs`: OCR image preprocessing and PNG encoding
+
+### Tech Stack
+
+- Avalonia 12
+- CommunityToolkit.Mvvm
+- Microsoft.Extensions.DependencyInjection
+- Microsoft.Extensions.Http
+- SharpHook
+- SQLite
+- ZLogger
+- Rust `xcap`
+- Rust `selection`
+- Rust `image`
+
+### Current Limitations
+
+- OCR and translation depend on OpenAI-compatible APIs. You need to configure your own available services.
+- API keys are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
+- There is no dedicated test project yet.
+- Rust formatting and clippy checks require the `rustfmt` and `clippy` components.
+
+### Development Checks
+
+Recommended checks before submitting changes:
+
+```bash
+dotnet build
+dotnet format --verify-no-changes --verbosity diagnostic
+cd native
+cargo build
+cargo fmt --all -- --check
+cargo clippy -- -D warnings
+```
+
+Install Rust formatting and clippy components if needed:
+
+```bash
+rustup component add rustfmt clippy
+```
+
+## License
+
+MIT License. See `LICENSE` if present in this repository.
