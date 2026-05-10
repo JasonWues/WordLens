@@ -35,14 +35,17 @@ public interface IModelProviderService
 /// </summary>
 public class OpenAIModelProviderService : IModelProviderService
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ILogger<OpenAIModelProviderService> _logger;
+    private readonly ISettingsService _settingsService;
 
     public OpenAIModelProviderService(
-        IHttpClientFactory httpClientFactory,
+        IProxyAwareHttpClientFactory httpClientFactory,
+        ISettingsService settingsService,
         ILogger<OpenAIModelProviderService> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _settingsService = settingsService;
         _logger = logger;
     }
 
@@ -68,7 +71,8 @@ public class OpenAIModelProviderService : IModelProviderService
         {
             _logger.ZLogInformation($"开始获取模型列表，BaseUrl: {baseUrl}");
 
-            using var httpClient = _httpClientFactory.CreateClient();
+            var settings = await _settingsService.LoadAsync();
+            using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
 
             // 配置HTTP客户端
             httpClient.BaseAddress = new Uri(baseUrl);

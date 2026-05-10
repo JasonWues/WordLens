@@ -30,7 +30,8 @@ public class AppSettings
         ApiKey = null,
         Model = "gpt-4o-mini",
         Type = ProviderType.OpenAI,
-        IsEnabled = true
+        IsEnabled = true,
+        RequestArguments = string.Empty
     };
 
     public ProxyConfig Proxy { get; set; } = new();
@@ -48,7 +49,8 @@ public class AppSettings
             BaseUrl = "https://api.openai.com",
             ApiKey = null,
             Model = "gpt-4o-mini",
-            Type = ProviderType.OpenAI
+            Type = ProviderType.OpenAI,
+            RequestArguments = string.Empty
         }
     };
 }
@@ -86,6 +88,11 @@ public class ProviderConfig
 
     public string Model { get; set; } = string.Empty;
     public bool IsEnabled { get; set; } = true; // 默认启用
+
+    /// <summary>
+    ///     附加到 LLM 请求体的 JSON 对象参数，例如 {"temperature":0.2}
+    /// </summary>
+    public string RequestArguments { get; set; } = string.Empty;
 
     /// <summary>
     ///     是否允许手动输入模型名称（兼容模式）

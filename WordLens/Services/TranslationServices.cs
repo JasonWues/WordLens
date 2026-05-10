@@ -42,13 +42,13 @@ public interface ITranslationProvider
 public class TranslationService
 {
     private readonly IEncryptionService _encryptionService;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TranslationService> _logger;
+    private readonly IProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ISettingsService _settings;
 
     public TranslationService(
         ISettingsService settings,
-        IHttpClientFactory httpClientFactory,
+        IProxyAwareHttpClientFactory httpClientFactory,
         IEncryptionService encryptionService,
         ILogger<TranslationService> logger)
     {

@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using WordLens.Models;
+using WordLens.Services.Implementations;
 
 namespace WordLens.Services.Implementations.Translation;
 
@@ -36,6 +37,7 @@ public class OpenAITranslationProvider : ITranslationProvider
         var payload = new ChatCompletionRequest
         {
             Model = _config.Model,
+            ExtensionData = OpenAIRequestArguments.Parse(_config.RequestArguments, "model", "messages", "stream"),
             Messages = new List<ChatMessage>
             {
                 new()
@@ -88,6 +90,7 @@ public class OpenAITranslationProvider : ITranslationProvider
         {
             Model = _config.Model,
             Stream = true, // 启用流式输出
+            ExtensionData = OpenAIRequestArguments.Parse(_config.RequestArguments, "model", "messages", "stream"),
             Messages = new List<ChatMessage>
             {
                 new()

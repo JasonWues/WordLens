@@ -288,6 +288,17 @@
                                                    Opacity="0.6" />
                                     </StackPanel>
                                 </Border>
+
+                                <TextBlock Text="Request Arguments" />
+                                <TextBox Text="{Binding SelectedProvider.RequestArguments}"
+                                         PlaceholderText="{}{&quot;temperature&quot;:0.2,&quot;max_tokens&quot;:1000}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80" />
+                                <TextBlock Text="填写 JSON 对象，会附加到 /v1/chat/completions 请求体；model、messages、stream 由应用管理。"
+                                           FontSize="11"
+                                           Opacity="0.6"
+                                           TextWrapping="Wrap" />
                                 
                             </StackPanel>
                         </ScrollViewer>
@@ -339,6 +350,19 @@
                                 <TextBox Text="{Binding OcrProvider.Model}"
                                          PlaceholderText="gpt-4o-mini" />
                                 <TextBlock Text="请选择支持图片输入的 OpenAI 兼容模型。"
+                                           FontSize="12"
+                                           Opacity="0.6"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Request Arguments" FontWeight="Bold" />
+                                <TextBox Text="{Binding OcrProvider.RequestArguments}"
+                                         PlaceholderText="{}{&quot;temperature&quot;:0.2,&quot;max_tokens&quot;:1000}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="90" />
+                                <TextBlock Text="填写 JSON 对象，会附加到 OCR 的 /v1/chat/completions 请求体；model、messages 由应用管理。"
                                            FontSize="12"
                                            Opacity="0.6"
                                            TextWrapping="Wrap" />

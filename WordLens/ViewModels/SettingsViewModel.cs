@@ -241,7 +241,7 @@ public partial class SettingsViewModel : ViewModelBase
             ProxyUsername = _originalSettings.Proxy.Username;
             ProxyPassword = _originalSettings.Proxy.Password;
         }
-        
+
         WeakReferenceMessenger.Default.Send(new CloseWindowMessage());
 
     }
@@ -334,7 +334,8 @@ public partial class SettingsViewModel : ViewModelBase
             Name = $"新翻译源 {Providers.Count + 1}",
             Type = ProviderType.OpenAI,
             BaseUrl = "https://api.openai.com",
-            Model = "gpt-4o-mini"
+            Model = "gpt-4o-mini",
+            RequestArguments = string.Empty
         };
         Providers.Add(newProvider);
         SelectedProvider = newProvider;
@@ -412,7 +413,7 @@ public partial class SettingsViewModel : ViewModelBase
                 models.Insert(0, new ModelInfo { Id = provider.Model, OwnedBy = "custom" });
                 _logger?.ZLogInformation($"当前模型 {provider.Model} 不在列表中，已添加");
             }
-            
+
             provider.AvailableModels ??= new ObservableCollection<ModelInfo>();
             provider.AvailableModels.Clear();
             foreach (var modelInfo in models)
@@ -499,6 +500,7 @@ public partial class SettingsViewModel : ViewModelBase
                 : _encryptionService.Decrypt(provider.ApiKey),
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
+            RequestArguments = provider.RequestArguments,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }
@@ -513,6 +515,7 @@ public partial class SettingsViewModel : ViewModelBase
             ApiKey = provider.ApiKey,
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
+            RequestArguments = provider.RequestArguments,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }
@@ -527,6 +530,7 @@ public partial class SettingsViewModel : ViewModelBase
             ApiKey = provider.ApiKey,
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
+            RequestArguments = provider.RequestArguments,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }

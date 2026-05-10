@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace WordLens.Models;
@@ -6,25 +7,28 @@ namespace WordLens.Models;
 public class ChatCompletionRequest
 {
     [JsonPropertyName("model")]
-    public string Model { get; set; }
+    public string Model { get; set; } = string.Empty;
 
     [JsonPropertyName("messages")]
-    public IList<ChatMessage> Messages { get; set; }
+    public IList<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
 
     /// <summary>
     ///     是否启用流式输出
     /// </summary>
     [JsonPropertyName("stream")]
     public bool Stream { get; set; } = false;
+
+    [JsonExtensionData]
+    public IDictionary<string, JsonElement>? ExtensionData { get; set; }
 }
 
 public class ChatMessage
 {
     [JsonPropertyName("role")]
-    public string Role { get; set; }
+    public string Role { get; set; } = string.Empty;
 
     [JsonPropertyName("content")]
-    public string Content { get; set; }
+    public string Content { get; set; } = string.Empty;
 }
 
 public class OcrChatCompletionRequest
@@ -36,7 +40,11 @@ public class OcrChatCompletionRequest
     public IList<OcrChatMessage> Messages { get; set; } = new List<OcrChatMessage>();
 
     [JsonPropertyName("max_tokens")]
-    public int MaxTokens { get; set; } = 2000;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? MaxTokens { get; set; } = 2000;
+
+    [JsonExtensionData]
+    public IDictionary<string, JsonElement>? ExtensionData { get; set; }
 }
 
 public class OcrChatMessage

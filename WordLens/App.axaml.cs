@@ -82,6 +82,7 @@ public class App : Application
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IProxyAwareHttpClientFactory, ProxyAwareHttpClientFactory>();
         services.AddSingleton<IOcrService, OpenAIOcrService>();
         services.AddSingleton<TranslationService>();
         services.AddSingleton<ISelectionService, SelectionService>();

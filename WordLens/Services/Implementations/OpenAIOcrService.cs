@@ -17,13 +17,13 @@ namespace WordLens.Services.Implementations;
 public class OpenAIOcrService : IOcrService
 {
     private readonly IEncryptionService _encryptionService;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<OpenAIOcrService> _logger;
+    private readonly IProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ISettingsService _settingsService;
 
     public OpenAIOcrService(
         ISettingsService settingsService,
-        IHttpClientFactory httpClientFactory,
+        IProxyAwareHttpClientFactory httpClientFactory,
         IEncryptionService encryptionService,
         ILogger<OpenAIOcrService> logger)
     {
@@ -59,9 +59,12 @@ public class OpenAIOcrService : IOcrService
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         var imageDataUrl = CreateOcrPngDataUrl(bitmap);
+        var requestArguments = OpenAIRequestArguments.Parse(provider.RequestArguments, "model", "messages");
         var request = new OcrChatCompletionRequest
         {
             Model = provider.Model,
+            MaxTokens = requestArguments?.ContainsKey("max_tokens") == true ? null : 2000,
+            ExtensionData = requestArguments,
             Messages = new List<OcrChatMessage>
             {
                 new()
