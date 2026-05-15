@@ -53,42 +53,6 @@ impl VirtualScreenBounds {
     }
 }
 
-#[repr(C)]
-pub struct ByteBuffer {
-    data: *mut u8,
-    len: usize,
-    capacity: usize,
-}
-
-impl ByteBuffer {
-    pub(crate) fn empty() -> Self {
-        Self {
-            data: std::ptr::null_mut(),
-            len: 0,
-            capacity: 0,
-        }
-    }
-
-    pub(crate) fn from_vec(mut bytes: Vec<u8>) -> Self {
-        let buffer = Self {
-            data: bytes.as_mut_ptr(),
-            len: bytes.len(),
-            capacity: bytes.capacity(),
-        };
-        std::mem::forget(bytes);
-        buffer
-    }
-
-    #[cfg(test)]
-    pub(crate) fn into_vec(self) -> Vec<u8> {
-        if self.data.is_null() {
-            return Vec::new();
-        }
-
-        unsafe { Vec::from_raw_parts(self.data, self.len, self.capacity) }
-    }
-}
-
 pub(crate) fn free_byte_allocation(data: *mut u8, len: usize, capacity: usize) {
     if data.is_null() {
         return;
@@ -102,28 +66,6 @@ pub(crate) fn free_byte_allocation(data: *mut u8, len: usize, capacity: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn byte_buffer_empty_has_null_data_and_zero_sizes() {
-        let buffer = ByteBuffer::empty();
-
-        assert!(buffer.data.is_null());
-        assert_eq!(buffer.len, 0);
-        assert_eq!(buffer.capacity, 0);
-    }
-
-    #[test]
-    fn byte_buffer_from_vec_transfers_allocation() {
-        let original = vec![1, 2, 3, 4];
-        let buffer = ByteBuffer::from_vec(original);
-
-        assert!(!buffer.data.is_null());
-        assert_eq!(buffer.len, 4);
-        assert!(buffer.capacity >= buffer.len);
-
-        let restored = unsafe { Vec::from_raw_parts(buffer.data, buffer.len, buffer.capacity) };
-        assert_eq!(restored, vec![1, 2, 3, 4]);
-    }
 
     #[test]
     fn screenshot_buffer_from_vec_records_image_metadata() {

@@ -1,10 +1,9 @@
 mod buffers;
 mod error;
-mod ocr;
 mod screenshot;
 mod selection_text;
 
-use buffers::{ByteBuffer, ScreenshotBuffer, VirtualScreenBounds};
+use buffers::{ScreenshotBuffer, VirtualScreenBounds};
 use error::{clear_last_error, set_last_error};
 
 #[unsafe(no_mangle)]
@@ -61,47 +60,6 @@ pub extern "C" fn capture_screen_region(
 #[unsafe(no_mangle)]
 pub extern "C" fn free_screenshot_buffer(data: *mut u8, len: usize, capacity: usize) {
     buffers::free_byte_allocation(data, len, capacity);
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn free_byte_buffer(data: *mut u8, len: usize, capacity: usize) {
-    buffers::free_byte_allocation(data, len, capacity);
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn preprocess_ocr_bgra_to_png(
-    pixels: *const u8,
-    width: u32,
-    height: u32,
-    stride: u32,
-    out_buffer: *mut ByteBuffer,
-) -> i32 {
-    if out_buffer.is_null() {
-        set_last_error("Output byte buffer pointer is null");
-        return -1;
-    }
-
-    unsafe {
-        *out_buffer = ByteBuffer::empty();
-    }
-
-    match std::panic::catch_unwind(|| ocr::preprocess_bgra_to_png(pixels, width, height, stride)) {
-        Ok(Ok(buffer)) => {
-            unsafe {
-                *out_buffer = buffer;
-            }
-            clear_last_error();
-            0
-        }
-        Ok(Err(err)) => {
-            set_last_error(err);
-            -2
-        }
-        Err(_) => {
-            set_last_error("OCR image preprocessing panicked");
-            -3
-        }
-    }
 }
 
 #[unsafe(no_mangle)]

@@ -53,6 +53,7 @@ public class SettingsService : ISettingsService
                 return new AppSettings();
             }
 
+
             // 自动迁移：检查并加密未加密的API Key
             var needsSave = false;
             foreach (var provider in settings.Providers)

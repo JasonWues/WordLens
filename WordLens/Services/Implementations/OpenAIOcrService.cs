@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.Logging;
 using WordLens.Models;
-using WordLens.Native;
 using ZLogger;
 
 namespace WordLens.Services.Implementations;
@@ -139,7 +138,7 @@ public class OpenAIOcrService : IOcrService
         try
         {
             using var framebuffer = bitmap.Lock();
-            var png = OcrImageNative.PreprocessBgraToPng(
+            var png = OcrImageProcessor.PreprocessBgraToPng(
                 framebuffer.Address,
                 bitmap.PixelSize.Width,
                 bitmap.PixelSize.Height,

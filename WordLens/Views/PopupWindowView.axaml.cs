@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using WordLens.Models;
 using WordLens.ViewModels;
 
 namespace WordLens.Views;
@@ -34,6 +35,12 @@ public partial class PopupWindowView : Window
             BeginMoveDrag(e);
     }
 
+    private void ResizeGrip_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginResizeDrag(WindowEdge.SouthEast, e);
+    }
+
     private void Minimize_Click(object? sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
@@ -52,6 +59,15 @@ public partial class PopupWindowView : Window
     private async void CopyTranslation_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string text } button) await CopyToClipboardAsync(text);
+    }
+
+    private void RemoveTranslation_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: TranslationResult result } &&
+            DataContext is PopupWindowViewModel vm)
+        {
+            vm.TranslationResults.Remove(result);
+        }
     }
 
     private async Task CopyToClipboardAsync(string? text)

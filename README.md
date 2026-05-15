@@ -19,7 +19,8 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 流式翻译输出
 - 翻译历史记录
 - HTTP 代理配置
-- Rust 原生截图、选中文本获取和 OCR 图片预处理
+- Rust 原生截图和选中文本获取
+- SkiaSharp OCR 图片预处理
 - 日志记录
 
 ### 主要功能
@@ -51,9 +52,9 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 
 OCR 使用单独的 OpenAI 兼容接口配置，不占用翻译源列表。
 
-#### Rust OCR 预处理
+#### SkiaSharp OCR 预处理
 
-OCR 请求前会通过 Rust native 模块对截图做预处理：
+OCR 请求前会通过 C# SkiaSharp 对截图做预处理：
 
 - BGRA 转灰度
 - 对比度拉伸
@@ -167,7 +168,6 @@ Rust crate 位于 `native/`，当前拆分为：
 - `error.rs`：native error 和 C string 管理
 - `selection_text.rs`：选中文本获取
 - `screenshot.rs`：跨平台截图和虚拟屏幕边界
-- `ocr.rs`：OCR 图片预处理和 PNG 编码
 
 ### 技术栈
 
@@ -178,6 +178,7 @@ Rust crate 位于 `native/`，当前拆分为：
 - SharpHook
 - SQLite
 - ZLogger
+- SkiaSharp
 - Rust `xcap`
 - Rust `selection`
 - Rust `image`
@@ -223,7 +224,8 @@ Current features include:
 - Streaming translation output
 - Translation history
 - HTTP proxy support
-- Rust native screenshot, selected-text extraction, and OCR image preprocessing
+- Rust native screenshot and selected-text extraction
+- SkiaSharp OCR image preprocessing
 - Structured logging
 
 ### Selected-Text Translation
@@ -253,9 +255,9 @@ Press the OCR hotkey to open the screen capture overlay. After selecting a regio
 
 OCR uses a separate OpenAI-compatible provider configuration and does not consume entries from the translation provider list.
 
-### Rust OCR Preprocessing
+### SkiaSharp OCR Preprocessing
 
-Before sending an image to OCR, WordLens preprocesses it in the Rust native module:
+Before sending an image to OCR, WordLens preprocesses it with C# SkiaSharp:
 
 - BGRA to grayscale conversion
 - Contrast stretching
@@ -369,7 +371,6 @@ The Rust crate lives in `native/` and is split into:
 - `error.rs`: native error and C string management
 - `selection_text.rs`: selected-text extraction
 - `screenshot.rs`: cross-platform screenshots and virtual screen bounds
-- `ocr.rs`: OCR image preprocessing and PNG encoding
 
 ### Tech Stack
 
@@ -380,6 +381,7 @@ The Rust crate lives in `native/` and is split into:
 - SharpHook
 - SQLite
 - ZLogger
+- SkiaSharp
 - Rust `xcap`
 - Rust `selection`
 - Rust `image`

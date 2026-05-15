@@ -2,11 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:WordLens.ViewModels"
         xmlns:models="using:WordLens.Models"
-        xmlns:conv="using:WordLens.Converter"
         x:Class="WordLens.Views.PopupWindowView"
         x:DataType="vm:PopupWindowViewModel"
-        Width="660" Height="560"
-        MinWidth="460" MinHeight="360"
+        Width="265" Height="315"
+        MinWidth="265" MinHeight="315"
         CanResize="True"
         Topmost="{Binding IsTopmost}"
         ShowInTaskbar="False"
@@ -26,427 +25,501 @@
         <Style Selector="Button.icon-button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="8" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="MinWidth" Value="32" />
-            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="MinWidth" Value="20" />
+            <Setter Property="MinHeight" Value="20" />
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Foreground" Value="#171717" />
         </Style>
 
         <Style Selector="Button.icon-button:pointerover">
-            <Setter Property="Background" Value="#12000000" />
+            <Setter Property="Background" Value="#15000000" />
         </Style>
 
         <Style Selector="Button.icon-button:pressed">
-            <Setter Property="Background" Value="#22000000" />
+            <Setter Property="Background" Value="#24000000" />
         </Style>
 
-        <Style Selector="Button.icon-button:disabled">
-            <Setter Property="Opacity" Value="0.45" />
-            <Setter Property="Cursor" Value="Arrow" />
+        <Style Selector="Button.icon-button.close">
+            <Setter Property="Foreground" Value="#7A7A7A" />
         </Style>
 
         <Style Selector="Button.icon-button.close:pointerover">
-            <Setter Property="Background" Value="#E5484D" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#D0D0D0" />
+            <Setter Property="Foreground" Value="#111111" />
         </Style>
 
         <Style Selector="Button.icon-button.topmost-active">
-            <Setter Property="Background" Value="#1D7AF3" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="Background" Value="#18000000" />
         </Style>
 
-        <Style Selector="Button.icon-button.topmost-active:pointerover">
-            <Setter Property="Background" Value="#2C83F4" />
-        </Style>
-
-        <Style Selector="Button.primary-action">
-            <Setter Property="Background" Value="#1F7A68" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="14,8" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style Selector="Button.primary-action:pointerover">
-            <Setter Property="Background" Value="#238874" />
-        </Style>
-
-        <Style Selector="Button.ghost-action">
-            <Setter Property="Background" Value="#F3F6F8" />
-            <Setter Property="BorderBrush" Value="#DDE4EA" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style Selector="Button.ghost-action:pointerover">
-            <Setter Property="Background" Value="#EAF0F4" />
-        </Style>
-
-        <Style Selector="Border.panel">
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#E4E9EE" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-        </Style>
-
-        <Style Selector="Border.translation-card">
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#E4E9EE" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="Margin" Value="0,0,0,10" />
-        </Style>
-
-        <Style Selector="Border.translation-card.success">
-            <Setter Property="BorderBrush" Value="#67A77C" />
-        </Style>
-
-        <Style Selector="Border.translation-card.error">
-            <Setter Property="BorderBrush" Value="#E5484D" />
-            <Setter Property="Background" Value="#FFF8F8" />
-        </Style>
-
-        <Style Selector="Border.translation-card.loading">
-            <Setter Property="BorderBrush" Value="#4B9EDB" />
-        </Style>
-
-        <Style Selector="TextBox.editor">
-            <Setter Property="BorderThickness" Value="0" />
+        <Style Selector="Button.topmost-button">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="12" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="MinWidth" Value="50" />
+            <Setter Property="Height" Value="21" />
+            <Setter Property="Foreground" Value="#333333" />
+        </Style>
+
+        <Style Selector="Button.topmost-button:pointerover">
+            <Setter Property="Background" Value="#15000000" />
+        </Style>
+
+        <Style Selector="Button.topmost-button.topmost-active">
+            <Setter Property="Background" Value="#1A2F72E5" />
+            <Setter Property="Foreground" Value="#1F5EC7" />
+        </Style>
+
+        <Style Selector="Button.translate-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Foreground" Value="#2F72E5" />
+        </Style>
+
+        <Style Selector="Button.translate-button:pointerover">
+            <Setter Property="Background" Value="#172F72E5" />
+        </Style>
+
+        <Style Selector="ComboBox.language-selector">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="9,0,7,0" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBox.source-editor">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,6,8,2" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="AcceptsReturn" Value="True" />
             <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineHeight" Value="18" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0">
+                        <ScrollViewer Name="PART_ContentHost"
+                                      Background="Transparent"
+                                      Padding="{TemplateBinding Padding}">
+                            <TextPresenter Name="PART_TextPresenter"
+                                           Background="Transparent" />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBox.source-editor:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TextBox.source-editor:focus">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TextBox.source-editor /template/ Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="TextBox.source-editor:pointerover /template/ Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="TextBox.source-editor:focus /template/ Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="TextBox.source-editor /template/ ScrollViewer">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TextBox.result-editor">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="9,0,9,8" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="LineHeight" Value="17" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0">
+                        <ScrollViewer Name="PART_ContentHost"
+                                      Background="Transparent"
+                                      Padding="{TemplateBinding Padding}">
+                            <TextPresenter Name="PART_TextPresenter"
+                                           Background="Transparent" />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBox.result-editor:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TextBox.result-editor:focus">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TextBox.result-editor /template/ Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="TextBox.result-editor:pointerover /template/ Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="TextBox.result-editor:focus /template/ Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="TextBox.result-editor /template/ ScrollViewer">
+            <Setter Property="Background" Value="Transparent" />
         </Style>
     </Window.Styles>
 
-    <Border Margin="10"
-            Background="#F7F9FB"
-            BorderBrush="#DCE3E9"
-            BorderThickness="1"
-            CornerRadius="10"
-            ClipToBounds="True"
-            BoxShadow="0 18 48 0 #26000000">
-        <Grid RowDefinitions="Auto,*">
-            <Border Grid.Row="0"
-                    Background="#FFFFFF"
-                    BorderBrush="#E4E9EE"
-                    BorderThickness="0,0,0,1"
-                    PointerPressed="TitleBar_PointerPressed">
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
-                      Height="48"
-                      Margin="12,0,8,0">
-                    <StackPanel Grid.Column="0"
-                                Orientation="Horizontal"
-                                Spacing="8"
+    <Border Background="#F7F7F7"
+            CornerRadius="7"
+            ClipToBounds="True">
+        <Grid>
+            <Grid RowDefinitions="26,Auto,6,28,6,*">
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="Auto,*,Auto"
+                      Background="#FBFBFB"
+                      PointerPressed="TitleBar_PointerPressed">
+                <Button Grid.Column="0"
+                        Classes="topmost-button"
+                        Classes.topmost-active="{Binding IsTopmost}"
+                        Command="{Binding ToggleTopmostCommand}"
+                        ToolTip.Tip="置顶窗口"
+                        Margin="3,2,0,2">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="3"
                                 VerticalAlignment="Center">
-                        <Border Width="28"
-                                Height="28"
-                                Background="#E8F3F0"
-                                CornerRadius="7">
-                            <PathIcon Width="16"
-                                      Height="16"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"
-                                      Foreground="#1F7A68"
-                                      Data="{StaticResource translate_regular}" />
-                        </Border>
-                        <TextBlock Text="WordLens"
-                                   FontWeight="SemiBold"
-                                   FontSize="14"
+                        <PathIcon Width="12"
+                                  Height="12"
+                                  Data="{StaticResource pin_regular}" />
+                        <TextBlock Text="置顶"
+                                   FontSize="10"
                                    VerticalAlignment="Center" />
                     </StackPanel>
+                </Button>
 
-                    <Button Grid.Column="2"
-                            Classes="icon-button"
-                            Classes.topmost-active="{Binding IsTopmost}"
-                            Command="{Binding ToggleTopmostCommand}"
-                            ToolTip.Tip="置顶窗口">
-                        <PathIcon Width="15"
-                                  Height="15"
-                                  Data="{StaticResource pin_regular}" />
-                    </Button>
-
-                    <Button Grid.Column="3"
-                            Classes="icon-button"
-                            Click="Minimize_Click"
-                            ToolTip.Tip="最小化">
-                        <PathIcon Width="15"
-                                  Height="15"
-                                  Data="{StaticResource subtract_regular}" />
-                    </Button>
-
-                    <Button Grid.Column="4"
-                            Classes="icon-button close"
-                            Click="Close_Click"
-                            ToolTip.Tip="关闭">
-                        <PathIcon Width="15"
-                                  Height="15"
-                                  Data="{StaticResource dismiss_regular}" />
-                    </Button>
+                <Button Grid.Column="2"
+                        Classes="icon-button close"
+                        Click="Close_Click"
+                        ToolTip.Tip="关闭"
+                        Margin="0,2,2,0">
+                    <PathIcon Width="11"
+                              Height="11"
+                              Data="{StaticResource dismiss_regular}" />
+                </Button>
                 </Grid>
-            </Border>
 
-            <Grid Grid.Row="1"
-                  RowDefinitions="Auto,12,Auto,12,Auto,*,8,Auto,*"
-                  Margin="16">
-                <Border Grid.Row="0"
-                        Classes="panel"
-                        Padding="12">
-                    <Grid ColumnDefinitions="*,Auto,*,Auto"
-                          ColumnSpacing="10">
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="源语言"
-                                       FontSize="11"
-                                       Foreground="#66727C"
-                                       Margin="0,0,0,5" />
-                            <ComboBox ItemsSource="{Binding SourceLanguages}"
-                                      SelectedItem="{Binding SelectedSourceLanguage}"
-                                      SelectedValueBinding="{Binding Code}"
-                                      HorizontalAlignment="Stretch"
-                                      MinWidth="120">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate DataType="models:LanguageInfo">
-                                        <TextBlock Text="{Binding DisplayName}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
+                <Border Grid.Row="1"
+                    Margin="4,0"
+                    Background="#E8E8E8"
+                    CornerRadius="7"
+                    ClipToBounds="True">
+                <Grid RowDefinitions="61,28">
+                    <TextBox Grid.Row="0"
+                             Text="{Binding SourceText}"
+                             Classes="source-editor"
+                             PlaceholderText="" />
+
+                    <Grid Grid.Row="1"
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto"
+                          ColumnSpacing="4"
+                          Margin="6,0"
+                          VerticalAlignment="Center">
+                        <PathIcon Grid.Column="0"
+                                  Width="12"
+                                  Height="12"
+                                  Margin="4,0"
+                                  Foreground="#171717"
+                                  Data="{StaticResource speaker_regular}"
+                                  VerticalAlignment="Center" />
 
                         <Button Grid.Column="1"
                                 Classes="icon-button"
-                                Command="{Binding SwapLanguagesCommand}"
-                                Margin="0,18,0,0"
-                                ToolTip.Tip="交换语言">
-                            <PathIcon Width="16"
-                                      Height="16"
-                                      Data="{StaticResource arrow_swap_regular}" />
+                                IsEnabled="{Binding CanCopySource}"
+                                Click="CopySource_Click"
+                                ToolTip.Tip="复制原文">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Data="{StaticResource copy_regular}" />
                         </Button>
 
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="目标语言"
-                                       FontSize="11"
-                                       Foreground="#66727C"
-                                       Margin="0,0,0,5" />
-                            <ComboBox ItemsSource="{Binding TargetLanguages}"
-                                      SelectedItem="{Binding SelectedTargetLanguage}"
-                                      SelectedValueBinding="{Binding Code}"
-                                      HorizontalAlignment="Stretch"
-                                      MinWidth="120">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate DataType="models:LanguageInfo">
-                                        <TextBlock Text="{Binding DisplayName}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
+                        <PathIcon Grid.Column="2"
+                                  Width="12"
+                                  Height="12"
+                                  Margin="4,0"
+                                  Foreground="#171717"
+                                  Data="{StaticResource link_regular}"
+                                  VerticalAlignment="Center" />
 
                         <Button Grid.Column="3"
-                                Classes="primary-action"
+                                Classes="icon-button"
+                                Command="{Binding ClearSourceCommand}"
+                                IsEnabled="{Binding CanCopySource}"
+                                ToolTip.Tip="清空">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Data="{StaticResource dismiss_regular}" />
+                        </Button>
+
+                        <Border Grid.Column="5"
+                                Background="#FFFFFF"
+                                BorderBrush="#9A83C8"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Height="19"
+                                MinWidth="48"
+                                Padding="7,0"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedTargetLanguage.DisplayName, FallbackValue=英语, TargetNullValue=英语}"
+                                       FontSize="10"
+                                       Foreground="#1D1D1D"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Border>
+
+                        <Button Grid.Column="6"
+                                Classes="translate-button"
                                 Command="{Binding TranslateCommand}"
-                                Margin="0,18,0,0">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <PathIcon Width="16"
-                                          Height="16"
-                                          Data="{StaticResource translate_regular}"
-                                          Foreground="White" />
-                                <TextBlock Text="翻译"
-                                           FontSize="13"
-                                           FontWeight="SemiBold" />
-                            </StackPanel>
+                                ToolTip.Tip="翻译">
+                            <PathIcon Width="14"
+                                      Height="14"
+                                      Data="{StaticResource translate_regular}" />
                         </Button>
                     </Grid>
+                </Grid>
                 </Border>
 
-                <Grid Grid.Row="2"
-                      ColumnDefinitions="Auto,*,Auto,Auto"
-                      ColumnSpacing="8">
-                    <TextBlock Grid.Column="0"
-                               Text="原文"
-                               FontWeight="SemiBold"
-                               FontSize="14"
-                               VerticalAlignment="Center" />
-
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding SourceCharacterCount, StringFormat='({0} 字符)'}"
-                               FontSize="11"
-                               Foreground="#66727C"
-                               VerticalAlignment="Center" />
+                <Border Grid.Row="3"
+                    Margin="4,0"
+                    Background="#DCDCDC"
+                    CornerRadius="5"
+                    ClipToBounds="True">
+                <Grid ColumnDefinitions="Auto,*,34,*,Auto">
+                    <ComboBox Grid.Column="0"
+                              Classes="language-selector"
+                              ItemsSource="{Binding SourceLanguages}"
+                              SelectedItem="{Binding SelectedSourceLanguage}"
+                              SelectedValueBinding="{Binding Code}"
+                              Width="92"
+                              HorizontalAlignment="Left">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="models:LanguageInfo">
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
                     <Button Grid.Column="2"
-                            Classes="ghost-action"
-                            Command="{Binding ClearSourceCommand}"
-                            IsEnabled="{Binding CanCopySource}"
-                            ToolTip.Tip="清空原文和译文">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <PathIcon Width="14"
-                                      Height="14"
-                                      Data="{StaticResource dismiss_regular}" />
-                            <TextBlock Text="清空" FontSize="12" />
-                        </StackPanel>
-                    </Button>
-
-                    <Button Grid.Column="3"
                             Classes="icon-button"
-                            IsEnabled="{Binding CanCopySource}"
-                            Click="CopySource_Click"
-                            ToolTip.Tip="复制原文">
+                            Command="{Binding SwapLanguagesCommand}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            ToolTip.Tip="交换语言">
                         <PathIcon Width="14"
                                   Height="14"
-                                  Data="{StaticResource copy_regular}" />
+                                  Data="{StaticResource arrow_swap_regular}" />
                     </Button>
-                </Grid>
 
-                <Border Grid.Row="4"
-                        Grid.RowSpan="2"
-                        Classes="panel">
-                    <TextBox Text="{Binding SourceText}"
-                             Classes="editor"
-                             PlaceholderText="在此输入要翻译的文本..."
-                             MinHeight="108" />
+                    <ComboBox Grid.Column="4"
+                              Classes="language-selector"
+                              ItemsSource="{Binding TargetLanguages}"
+                              SelectedItem="{Binding SelectedTargetLanguage}"
+                              SelectedValueBinding="{Binding Code}"
+                              Width="92"
+                              HorizontalAlignment="Right">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="models:LanguageInfo">
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
                 </Border>
 
-                <ProgressBar Grid.Row="6"
-                             IsVisible="{Binding IsBusy}"
-                             IsIndeterminate="True"
-                             Height="3"
-                             Foreground="#1F7A68" />
+                <ProgressBar Grid.Row="4"
+                         IsVisible="{Binding IsBusy}"
+                         IsIndeterminate="True"
+                         Height="2"
+                         Margin="4,2,4,0"
+                         Foreground="#288B51" />
 
-                <Grid Grid.Row="7"
-                      ColumnDefinitions="Auto,*,Auto"
-                      ColumnSpacing="8"
-                      Margin="0,6,0,8">
-                    <TextBlock Grid.Column="0"
-                               Text="翻译结果"
-                               FontWeight="SemiBold"
-                               FontSize="14"
-                               VerticalAlignment="Center" />
+                <ScrollViewer Grid.Row="5"
+                          Margin="4,0,4,4"
+                          VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding TranslationResults}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:TranslationResult">
+                            <Border Margin="0,0,0,6"
+                                    CornerRadius="5"
+                                    ClipToBounds="True">
+                                <Grid RowDefinitions="24,Auto">
+                                    <Border Grid.Row="0"
+                                            Background="#DCDCDC">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <PathIcon Grid.Column="0"
+                                                      Width="14"
+                                                      Height="14"
+                                                      Margin="9,0,5,0"
+                                                      Foreground="#17A34A"
+                                                      Data="{StaticResource translate_regular}"
+                                                      VerticalAlignment="Center" />
 
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding TranslationResults.Count, StringFormat='({0} 个翻译源)'}"
-                               FontSize="11"
-                               Foreground="#66727C"
-                               VerticalAlignment="Center"
-                               IsVisible="{Binding HasTranslationResults}" />
-
-                    <Button Grid.Column="2"
-                            Classes="ghost-action"
-                            Command="{Binding UseTranslationAsSourceCommand}"
-                            IsEnabled="{Binding CanUseTranslationAsSource}"
-                            ToolTip.Tip="将第一个成功译文放入原文框">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <PathIcon Width="14"
-                                      Height="14"
-                                      Data="{StaticResource arrow_turn_up_regular}" />
-                            <TextBlock Text="译文转原文" FontSize="12" />
-                        </StackPanel>
-                    </Button>
-                </Grid>
-
-                <ScrollViewer Grid.Row="8">
-                    <ItemsControl ItemsSource="{Binding TranslationResults}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="models:TranslationResult">
-                                <Border Classes="translation-card"
-                                        Classes.success="{Binding IsSuccess}"
-                                        Classes.error="{Binding IsError}"
-                                        Classes.loading="{Binding IsLoading}">
-                                    <Grid RowDefinitions="Auto,8,Auto">
-                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
-                                            <TextBlock Grid.Column="0"
+                                            <TextBlock Grid.Column="1"
                                                        Text="{Binding ProviderName}"
-                                                       FontWeight="SemiBold"
-                                                       FontSize="13"
-                                                       VerticalAlignment="Center" />
-
-                                            <StackPanel Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="6"
-                                                        IsVisible="{Binding IsLoading}">
-                                                <ProgressBar Width="48"
-                                                             Height="3"
-                                                             IsIndeterminate="True" />
-                                                <TextBlock Text="翻译中"
-                                                           FontSize="11"
-                                                           Foreground="#4B8EBF"
-                                                           VerticalAlignment="Center" />
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="5"
-                                                        IsVisible="{Binding IsSuccess}">
-                                                <Ellipse Width="8" Height="8"
-                                                         Fill="#67A77C"
-                                                         VerticalAlignment="Center" />
-                                                <TextBlock Text="成功"
-                                                           FontSize="11"
-                                                           Foreground="#4D8A62"
-                                                           VerticalAlignment="Center" />
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="5"
-                                                        IsVisible="{Binding IsError}">
-                                                <Ellipse Width="8" Height="8"
-                                                         Fill="#E5484D"
-                                                         VerticalAlignment="Center" />
-                                                <TextBlock Text="失败"
-                                                           FontSize="11"
-                                                           Foreground="#C83D42"
-                                                           VerticalAlignment="Center" />
-                                            </StackPanel>
+                                                       FontSize="10"
+                                                       Foreground="#111111"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
 
                                             <Button Grid.Column="2"
-                                                    Classes="icon-button"
-                                                    Click="CopyTranslation_Click"
-                                                    IsVisible="{Binding IsSuccess}"
-                                                    Tag="{Binding Result}"
-                                                    ToolTip.Tip="复制此翻译">
-                                                <PathIcon Width="12"
-                                                          Height="12"
-                                                          Data="{StaticResource copy_regular}" />
+                                                    Classes="icon-button close"
+                                                    Tag="{Binding}"
+                                                    Click="RemoveTranslation_Click"
+                                                    ToolTip.Tip="移除此翻译源"
+                                                    Margin="0,2,2,0">
+                                                <PathIcon Width="10"
+                                                          Height="10"
+                                                          Data="{StaticResource dismiss_regular}" />
                                             </Button>
                                         </Grid>
+                                    </Border>
 
-                                        <TextBox Grid.Row="2"
-                                                 Text="{Binding Result}"
-                                                 IsVisible="{Binding HasVisibleResult}"
-                                                 TextWrapping="Wrap"
-                                                 AcceptsReturn="True"
-                                                 BorderThickness="0"
-                                                 Background="#F7FAFC"
-                                                 CornerRadius="6"
-                                                 Padding="10"
-                                                 LineHeight="20"
-                                                 FontSize="13" />
+                                    <Border Grid.Row="1"
+                                            Background="#E8E8E8"
+                                            MinHeight="40">
+                                        <Grid RowDefinitions="28,Auto">
+                                            <Grid Grid.Row="0"
+                                                  ColumnDefinitions="Auto,Auto,Auto,*"
+                                                  ColumnSpacing="5"
+                                                  Margin="6,0"
+                                                  VerticalAlignment="Center">
+                                                <PathIcon Grid.Column="0"
+                                                          Width="12"
+                                                          Height="12"
+                                                          Margin="4,0"
+                                                          Foreground="#171717"
+                                                          Data="{StaticResource speaker_regular}"
+                                                          VerticalAlignment="Center" />
 
-                                        <Border Grid.Row="2"
-                                                Background="#FFF1F1"
-                                                BorderBrush="#F2B8BA"
-                                                BorderThickness="1"
-                                                CornerRadius="6"
-                                                Padding="10"
-                                                IsVisible="{Binding IsError}">
-                                            <TextBlock Text="{Binding ErrorMessage}"
-                                                       TextWrapping="Wrap"
+                                                <Button Grid.Column="1"
+                                                        Classes="icon-button"
+                                                        Click="CopyTranslation_Click"
+                                                        IsVisible="{Binding IsSuccess}"
+                                                        Tag="{Binding Result}"
+                                                        ToolTip.Tip="复制此翻译">
+                                                    <PathIcon Width="12"
+                                                              Height="12"
+                                                              Data="{StaticResource copy_regular}" />
+                                                </Button>
+
+                                                <PathIcon Grid.Column="2"
+                                                          Width="12"
+                                                          Height="12"
+                                                          Margin="4,0"
+                                                          Foreground="#171717"
+                                                          Data="{StaticResource sparkles_regular}"
+                                                          VerticalAlignment="Center" />
+
+                                                <StackPanel Grid.Column="3"
+                                                            Orientation="Horizontal"
+                                                            Spacing="5"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsLoading}">
+                                                    <ProgressBar Width="34"
+                                                                 Height="2"
+                                                                 IsIndeterminate="True"
+                                                                 Foreground="#288B51" />
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <TextBox Grid.Row="1"
+                                                     Text="{Binding Result}"
+                                                     Classes="result-editor"
+                                                     IsVisible="{Binding HasVisibleResult}" />
+
+                                            <TextBlock Grid.Row="1"
+                                                       Text="{Binding ErrorMessage}"
+                                                       IsVisible="{Binding IsError}"
+                                                       Margin="9,0,9,8"
+                                                       FontSize="11"
                                                        Foreground="#A83236"
-                                                       FontSize="12"
-                                                       FontStyle="Italic" />
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                                       TextWrapping="Wrap" />
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 </ScrollViewer>
             </Grid>
+
+            <Border Width="16"
+                    Height="16"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Background="Transparent"
+                    Cursor="BottomRightCorner"
+                    PointerPressed="ResizeGrip_PointerPressed"
+                    ToolTip.Tip="拖拽调整窗口大小">
+                <PathIcon Width="9"
+                          Height="9"
+                          Margin="0,0,3,3"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Bottom"
+                          Foreground="#8A8A8A"
+                          Data="M3 9H9V7.8H5.05L9 3.85V2.15L3.85 7.3V3H3V9Z" />
+            </Border>
         </Grid>
     </Border>
 </Window>
