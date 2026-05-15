@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using SkiaSharp;
 
 namespace WordLens.Services.Implementations;
@@ -17,21 +18,37 @@ internal static class OcrImageProcessor
         if (stride < minStride)
             throw new ArgumentOutOfRangeException(nameof(stride), "Image stride must be at least width * 4.");
 
-        var luma = BgraToLuma(pixels, width, height, stride, minStride);
-        StretchContrast(luma);
-        SharpenLuma(luma, width, height);
+        var pixelCount = checked(width * height);
+        var lumaBuffer = ArrayPool<byte>.Shared.Rent(pixelCount);
+        try
+        {
+            var luma = lumaBuffer.AsSpan(0, pixelCount);
 
-        using var bitmap = BuildLumaBitmap(luma, width, height);
-        using var scaledBitmap = ScaleForOcr(bitmap);
+            BgraToLuma(pixels, width, height, stride, minStride, luma);
+            StretchContrast(luma);
+            SharpenLuma(luma, width, height);
 
-        return EncodePng(scaledBitmap ?? bitmap);
+            using var bitmap = BuildLumaBitmap(luma, width, height);
+            using var scaledBitmap = ScaleForOcr(bitmap);
+
+            return EncodePng(scaledBitmap ?? bitmap);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(lumaBuffer);
+        }
     }
 
-    private static unsafe byte[] BgraToLuma(IntPtr pixels, int width, int height, int stride, int minStride)
+    private static unsafe void BgraToLuma(
+        IntPtr pixels,
+        int width,
+        int height,
+        int stride,
+        int minStride,
+        Span<byte> luma)
     {
         _ = checked(stride * height);
 
-        var luma = new byte[checked(width * height)];
         var source = (byte*)pixels;
         var outputIndex = 0;
 
@@ -51,11 +68,9 @@ internal static class OcrImageProcessor
                     : (byte)value;
             }
         }
-
-        return luma;
     }
 
-    private static unsafe SKBitmap BuildLumaBitmap(byte[] luma, int width, int height)
+    private static unsafe SKBitmap BuildLumaBitmap(ReadOnlySpan<byte> luma, int width, int height)
     {
         var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque));
         if (bitmap.IsNull)
@@ -78,7 +93,7 @@ internal static class OcrImageProcessor
         return bitmap;
     }
 
-    private static byte PercentileFromHistogram(uint[] histogram, uint total, double percentile)
+    private static byte PercentileFromHistogram(ReadOnlySpan<uint> histogram, uint total, double percentile)
     {
         if (total == 0)
             return 0;
@@ -96,9 +111,9 @@ internal static class OcrImageProcessor
         return 255;
     }
 
-    private static void StretchContrast(byte[] buffer)
+    private static void StretchContrast(Span<byte> buffer)
     {
-        var histogram = new uint[256];
+        Span<uint> histogram = stackalloc uint[256];
         foreach (var value in buffer)
             histogram[value]++;
 
@@ -117,30 +132,40 @@ internal static class OcrImageProcessor
         }
     }
 
-    private static void SharpenLuma(byte[] buffer, int width, int height)
+    private static void SharpenLuma(Span<byte> buffer, int width, int height)
     {
         if (width < 3 || height < 3)
             return;
 
-        var source = (byte[])buffer.Clone();
-        for (var y = 1; y < height - 1; y++)
+        var sourceBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+        try
         {
-            for (var x = 1; x < width - 1; x++)
+            var source = sourceBuffer.AsSpan(0, buffer.Length);
+            buffer.CopyTo(source);
+
+            for (var y = 1; y < height - 1; y++)
             {
-                var index = y * width + x;
-                var sum = 0u;
-
-                for (var offsetY = y - 1; offsetY <= y + 1; offsetY++)
+                for (var x = 1; x < width - 1; x++)
                 {
-                    for (var offsetX = x - 1; offsetX <= x + 1; offsetX++)
-                        sum += source[offsetY * width + offsetX];
-                }
+                    var index = y * width + x;
+                    var sum = 0u;
 
-                var blurred = sum / 9.0;
-                var original = source[index];
-                var sharpened = Math.Round(original + (original - blurred) * 0.65);
-                buffer[index] = (byte)Math.Clamp(sharpened, 0, 255);
+                    for (var offsetY = y - 1; offsetY <= y + 1; offsetY++)
+                    {
+                        for (var offsetX = x - 1; offsetX <= x + 1; offsetX++)
+                            sum += source[offsetY * width + offsetX];
+                    }
+
+                    var blurred = sum / 9.0;
+                    var original = source[index];
+                    var sharpened = Math.Round(original + (original - blurred) * 0.65);
+                    buffer[index] = (byte)Math.Clamp(sharpened, 0, 255);
+                }
             }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(sourceBuffer);
         }
     }
 

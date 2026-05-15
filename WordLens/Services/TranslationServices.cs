@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -41,6 +43,9 @@ public interface ITranslationProvider
 
 public class TranslationService
 {
+    private const int StreamFlushIntervalMs = 33;
+    private const int StreamFlushCharacterThreshold = 64;
+
     private readonly IEncryptionService _encryptionService;
     private readonly ILogger<TranslationService> _logger;
     private readonly IProxyAwareHttpClientFactory _httpClientFactory;
@@ -176,6 +181,8 @@ public class TranslationService
         TranslationResult result,
         CancellationToken ct)
     {
+        StreamResultUpdater? streamUpdater = null;
+
         try
         {
             _logger.ZLogInformation($"开始使用 {providerCfg.Name} 进行流式翻译");
@@ -193,16 +200,19 @@ public class TranslationService
 
             using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
 
+            streamUpdater = new StreamResultUpdater(result, settings.Streaming, ct);
+
             // 流式翻译，通过回调实时更新result
             var fullResult = await provider.TranslateStreamAsync(
                 text,
                 targetLanguage,
                 sourceLanguage,
                 httpClient,
-                content => AppendStreamContentAsync(result, content, settings.Streaming, ct),
+                streamUpdater.AppendAsync,
                 ct
             );
 
+            await streamUpdater.FlushAsync();
             await Dispatcher.UIThread.InvokeAsync(() => result.IsSuccess = true);
             _logger.ZLogInformation($"{providerCfg.Name} 流式翻译成功，最终长度: {fullResult?.Length ?? 0}");
         }
@@ -226,34 +236,80 @@ public class TranslationService
         }
         finally
         {
+            if (streamUpdater != null)
+                await streamUpdater.FlushAsync();
+
             await Dispatcher.UIThread.InvokeAsync(() => result.IsLoading = false);
         }
     }
 
-    private static async Task AppendStreamContentAsync(
+    private sealed class StreamResultUpdater(
         TranslationResult result,
-        string content,
         StreamingConfig streaming,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(content)) return;
+        private readonly StringBuilder _pending = new();
+        private bool _hasFlushed;
+        private long _lastFlushTimestamp = Stopwatch.GetTimestamp();
 
-        var charsPerUpdate = Math.Max(1, streaming.CharsPerUpdate);
-        var delayMs = Math.Max(0, streaming.TypewriterDelayMs);
-
-        for (var i = 0; i < content.Length; i += charsPerUpdate)
+        public async Task AppendAsync(string content)
         {
-            ct.ThrowIfCancellationRequested();
+            if (string.IsNullOrEmpty(content))
+                return;
 
-            var length = Math.Min(charsPerUpdate, content.Length - i);
-            var segment = content.Substring(i, length);
+            var charsPerUpdate = Math.Max(1, streaming.CharsPerUpdate);
+            var delayMs = Math.Max(0, streaming.TypewriterDelayMs);
+
+            for (var i = 0; i < content.Length; i += charsPerUpdate)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var length = Math.Min(charsPerUpdate, content.Length - i);
+                _pending.Append(content, i, length);
+
+                if (!ShouldFlush(delayMs))
+                    continue;
+
+                await FlushAsync();
+
+                if (delayMs > 0)
+                    await Task.Delay(delayMs, cancellationToken);
+            }
+        }
+
+        public async Task FlushAsync()
+        {
+            if (_pending.Length == 0)
+                return;
+
+            var text = _pending.ToString();
+            _pending.Clear();
+            _hasFlushed = true;
+            _lastFlushTimestamp = Stopwatch.GetTimestamp();
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                result.Result += segment;
+                result.Result += text;
             });
+        }
 
-            if (delayMs > 0) await Task.Delay(delayMs, ct);
+        private bool ShouldFlush(int delayMs)
+        {
+            if (_pending.Length == 0)
+                return false;
+
+            if (!_hasFlushed || delayMs > 0)
+                return true;
+
+            if (_pending.Length >= StreamFlushCharacterThreshold)
+                return true;
+
+            return GetElapsedMilliseconds(_lastFlushTimestamp) >= StreamFlushIntervalMs;
+        }
+
+        private static double GetElapsedMilliseconds(long startTimestamp)
+        {
+            return (Stopwatch.GetTimestamp() - startTimestamp) * 1000.0 / Stopwatch.Frequency;
         }
     }
 
