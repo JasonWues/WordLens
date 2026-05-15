@@ -1,8 +1,12 @@
-﻿using Avalonia.Input;
+using SharpHook.Data;
 
 namespace WordLens.Messages;
 
-public class CapturingKeyMessage(KeyEventArgs keyEventArgs)
+public class CapturingKeyMessage(KeyCode keyCode, EventMask modifiers)
 {
-    public KeyEventArgs KeyEventArgs { get; } = keyEventArgs;
+    public KeyCode KeyCode { get; } = keyCode;
+
+    public EventMask Modifiers { get; } = modifiers;
+
+    public bool Handled { get; set; }
 }

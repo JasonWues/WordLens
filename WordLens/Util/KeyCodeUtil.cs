@@ -63,6 +63,22 @@ public class KeyCodeUtil
         };
     }
 
+    public static EventMask ConvertToEventMask(KeyModifiers modifiers)
+    {
+        var result = EventMask.None;
+
+        if (modifiers.HasFlag(KeyModifiers.Control))
+            result |= EventMask.LeftCtrl;
+        if (modifiers.HasFlag(KeyModifiers.Shift))
+            result |= EventMask.LeftShift;
+        if (modifiers.HasFlag(KeyModifiers.Alt))
+            result |= EventMask.LeftAlt;
+        if (modifiers.HasFlag(KeyModifiers.Meta))
+            result |= EventMask.LeftMeta;
+
+        return result;
+    }
+
     public static string GetKeyName(KeyCode keyCode)
     {
         return keyCode switch

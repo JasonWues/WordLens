@@ -1,12 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
-using WordLens.Models;
-using WordLens.ViewModels;
 
 namespace WordLens.Views;
 
@@ -49,34 +45,6 @@ public partial class PopupWindowView : Window
     private void Close_Click(object? sender, RoutedEventArgs e)
     {
         Hide();
-    }
-
-    private async void CopySource_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is PopupWindowViewModel vm) await CopyToClipboardAsync(vm.SourceText);
-    }
-
-    private async void CopyTranslation_Click(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string text } button) await CopyToClipboardAsync(text);
-    }
-
-    private void RemoveTranslation_Click(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: TranslationResult result } &&
-            DataContext is PopupWindowViewModel vm)
-        {
-            vm.TranslationResults.Remove(result);
-        }
-    }
-
-    private async Task CopyToClipboardAsync(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return;
-
-        var topLevel = GetTopLevel(this);
-        if (topLevel?.Clipboard != null) await topLevel.Clipboard.SetTextAsync(text);
     }
 
     protected override void OnClosed(EventArgs e)

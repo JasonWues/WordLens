@@ -42,12 +42,12 @@ public class WindowManagerService : IWindowManagerService
     /// <summary>
     /// 显示或激活翻译窗口
     /// </summary>
-    public async Task<Window> ShowTranslationWindowAsync(string selectedText)
+    public async Task ShowTranslationWindowAsync(string selectedText)
     {
         await _semaphore.WaitAsync();
         try
         {
-            return await Dispatcher.UIThread.InvokeAsync(() =>
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (_translationWindow == null)
                 {
@@ -98,7 +98,6 @@ public class WindowManagerService : IWindowManagerService
                     ActivateWindow(_translationWindow);
                 }
 
-                return _translationWindow;
             });
         }
         finally
@@ -110,12 +109,12 @@ public class WindowManagerService : IWindowManagerService
     /// <summary>
     /// 显示或激活设置窗口
     /// </summary>
-    public async Task<Window> ShowSettingsWindowAsync()
+    public async Task ShowSettingsWindowAsync()
     {
         await _semaphore.WaitAsync();
         try
         {
-            return await Dispatcher.UIThread.InvokeAsync(async () =>
+            await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 if (_settingsWindow == null)
                 {
@@ -155,7 +154,6 @@ public class WindowManagerService : IWindowManagerService
                     ActivateWindow(_settingsWindow);
                 }
 
-                return _settingsWindow;
             });
         }
         finally
@@ -167,12 +165,12 @@ public class WindowManagerService : IWindowManagerService
     /// <summary>
     /// 显示或激活截图窗口
     /// </summary>
-    public Window ShowScreenCaptureWindow()
+    public void ShowScreenCaptureWindow()
     {
         _semaphore.Wait();
         try
         {
-            return Dispatcher.UIThread.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 if (_screenCaptureWindow == null)
                 {
@@ -211,7 +209,6 @@ public class WindowManagerService : IWindowManagerService
                     ActivateWindow(_screenCaptureWindow);
                 }
 
-                return _screenCaptureWindow;
             });
         }
         finally
@@ -223,12 +220,12 @@ public class WindowManagerService : IWindowManagerService
     /// <summary>
     /// 显示或激活 OCR 结果窗口
     /// </summary>
-    public Window ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null)
+    public void ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null)
     {
         _semaphore.Wait();
         try
         {
-            return Dispatcher.UIThread.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 if (_ocrResultWindow == null)
                 {
@@ -269,7 +266,6 @@ public class WindowManagerService : IWindowManagerService
                     ActivateWindow(_ocrResultWindow);
                 }
 
-                return _ocrResultWindow;
             });
         }
         finally
@@ -281,12 +277,12 @@ public class WindowManagerService : IWindowManagerService
     /// <summary>
     /// 显示或激活历史记录窗口
     /// </summary>
-    public Window ShowHistoryWindow()
+    public void ShowHistoryWindow()
     {
         _semaphore.Wait();
         try
         {
-            return Dispatcher.UIThread.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 if (_historyWindow == null)
                 {
@@ -327,7 +323,6 @@ public class WindowManagerService : IWindowManagerService
                         _ = vm.InitializeAsync();
                 }
 
-                return _historyWindow;
             });
         }
         finally

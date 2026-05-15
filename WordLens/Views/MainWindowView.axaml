@@ -144,20 +144,20 @@
                                   Margin="0,0,10,0"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding Providers}"
-                                      sortable:Sortable.Sortable="True"
-                                      sortable:Sortable.Mode="Sort"
-                                      sortable:Sortable.UpdateCommand="{Binding ReorderProviderCommand}">
-                            <ItemsControl.ItemsPanel>
+                        <ListBox ItemsSource="{Binding Providers}"
+                                 SelectedItem="{Binding SelectedProvider}"
+                                 SelectionMode="Single"
+                                 sortable:Sortable.Sortable="True"
+                                 sortable:Sortable.Mode="Sort"
+                                 sortable:Sortable.UpdateCommand="{Binding ReorderProviderCommand}">
+                            <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Spacing="6" />
                                 </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border sortable:Sortable.IsSortable="True"
-                                            Tag="{Binding}"
-                                            Tapped="ProviderItem_Tapped"
                                             Cursor="Hand"
                                             Padding="8"
                                             Background="#FAFAFA"
@@ -199,8 +199,8 @@
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </ScrollViewer>
 
                     <!-- 右侧按钮和详情 -->

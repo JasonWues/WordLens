@@ -256,8 +256,7 @@
 
                         <Button Grid.Column="1"
                                 Classes="icon-button"
-                                IsEnabled="{Binding CanCopySource}"
-                                Click="CopySource_Click"
+                                Command="{Binding CopySourceCommand}"
                                 ToolTip.Tip="复制原文">
                             <PathIcon Width="12"
                                       Height="12"
@@ -394,8 +393,8 @@
 
                                             <Button Grid.Column="2"
                                                     Classes="icon-button close"
-                                                    Tag="{Binding}"
-                                                    Click="RemoveTranslation_Click"
+                                                    Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).RemoveTranslationCommand}"
+                                                    CommandParameter="{Binding}"
                                                     ToolTip.Tip="移除此翻译源"
                                                     Margin="0,2,2,0">
                                                 <PathIcon Width="10"
@@ -424,9 +423,9 @@
 
                                                 <Button Grid.Column="1"
                                                         Classes="icon-button"
-                                                        Click="CopyTranslation_Click"
+                                                        Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).CopyTranslationCommand}"
+                                                        CommandParameter="{Binding Result}"
                                                         IsVisible="{Binding IsSuccess}"
-                                                        Tag="{Binding Result}"
                                                         ToolTip.Tip="复制此翻译">
                                                     <PathIcon Width="12"
                                                               Height="12"

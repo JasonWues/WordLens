@@ -2,11 +2,9 @@ using System;
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.Messaging;
-using Ursa.Controls;
 using WordLens.Messages;
-using WordLens.Models;
+using WordLens.Util;
 using WordLens.ViewModels;
 
 namespace WordLens.Views;
@@ -46,18 +44,12 @@ public partial class MainWindowView : Window
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
-        WeakReferenceMessenger.Default.Send(new CapturingKeyMessage(e));
-    }
-
-    private void ProviderItem_Tapped(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Control { Tag: ProviderConfig provider } ||
-            DataContext is not MainWindowViewModel { SettingsViewModel: { } settingsViewModel })
-        {
-            return;
-        }
-
-        settingsViewModel.SelectedProvider = provider;
+        var message = new CapturingKeyMessage(
+            KeyCodeUtil.ConvertToKeyCode(e.Key),
+            KeyCodeUtil.ConvertToEventMask(e.KeyModifiers));
+        WeakReferenceMessenger.Default.Send(message);
+        if (message.Handled)
+            e.Handled = true;
     }
 
     protected override void OnClosed(EventArgs e)

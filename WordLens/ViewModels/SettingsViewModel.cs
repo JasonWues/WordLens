@@ -1,18 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
-using Semi.Avalonia;
 using SharpHook.Data;
 using Sortable.Avalonia;
 using WordLens.Messages;
@@ -31,6 +27,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ILogger<SettingsViewModel>? _logger;
     private readonly IModelProviderService? _modelProviderService;
     private readonly ISettingsService? _settingsService;
+    private readonly IThemeService? _themeService;
 
     // 当前正在捕获的热键类型
     private string _currentCapturingType = string.Empty;
@@ -93,20 +90,22 @@ public partial class SettingsViewModel : ViewModelBase
         IHotkeyManagerService hotkeyManagerService,
         IModelProviderService modelProviderService,
         IEncryptionService encryptionService,
+        IThemeService themeService,
         ILogger<SettingsViewModel> logger)
     {
         _settingsService = settingsService;
         _hotkeyManagerService = hotkeyManagerService;
         _modelProviderService = modelProviderService;
         _encryptionService = encryptionService;
+        _themeService = themeService;
         _logger = logger;
 
         WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
         {
             if (IsCapturingHotkey)
             {
-                CaptureKey(m.KeyEventArgs);
-                m.KeyEventArgs.Handled = true;
+                m.Handled = true;
+                CaptureKey(m.KeyCode, m.Modifiers);
             }
         });
     }
@@ -259,24 +258,11 @@ public partial class SettingsViewModel : ViewModelBase
             HotkeyDisplay = "请按下快捷键...";
     }
 
-    public void CaptureKey(KeyEventArgs e)
+    public void CaptureKey(KeyCode keyCode, EventMask modifiers)
     {
         if (!IsCapturingHotkey) return;
 
-        // 将 Avalonia 的 Key 转换为 SharpHook 的 KeyCode
-        var keyCode = KeyCodeUtil.ConvertToKeyCode(e.Key);
         if (keyCode == KeyCode.VcUndefined) return;
-
-        // 构建修饰键
-        var modifiers = EventMask.None;
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
-            modifiers |= EventMask.LeftCtrl;
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
-            modifiers |= EventMask.LeftShift;
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt))
-            modifiers |= EventMask.LeftAlt;
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Meta))
-            modifiers |= EventMask.LeftMeta;
 
         var newConfig = new HotkeyConfig
         {
@@ -477,7 +463,7 @@ public partial class SettingsViewModel : ViewModelBase
     partial void OnUiLanguageChanged(string value)
     {
         if (!string.IsNullOrEmpty(value))
-            SemiTheme.OverrideLocaleResources(Application.Current, new CultureInfo(value));
+            _themeService?.ApplyLocale(value);
     }
 
     private ProviderConfig CloneOcrProviderForEditing(ProviderConfig provider)

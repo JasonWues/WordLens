@@ -19,6 +19,7 @@ namespace WordLens.ViewModels;
 public partial class PopupWindowViewModel : ViewModelBase
 {
     private readonly ILogger<PopupWindowViewModel> _logger;
+    private readonly IClipboardService? _clipboardService;
     private readonly ISettingsService _settingsService;
     private readonly ITranslationHistoryService _historyService;
     private readonly TranslationService _translationService;
@@ -49,6 +50,7 @@ public partial class PopupWindowViewModel : ViewModelBase
 
     public PopupWindowViewModel()
     {
+        _clipboardService = null;
         _translationService = null!;
         _settingsService = null!;
         _historyService = null!;
@@ -62,11 +64,13 @@ public partial class PopupWindowViewModel : ViewModelBase
         TranslationService translationService,
         ISettingsService settingsService,
         ITranslationHistoryService historyService,
+        IClipboardService clipboardService,
         ILogger<PopupWindowViewModel> logger)
     {
         _translationService = translationService;
         _settingsService = settingsService;
         _historyService = historyService;
+        _clipboardService = clipboardService;
         _logger = logger;
 
         // 初始化语言列表
@@ -132,6 +136,7 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(CanCopySource));
         OnPropertyChanged(nameof(SourceCharacterCount));
+        CopySourceCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnTranslationResultsChanged(ObservableCollection<TranslationResult> value)
@@ -370,6 +375,33 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         SourceText = string.Empty;
         TranslationResults.Clear();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCopySource))]
+    public async Task CopySourceAsync()
+    {
+        await CopyTextAsync(SourceText);
+    }
+
+    [RelayCommand]
+    public async Task CopyTranslationAsync(string? text)
+    {
+        await CopyTextAsync(text);
+    }
+
+    [RelayCommand]
+    public void RemoveTranslation(TranslationResult? result)
+    {
+        if (result != null)
+            TranslationResults.Remove(result);
+    }
+
+    private async Task CopyTextAsync(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || _clipboardService == null)
+            return;
+
+        await _clipboardService.SetTextAsync(text);
     }
 
     [RelayCommand]

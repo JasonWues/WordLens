@@ -80,6 +80,8 @@ public class App : Application
         services.AddSingleton<IWindowManagerService, WindowManagerService>();
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
+        services.AddSingleton<IThemeService, AvaloniaThemeService>();
+        services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IProxyAwareHttpClientFactory, ProxyAwareHttpClientFactory>();

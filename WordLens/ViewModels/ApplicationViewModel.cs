@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using WordLens.Messages;
@@ -24,28 +23,9 @@ public partial class ApplicationViewModel : ViewModelBase
         WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "text",
             async (recipient, message) =>
             {
-                await Dispatcher.UIThread.InvokeAsync(async () =>
-                {
-                    try
-                    {
-                        await _windowManager.ShowTranslationWindowAsync(message.SelectedText);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
-                    }
-                });
-            });
-
-        // 注册OCR截图窗口消息
-        WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "ocr", (recipient, message) =>
-        {
-            Dispatcher.UIThread.InvokeAsync(() =>
-            {
                 try
                 {
-                    _windowManager.ShowScreenCaptureWindow();
+                    await _windowManager.ShowTranslationWindowAsync(message.SelectedText);
                 }
                 catch (Exception e)
                 {
@@ -53,6 +33,19 @@ public partial class ApplicationViewModel : ViewModelBase
                     throw;
                 }
             });
+
+        // 注册OCR截图窗口消息
+        WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "ocr", (recipient, message) =>
+        {
+            try
+            {
+                _windowManager.ShowScreenCaptureWindow();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         });
     }
 

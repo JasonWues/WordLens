@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 
 namespace WordLens.Services;
@@ -16,37 +15,32 @@ public interface IWindowManagerService
     /// 如果窗口已存在，则激活并显示；否则创建新窗口
     /// </summary>
     /// <param name="selectedText">要翻译的文本</param>
-    /// <returns>翻译窗口实例</returns>
-    Task<Window> ShowTranslationWindowAsync(string selectedText);
+    Task ShowTranslationWindowAsync(string selectedText);
 
     /// <summary>
     /// 显示或激活设置窗口
     /// 如果窗口已存在，则激活并显示；否则创建新窗口
     /// </summary>
-    /// <returns>设置窗口实例</returns>
-    Task<Window> ShowSettingsWindowAsync();
+    Task ShowSettingsWindowAsync();
 
     /// <summary>
     /// 显示或激活截图窗口
     /// 如果窗口已存在，则激活并显示；否则创建新窗口
     /// </summary>
-    /// <returns>截图窗口实例</returns>
-    Window ShowScreenCaptureWindow();
+    void ShowScreenCaptureWindow();
 
     /// <summary>
     /// 显示或激活 OCR 结果窗口
     /// </summary>
     /// <param name="screenshot">已截取的图片</param>
     /// <param name="recognizedText">可选的初始识别文本</param>
-    /// <returns>OCR 结果窗口实例</returns>
-    Window ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null);
+    void ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null);
 
     /// <summary>
     /// 显示或激活历史记录窗口
     /// 如果窗口已存在，则激活并显示；否则创建新窗口
     /// </summary>
-    /// <returns>历史记录窗口实例</returns>
-    Window ShowHistoryWindow();
+    void ShowHistoryWindow();
 
     /// <summary>
     /// 关闭所有窗口（应用程序退出时调用）
