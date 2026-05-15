@@ -14,6 +14,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Semi.Avalonia;
 using SharpHook.Data;
+using Sortable.Avalonia;
 using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
@@ -355,23 +356,14 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void MoveProviderUp()
+    private void ReorderProvider(SortableUpdateEventArgs? args)
     {
-        if (SelectedProvider != null)
-        {
-            var index = Providers.IndexOf(SelectedProvider);
-            if (index > 0) Providers.Move(index, index - 1);
-        }
-    }
+        if (args == null)
+            return;
 
-    [RelayCommand]
-    private void MoveProviderDown()
-    {
-        if (SelectedProvider != null)
-        {
-            var index = Providers.IndexOf(SelectedProvider);
-            if (index < Providers.Count - 1) Providers.Move(index, index + 1);
-        }
+        var movedProvider = args.Item as ProviderConfig;
+        if (args.ApplyUpdateMutation() && movedProvider != null)
+            SelectedProvider = movedProvider;
     }
 
     /// <summary>

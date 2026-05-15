@@ -9,7 +9,7 @@ WordLens is a desktop translation app built with Avalonia UI and a Rust native h
 - `WordLens/ViewModels/` contains MVVM state and commands.
 - `WordLens/Models/`, `Services/`, `Messages/`, `Converter/`, `Util/`, and `Native/` hold domain models, service interfaces/implementations, messaging types, converters, helpers, and C# native bindings.
 - `WordLens/Assets/` contains Avalonia resources such as icons.
-- `native/` is the Rust `cdylib` crate for screenshot, selection, and OCR preprocessing.
+- `native/` is the Rust `cdylib` crate for screenshot and selection.
 - `.github/workflows/main.yml` defines CI checks and platform builds.
 
 There is no dedicated test project yet. Add one as `WordLens.Tests/` when introducing testable behavior.

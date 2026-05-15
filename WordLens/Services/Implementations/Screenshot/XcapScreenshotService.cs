@@ -12,7 +12,7 @@ namespace WordLens.Services.Implementations.Screenshot;
 /// <summary>
 ///     基于 Rust xcap 的跨平台截图服务实现
 /// </summary>
-public class XcapScreenshotService : IScreenshotService
+public partial class XcapScreenshotService : IScreenshotService
 {
     private readonly ILogger<XcapScreenshotService> _logger;
 
@@ -136,12 +136,12 @@ public class XcapScreenshotService : IScreenshotService
 
     private const int LOGPIXELSX = 88;
 
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetDC(IntPtr hWnd);
+    [LibraryImport("user32.dll")]
+    private static partial IntPtr GetDC(IntPtr hWnd);
 
-    [DllImport("user32.dll")]
-    private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+    [LibraryImport("user32.dll")]
+    private static partial int ReleaseDC(IntPtr hWnd, IntPtr hDC);
 
-    [DllImport("gdi32.dll")]
-    private static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+    [LibraryImport("gdi32.dll")]
+    private static partial int GetDeviceCaps(IntPtr hdc, int nIndex);
 }

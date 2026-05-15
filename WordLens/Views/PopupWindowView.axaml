@@ -113,20 +113,6 @@
             <Setter Property="VerticalContentAlignment" Value="Top" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="LineHeight" Value="18" />
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Border Background="Transparent"
-                            BorderBrush="Transparent"
-                            BorderThickness="0">
-                        <ScrollViewer Name="PART_ContentHost"
-                                      Background="Transparent"
-                                      Padding="{TemplateBinding Padding}">
-                            <TextPresenter Name="PART_TextPresenter"
-                                           Background="Transparent" />
-                        </ScrollViewer>
-                    </Border>
-                </ControlTemplate>
-            </Setter>
         </Style>
 
         <Style Selector="TextBox.source-editor:pointerover">
@@ -171,20 +157,6 @@
             <Setter Property="FontSize" Value="12" />
             <Setter Property="LineHeight" Value="17" />
             <Setter Property="MinHeight" Value="24" />
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Border Background="Transparent"
-                            BorderBrush="Transparent"
-                            BorderThickness="0">
-                        <ScrollViewer Name="PART_ContentHost"
-                                      Background="Transparent"
-                                      Padding="{TemplateBinding Padding}">
-                            <TextPresenter Name="PART_TextPresenter"
-                                           Background="Transparent" />
-                        </ScrollViewer>
-                    </Border>
-                </ControlTemplate>
-            </Setter>
         </Style>
 
         <Style Selector="TextBox.result-editor:pointerover">

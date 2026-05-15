@@ -1320,7 +1320,6 @@ dependencies = [
 name = "native"
 version = "0.1.0"
 dependencies = [
- "image",
  "selection",
  "xcap",
 ]

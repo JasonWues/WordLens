@@ -1,4 +1,3 @@
-use image::RgbaImage;
 use xcap::Monitor;
 
 use crate::buffers::{ScreenshotBuffer, VirtualScreenBounds};
@@ -19,7 +18,11 @@ pub(crate) fn capture_region(
     let request_right = request_left + width as i64;
     let request_bottom = request_top + height as i64;
 
-    let mut output = RgbaImage::new(width, height);
+    let output_len = (width as usize)
+        .checked_mul(height as usize)
+        .and_then(|pixel_count| pixel_count.checked_mul(4))
+        .ok_or_else(|| "Capture output buffer length overflow".to_string())?;
+    let mut output = vec![0_u8; output_len];
     let mut captured_any = false;
 
     for monitor in monitors {
@@ -48,7 +51,7 @@ pub(crate) fn capture_region(
             .map_err(|err| err.to_string())?;
 
         let src = image.as_raw();
-        let dst = output.as_mut();
+        let dst = output.as_mut_slice();
         let src_stride = region_width as usize * 4;
         let dst_stride = width as usize * 4;
         let dst_x = (left - request_left) as usize;
@@ -70,12 +73,11 @@ pub(crate) fn capture_region(
         ));
     }
 
-    let mut bytes = output.into_raw();
-    for pixel in bytes.chunks_exact_mut(4) {
+    for pixel in output.chunks_exact_mut(4) {
         pixel.swap(0, 2);
     }
 
-    Ok(ScreenshotBuffer::from_vec(bytes, width, height, width * 4))
+    Ok(ScreenshotBuffer::from_vec(output, width, height, width * 4))
 }
 
 pub(crate) fn virtual_screen_bounds() -> Result<VirtualScreenBounds, String> {
