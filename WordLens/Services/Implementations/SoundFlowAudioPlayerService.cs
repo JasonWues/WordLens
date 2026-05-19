@@ -18,7 +18,7 @@ public sealed class SoundFlowAudioPlayerService : IAudioPlayerService, IDisposab
 {
     private readonly AudioFormat _format = AudioFormat.DvdHq;
     private readonly ILogger<SoundFlowAudioPlayerService> _logger;
-    private readonly object _sync = new();
+    private readonly Lock _sync = new();
     private AudioPlaybackDevice? _device;
     private MiniAudioEngine? _engine;
     private PlaybackSession? _session;

@@ -167,49 +167,70 @@ public class WindowManagerService : IWindowManagerService
     /// </summary>
     public void ShowScreenCaptureWindow()
     {
-        _semaphore.Wait();
+        Dispatcher.UIThread.Post(async () => await ShowScreenCaptureWindowCoreAsync());
+    }
+
+    private async Task ShowScreenCaptureWindowCoreAsync()
+    {
+        await _semaphore.WaitAsync();
         try
         {
-            Dispatcher.UIThread.Invoke(() =>
+            if (_screenCaptureWindow == null)
             {
-                if (_screenCaptureWindow == null)
+                _logger.ZLogInformation($"创建新的截图窗口");
+
+                using var scope = _serviceProvider.CreateScope();
+                var newViewModel = scope.ServiceProvider.GetRequiredService<ScreenCaptureViewModel>();
+
+                _screenCaptureWindow = new ScreenCaptureWindow
                 {
-                    _logger.ZLogInformation($"创建新的截图窗口");
-                    
-                    using var scope = _serviceProvider.CreateScope();
-                    var viewModel = scope.ServiceProvider.GetRequiredService<ScreenCaptureViewModel>();
+                    DataContext = newViewModel
+                };
 
-                    _screenCaptureWindow = new ScreenCaptureWindow
-                    {
-                        DataContext = viewModel
-                    };
-
-                    // 订阅窗口关闭事件，清理引用
-                    _screenCaptureWindow.Closed += (s, e) =>
-                    {
-                        _semaphore.Wait();
-                        try
-                        {
-                            _logger.ZLogInformation($"截图窗口已关闭，清理引用");
-                            _screenCaptureWindow = null;
-                        }
-                        finally
-                        {
-                            _semaphore.Release();
-                        }
-                    };
-
-                    _screenCaptureWindow.Show();
-                }
-                else
+                // 订阅窗口关闭事件，清理引用
+                _screenCaptureWindow.Closed += (s, e) =>
                 {
-                    _logger.ZLogInformation($"截图窗口已存在，激活");
-                    
-                    // 激活窗口
-                    ActivateWindow(_screenCaptureWindow);
-                }
+                    _semaphore.Wait();
+                    try
+                    {
+                        _logger.ZLogInformation($"截图窗口已关闭，清理引用");
+                        _screenCaptureWindow = null;
+                    }
+                    finally
+                    {
+                        _semaphore.Release();
+                    }
+                };
+            }
 
-            });
+            if (_screenCaptureWindow is not ScreenCaptureWindow captureWindow ||
+                captureWindow.DataContext is not ScreenCaptureViewModel viewModel)
+            {
+                _logger.ZLogError($"截图窗口状态无效，无法显示");
+                return;
+            }
+
+            if (captureWindow.IsVisible)
+            {
+                _logger.ZLogInformation($"截图窗口已存在，激活");
+                ActivateWindow(captureWindow);
+                return;
+            }
+
+            var prepared = await viewModel.PrepareCaptureAsync();
+            if (!prepared)
+            {
+                _logger.ZLogError($"截图窗口启动前预捕获屏幕背景失败");
+                return;
+            }
+
+            captureWindow.PrepareForCapture(viewModel.ScreenBackgroundBounds);
+            captureWindow.Show();
+            captureWindow.Activate();
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"显示截图窗口时发生错误");
         }
         finally
         {
@@ -336,12 +357,14 @@ public class WindowManagerService : IWindowManagerService
     /// </summary>
     public void CloseAllWindows()
     {
+        List<Window?> windows;
+
         _semaphore.Wait();
         try
         {
             _logger.ZLogInformation($"关闭所有窗口");
 
-            var windows = new List<Window?>
+            windows = new List<Window?>
             {
                 _translationWindow,
                 _settingsWindow,
@@ -349,21 +372,6 @@ public class WindowManagerService : IWindowManagerService
                 _ocrResultWindow,
                 _historyWindow
             };
-
-            foreach (var window in windows)
-            {
-                if (window != null)
-                {
-                    try
-                    {
-                        window.Close();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.ZLogError(ex, $"关闭窗口时发生错误");
-                    }
-                }
-            }
 
             // 清理所有引用
             _translationWindow = null;
@@ -375,6 +383,24 @@ public class WindowManagerService : IWindowManagerService
         finally
         {
             _semaphore.Release();
+        }
+
+        foreach (var window in windows)
+        {
+            if (window == null)
+                continue;
+
+            try
+            {
+                if (window is ScreenCaptureWindow screenCaptureWindow)
+                    screenCaptureWindow.ForceClose();
+                else
+                    window.Close();
+            }
+            catch (Exception ex)
+            {
+                _logger.ZLogError(ex, $"关闭窗口时发生错误");
+            }
         }
     }
 

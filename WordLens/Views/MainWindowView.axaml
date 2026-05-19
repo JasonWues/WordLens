@@ -430,52 +430,106 @@
 
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Model / Acoustic Model" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsModelPath}"
-                                         PlaceholderText="C:\models\tts\model.onnx" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsModelPath}"
+                                             PlaceholderText="C:\models\tts\model.onnx" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsModelPathCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Tokens" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsTokensPath}"
-                                         PlaceholderText="C:\models\tts\tokens.txt" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsTokensPath}"
+                                             PlaceholderText="C:\models\tts\tokens.txt" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsTokensPathCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8" IsVisible="{Binding IsKokoroTtsModel}">
                                 <TextBlock Text="Voices" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsVoicesPath}"
-                                         PlaceholderText="C:\models\tts\voices.bin" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsVoicesPath}"
+                                             PlaceholderText="C:\models\tts\voices.bin" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsVoicesPathCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8" IsVisible="{Binding IsMatchaTtsModel}">
                                 <TextBlock Text="Vocoder" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsVocoderPath}"
-                                         PlaceholderText="C:\models\tts\vocoder.onnx" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsVocoderPath}"
+                                             PlaceholderText="C:\models\tts\vocoder.onnx" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsVocoderPathCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Data Dir" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsDataDir}"
-                                         PlaceholderText="C:\models\tts\espeak-ng-data" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsDataDir}"
+                                             PlaceholderText="C:\models\tts\espeak-ng-data" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsDataDirCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Lexicon" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsLexiconPath}"
-                                         PlaceholderText="可选，多个文件用英文逗号分隔" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsLexiconPath}"
+                                             PlaceholderText="可选，多个文件用英文逗号分隔" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsLexiconPathCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Dict Dir" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsDictDir}"
-                                         PlaceholderText="可选" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsDictDir}"
+                                             PlaceholderText="可选" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsDictDirCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Rule FSTs / FARs" FontWeight="Bold" />
-                                <TextBox Text="{Binding TtsRuleFsts}"
-                                         PlaceholderText="可选，多个 FST 文件用英文逗号分隔" />
-                                <TextBox Text="{Binding TtsRuleFars}"
-                                         PlaceholderText="可选，多个 FAR 文件用英文逗号分隔" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsRuleFsts}"
+                                             PlaceholderText="可选，多个 FST 文件用英文逗号分隔" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsRuleFstsCommand}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding TtsRuleFars}"
+                                             PlaceholderText="可选，多个 FAR 文件用英文逗号分隔" />
+                                    <Button Grid.Column="1"
+                                            Content="选择"
+                                            Command="{Binding PickTtsRuleFarsCommand}" />
+                                </Grid>
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*">

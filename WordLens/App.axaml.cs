@@ -83,6 +83,7 @@ public class App : Application
         services.AddSingleton<IThemeService, AvaloniaThemeService>();
         services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
+        services.AddSingleton<IPathPickerService, AvaloniaPathPickerService>();
         services.AddSingleton<IAudioPlayerService, SoundFlowAudioPlayerService>();
         services.AddSingleton<ITtsService, SherpaOnnxTtsService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();

@@ -3,7 +3,6 @@
         xmlns:vm="using:WordLens.ViewModels"
         x:Class="WordLens.Views.ScreenCaptureWindow"
         x:DataType="vm:ScreenCaptureViewModel"
-        WindowState="Maximized"
         WindowStartupLocation="Manual"
         WindowDecorations="None"
         Background="#80000000"
@@ -23,6 +22,12 @@
             <Setter Property="Stroke" Value="#00BFFF" />
             <Setter Property="StrokeThickness" Value="2" />
             <Setter Property="Fill" Value="#30FFFFFF" />
+        </Style>
+
+        <Style Selector="Line.guide-line">
+            <Setter Property="Stroke" Value="#CCFFFFFF" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeDashArray" Value="6,4" />
         </Style>
 
         <!-- 尺寸提示样式 -->
@@ -54,9 +59,11 @@
         <!-- 全屏画布 - 用于绘制选择区域 -->
         <Canvas Name="CaptureCanvas"
                 Background="Transparent"
+                Cursor="Cross"
                 PointerPressed="OnPointerPressed"
                 PointerMoved="OnPointerMoved"
                 PointerReleased="OnPointerReleased"
+                PointerCaptureLost="OnPointerCaptureLost"
                 KeyDown="OnKeyDown"
                 Focusable="True">
 
@@ -68,6 +75,16 @@
                        Canvas.Top="{Binding SelectionRect.Y}"
                        Width="{Binding SelectionRect.Width}"
                        Height="{Binding SelectionRect.Height}" />
+
+            <!-- 鼠标辅助线 -->
+            <Line Name="VerticalGuideLine"
+                  Classes="guide-line"
+                  IsVisible="False"
+                  IsHitTestVisible="False" />
+            <Line Name="HorizontalGuideLine"
+                  Classes="guide-line"
+                  IsVisible="False"
+                  IsHitTestVisible="False" />
 
             <!-- 尺寸提示（跟随鼠标） -->
             <Border Name="SizeHintBorder"

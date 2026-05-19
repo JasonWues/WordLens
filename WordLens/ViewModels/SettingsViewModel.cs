@@ -26,6 +26,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IHotkeyManagerService? _hotkeyManagerService;
     private readonly ILogger<SettingsViewModel>? _logger;
     private readonly IModelProviderService? _modelProviderService;
+    private readonly IPathPickerService? _pathPickerService;
     private readonly ISettingsService? _settingsService;
     private readonly IStartupService? _startupService;
     private readonly IThemeService? _themeService;
@@ -37,6 +38,11 @@ public partial class SettingsViewModel : ViewModelBase
     private HotkeyConfig _hotkeyConfig = HotkeyConfig.Default();
     private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.Default();
     private AppSettings? _originalSettings;
+    private static readonly IReadOnlyList<string> OnnxFilePatterns = new[] { "*.onnx" };
+    private static readonly IReadOnlyList<string> TextFilePatterns = new[] { "*.txt" };
+    private static readonly IReadOnlyList<string> BinFilePatterns = new[] { "*.bin" };
+    private static readonly IReadOnlyList<string> FstFilePatterns = new[] { "*.fst" };
+    private static readonly IReadOnlyList<string> FarFilePatterns = new[] { "*.far" };
 
     [ObservableProperty] private bool hasModelLoadError;
 
@@ -127,6 +133,7 @@ public partial class SettingsViewModel : ViewModelBase
         IEncryptionService encryptionService,
         IThemeService themeService,
         IStartupService startupService,
+        IPathPickerService pathPickerService,
         ILogger<SettingsViewModel> logger)
     {
         _settingsService = settingsService;
@@ -135,6 +142,7 @@ public partial class SettingsViewModel : ViewModelBase
         _encryptionService = encryptionService;
         _themeService = themeService;
         _startupService = startupService;
+        _pathPickerService = pathPickerService;
         _logger = logger;
 
         WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
@@ -549,6 +557,96 @@ public partial class SettingsViewModel : ViewModelBase
         TtsNumThreads = config.NumThreads;
         TtsSpeakerId = config.SpeakerId;
         TtsSpeed = config.Speed;
+    }
+
+    [RelayCommand]
+    private async Task PickTtsModelPathAsync()
+    {
+        await PickSingleFilePathAsync("选择 TTS ONNX 模型", OnnxFilePatterns, path => TtsModelPath = path);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsTokensPathAsync()
+    {
+        await PickSingleFilePathAsync("选择 tokens.txt", TextFilePatterns, path => TtsTokensPath = path);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsVoicesPathAsync()
+    {
+        await PickSingleFilePathAsync("选择 voices.bin", BinFilePatterns, path => TtsVoicesPath = path);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsVocoderPathAsync()
+    {
+        await PickSingleFilePathAsync("选择 Vocoder ONNX 模型", OnnxFilePatterns, path => TtsVocoderPath = path);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsDataDirAsync()
+    {
+        await PickFolderPathAsync("选择 espeak-ng-data 目录", path => TtsDataDir = path);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsDictDirAsync()
+    {
+        await PickFolderPathAsync("选择词典目录", path => TtsDictDir = path);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsLexiconPathAsync()
+    {
+        await PickMultipleFilePathsAsync("选择 Lexicon 文件", TextFilePatterns, paths => TtsLexiconPath = paths);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsRuleFstsAsync()
+    {
+        await PickMultipleFilePathsAsync("选择 Rule FST 文件", FstFilePatterns, paths => TtsRuleFsts = paths);
+    }
+
+    [RelayCommand]
+    private async Task PickTtsRuleFarsAsync()
+    {
+        await PickMultipleFilePathsAsync("选择 Rule FAR 文件", FarFilePatterns, paths => TtsRuleFars = paths);
+    }
+
+    private async Task PickSingleFilePathAsync(
+        string title,
+        IReadOnlyList<string> patterns,
+        Action<string> apply)
+    {
+        if (_pathPickerService == null)
+            return;
+
+        var path = await _pathPickerService.PickFileAsync(title, patterns);
+        if (!string.IsNullOrWhiteSpace(path))
+            apply(path);
+    }
+
+    private async Task PickMultipleFilePathsAsync(
+        string title,
+        IReadOnlyList<string> patterns,
+        Action<string> apply)
+    {
+        if (_pathPickerService == null)
+            return;
+
+        var paths = await _pathPickerService.PickFilesAsync(title, patterns);
+        if (paths.Count > 0)
+            apply(string.Join(",", paths));
+    }
+
+    private async Task PickFolderPathAsync(string title, Action<string> apply)
+    {
+        if (_pathPickerService == null)
+            return;
+
+        var path = await _pathPickerService.PickFolderAsync(title);
+        if (!string.IsNullOrWhiteSpace(path))
+            apply(path);
     }
 
     private TtsConfig BuildTtsSettingsFromViewModel()
