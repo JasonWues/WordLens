@@ -22,6 +22,7 @@ public partial class PopupWindowViewModel : ViewModelBase
     private readonly IClipboardService? _clipboardService;
     private readonly ISettingsService _settingsService;
     private readonly ITranslationHistoryService _historyService;
+    private readonly ITtsService? _ttsService;
     private readonly TranslationService _translationService;
     private readonly Task _languageInitializationTask = Task.CompletedTask;
     private PendingHistorySave? _pendingHistorySave;
@@ -54,6 +55,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         _translationService = null!;
         _settingsService = null!;
         _historyService = null!;
+        _ttsService = null;
         _logger = null!;
 
         InitializeLanguageCollections();
@@ -65,12 +67,14 @@ public partial class PopupWindowViewModel : ViewModelBase
         ISettingsService settingsService,
         ITranslationHistoryService historyService,
         IClipboardService clipboardService,
+        ITtsService ttsService,
         ILogger<PopupWindowViewModel> logger)
     {
         _translationService = translationService;
         _settingsService = settingsService;
         _historyService = historyService;
         _clipboardService = clipboardService;
+        _ttsService = ttsService;
         _logger = logger;
 
         // 初始化语言列表
@@ -79,6 +83,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     }
 
     public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
+
+    public bool CanSpeakSource => CanCopySource;
 
     public bool CanUseTranslationAsSource =>
         TranslationResults.Any(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
@@ -135,8 +141,10 @@ public partial class PopupWindowViewModel : ViewModelBase
     partial void OnSourceTextChanged(string? value)
     {
         OnPropertyChanged(nameof(CanCopySource));
+        OnPropertyChanged(nameof(CanSpeakSource));
         OnPropertyChanged(nameof(SourceCharacterCount));
         CopySourceCommand.NotifyCanExecuteChanged();
+        SpeakSourceCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnTranslationResultsChanged(ObservableCollection<TranslationResult> value)
@@ -389,6 +397,24 @@ public partial class PopupWindowViewModel : ViewModelBase
         await CopyTextAsync(text);
     }
 
+    [RelayCommand(CanExecute = nameof(CanSpeakSource))]
+    public async Task SpeakSourceAsync()
+    {
+        await SpeakTextAsync(SourceText);
+    }
+
+    [RelayCommand]
+    public async Task SpeakTranslationAsync(string? text)
+    {
+        await SpeakTextAsync(text);
+    }
+
+    [RelayCommand]
+    public void StopSpeech()
+    {
+        _ttsService?.Stop();
+    }
+
     [RelayCommand]
     public void RemoveTranslation(TranslationResult? result)
     {
@@ -402,6 +428,21 @@ public partial class PopupWindowViewModel : ViewModelBase
             return;
 
         await _clipboardService.SetTextAsync(text);
+    }
+
+    private async Task SpeakTextAsync(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || _ttsService == null)
+            return;
+
+        try
+        {
+            await _ttsService.SpeakAsync(text);
+        }
+        catch (Exception ex)
+        {
+            _logger?.ZLogError(ex, $"朗读文本失败: {ex.Message}");
+        }
     }
 
     [RelayCommand]

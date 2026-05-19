@@ -1,3 +1,6 @@
+using Avalonia.Media.Imaging;
+using Microsoft.Extensions.Logging;
+using SherpaOnnx;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,8 +9,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Avalonia.Media.Imaging;
-using Microsoft.Extensions.Logging;
 using WordLens.Models;
 using ZLogger;
 

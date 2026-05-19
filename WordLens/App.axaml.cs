@@ -83,6 +83,8 @@ public class App : Application
         services.AddSingleton<IThemeService, AvaloniaThemeService>();
         services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
+        services.AddSingleton<IAudioPlayerService, SoundFlowAudioPlayerService>();
+        services.AddSingleton<ITtsService, SherpaOnnxTtsService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IProxyAwareHttpClientFactory, ProxyAwareHttpClientFactory>();

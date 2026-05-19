@@ -82,6 +82,36 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] private bool isStartupSupported = true;
 
+    [ObservableProperty] private bool ttsEnabled;
+
+    [ObservableProperty] private TtsModelType ttsModelType = TtsModelType.Vits;
+
+    [ObservableProperty] private string ttsModelPath = string.Empty;
+
+    [ObservableProperty] private string ttsTokensPath = string.Empty;
+
+    [ObservableProperty] private string ttsVoicesPath = string.Empty;
+
+    [ObservableProperty] private string ttsDataDir = string.Empty;
+
+    [ObservableProperty] private string ttsLexiconPath = string.Empty;
+
+    [ObservableProperty] private string ttsDictDir = string.Empty;
+
+    [ObservableProperty] private string ttsVocoderPath = string.Empty;
+
+    [ObservableProperty] private string ttsRuleFsts = string.Empty;
+
+    [ObservableProperty] private string ttsRuleFars = string.Empty;
+
+    [ObservableProperty] private string ttsProvider = "cpu";
+
+    [ObservableProperty] private int ttsNumThreads = 2;
+
+    [ObservableProperty] private int ttsSpeakerId;
+
+    [ObservableProperty] private double ttsSpeed = 1.0;
+
     // 流式输出配置
     [ObservableProperty] private bool streamingEnabled = true;
 
@@ -125,6 +155,19 @@ public partial class SettingsViewModel : ViewModelBase
         new LanguageOption("ja", "日本語")
     };
 
+    public List<TtsModelTypeOption> AvailableTtsModelTypes { get; } = new()
+    {
+        new TtsModelTypeOption(TtsModelType.Vits, "VITS / Piper"),
+        new TtsModelTypeOption(TtsModelType.Kokoro, "Kokoro"),
+        new TtsModelTypeOption(TtsModelType.Matcha, "Matcha")
+    };
+
+    public bool IsVitsTtsModel => TtsModelType == TtsModelType.Vits;
+
+    public bool IsKokoroTtsModel => TtsModelType == TtsModelType.Kokoro;
+
+    public bool IsMatchaTtsModel => TtsModelType == TtsModelType.Matcha;
+
     public async Task InitializeAsync()
     {
         await LoadSettingsAsync();
@@ -145,6 +188,7 @@ public partial class SettingsViewModel : ViewModelBase
         _ocrHotkeyConfig = settings.OcrHotkey;
         IsStartupSupported = _startupService?.IsSupported ?? false;
         StartWithSystem = IsStartupSupported ? _startupService?.IsEnabled() ?? settings.StartWithSystem : settings.StartWithSystem;
+        LoadTtsSettings(settings.Tts);
         UpdateHotkeyDisplay();
         UpdateOcrHotkeyDisplay();
 
@@ -231,6 +275,7 @@ public partial class SettingsViewModel : ViewModelBase
             _hotkeyConfig = _originalSettings.Hotkey;
             _ocrHotkeyConfig = _originalSettings.OcrHotkey;
             StartWithSystem = _originalSettings.StartWithSystem;
+            LoadTtsSettings(_originalSettings.Tts);
             UpdateHotkeyDisplay();
             UpdateOcrHotkeyDisplay();
 
@@ -451,6 +496,7 @@ public partial class SettingsViewModel : ViewModelBase
             StartWithSystem = StartWithSystem,
             Hotkey = _hotkeyConfig,
             OcrHotkey = _ocrHotkeyConfig,
+            Tts = BuildTtsSettingsFromViewModel(),
             SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
             Providers = Providers.Select(CloneProviderForPersistence).ToList(),
             OcrProvider = CloneOcrProviderForPersistence(OcrProvider),
@@ -477,6 +523,54 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (!string.IsNullOrEmpty(value))
             _themeService?.ApplyLocale(value);
+    }
+
+    partial void OnTtsModelTypeChanged(TtsModelType value)
+    {
+        OnPropertyChanged(nameof(IsVitsTtsModel));
+        OnPropertyChanged(nameof(IsKokoroTtsModel));
+        OnPropertyChanged(nameof(IsMatchaTtsModel));
+    }
+
+    private void LoadTtsSettings(TtsConfig config)
+    {
+        TtsEnabled = config.Enabled;
+        TtsModelType = config.ModelType;
+        TtsModelPath = config.ModelPath;
+        TtsTokensPath = config.TokensPath;
+        TtsVoicesPath = config.VoicesPath;
+        TtsDataDir = config.DataDir;
+        TtsLexiconPath = config.LexiconPath;
+        TtsDictDir = config.DictDir;
+        TtsVocoderPath = config.VocoderPath;
+        TtsRuleFsts = config.RuleFsts;
+        TtsRuleFars = config.RuleFars;
+        TtsProvider = config.Provider;
+        TtsNumThreads = config.NumThreads;
+        TtsSpeakerId = config.SpeakerId;
+        TtsSpeed = config.Speed;
+    }
+
+    private TtsConfig BuildTtsSettingsFromViewModel()
+    {
+        return new TtsConfig
+        {
+            Enabled = TtsEnabled,
+            ModelType = TtsModelType,
+            ModelPath = TtsModelPath,
+            TokensPath = TtsTokensPath,
+            VoicesPath = TtsVoicesPath,
+            DataDir = TtsDataDir,
+            LexiconPath = TtsLexiconPath,
+            DictDir = TtsDictDir,
+            VocoderPath = TtsVocoderPath,
+            RuleFsts = TtsRuleFsts,
+            RuleFars = TtsRuleFars,
+            Provider = string.IsNullOrWhiteSpace(TtsProvider) ? "cpu" : TtsProvider,
+            NumThreads = Math.Max(1, TtsNumThreads),
+            SpeakerId = Math.Max(0, TtsSpeakerId),
+            Speed = Math.Clamp(TtsSpeed, 0.25, 4.0)
+        };
     }
 
     private ProviderConfig CloneOcrProviderForEditing(ProviderConfig provider)
@@ -535,6 +629,7 @@ public partial class SettingsViewModel : ViewModelBase
             StartWithSystem = settings.StartWithSystem,
             Hotkey = settings.Hotkey,
             OcrHotkey = settings.OcrHotkey,
+            Tts = CloneTtsConfig(settings.Tts),
             SelectedProvider = settings.SelectedProvider,
             Providers = settings.Providers.Select(CloneProviderForPersistence).ToList(),
             OcrProvider = CloneOcrProviderForPersistence(settings.OcrProvider),
@@ -554,6 +649,28 @@ public partial class SettingsViewModel : ViewModelBase
                 Username = settings.Proxy.Username,
                 Password = settings.Proxy.Password
             }
+        };
+    }
+
+    private static TtsConfig CloneTtsConfig(TtsConfig config)
+    {
+        return new TtsConfig
+        {
+            Enabled = config.Enabled,
+            ModelType = config.ModelType,
+            ModelPath = config.ModelPath,
+            TokensPath = config.TokensPath,
+            VoicesPath = config.VoicesPath,
+            DataDir = config.DataDir,
+            LexiconPath = config.LexiconPath,
+            DictDir = config.DictDir,
+            VocoderPath = config.VocoderPath,
+            RuleFsts = config.RuleFsts,
+            RuleFars = config.RuleFars,
+            Provider = config.Provider,
+            NumThreads = config.NumThreads,
+            SpeakerId = config.SpeakerId,
+            Speed = config.Speed
         };
     }
 
@@ -579,5 +696,17 @@ public class LanguageOption
     }
 
     public string Code { get; set; }
+    public string DisplayName { get; set; }
+}
+
+public class TtsModelTypeOption
+{
+    public TtsModelTypeOption(TtsModelType value, string displayName)
+    {
+        Value = value;
+        DisplayName = displayName;
+    }
+
+    public TtsModelType Value { get; set; }
     public string DisplayName { get; set; }
 }

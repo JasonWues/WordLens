@@ -38,6 +38,8 @@ public class AppSettings
 
     public ProxyConfig Proxy { get; set; } = new();
 
+    public TtsConfig Tts { get; set; } = new();
+
     /// <summary>
     ///     流式输出配置
     /// </summary>
@@ -138,4 +140,30 @@ public class ProxyConfig
     public bool UseAuthentication { get; set; } = false;
     public string? Username { get; set; }
     public string? Password { get; set; }
+}
+
+public class TtsConfig
+{
+    public bool Enabled { get; set; } = false;
+    public TtsModelType ModelType { get; set; } = TtsModelType.Vits;
+    public string ModelPath { get; set; } = string.Empty;
+    public string TokensPath { get; set; } = string.Empty;
+    public string VoicesPath { get; set; } = string.Empty;
+    public string DataDir { get; set; } = string.Empty;
+    public string LexiconPath { get; set; } = string.Empty;
+    public string DictDir { get; set; } = string.Empty;
+    public string VocoderPath { get; set; } = string.Empty;
+    public string RuleFsts { get; set; } = string.Empty;
+    public string RuleFars { get; set; } = string.Empty;
+    public string Provider { get; set; } = "cpu";
+    public int NumThreads { get; set; } = 2;
+    public int SpeakerId { get; set; } = 0;
+    public double Speed { get; set; } = 1.0;
+}
+
+public enum TtsModelType
+{
+    Vits,
+    Kokoro,
+    Matcha
 }

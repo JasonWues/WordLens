@@ -246,13 +246,15 @@
                           ColumnSpacing="4"
                           Margin="6,0"
                           VerticalAlignment="Center">
-                        <PathIcon Grid.Column="0"
-                                  Width="12"
-                                  Height="12"
-                                  Margin="4,0"
-                                  Foreground="#171717"
-                                  Data="{StaticResource speaker_regular}"
-                                  VerticalAlignment="Center" />
+                        <Button Grid.Column="0"
+                                Classes="icon-button"
+                                Command="{Binding SpeakSourceCommand}"
+                                IsEnabled="{Binding CanSpeakSource}"
+                                ToolTip.Tip="朗读原文">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Data="{StaticResource speaker_regular}" />
+                        </Button>
 
                         <Button Grid.Column="1"
                                 Classes="icon-button"
@@ -413,13 +415,16 @@
                                                   ColumnSpacing="5"
                                                   Margin="6,0"
                                                   VerticalAlignment="Center">
-                                                <PathIcon Grid.Column="0"
-                                                          Width="12"
-                                                          Height="12"
-                                                          Margin="4,0"
-                                                          Foreground="#171717"
-                                                          Data="{StaticResource speaker_regular}"
-                                                          VerticalAlignment="Center" />
+                                                <Button Grid.Column="0"
+                                                        Classes="icon-button"
+                                                        Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).SpeakTranslationCommand}"
+                                                        CommandParameter="{Binding Result}"
+                                                        IsVisible="{Binding IsSuccess}"
+                                                        ToolTip.Tip="朗读此翻译">
+                                                    <PathIcon Width="12"
+                                                              Height="12"
+                                                              Data="{StaticResource speaker_regular}" />
+                                                </Button>
 
                                                 <Button Grid.Column="1"
                                                         Classes="icon-button"

@@ -407,6 +407,121 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- 本地 TTS 标签页 -->
+            <TabItem Header="TTS">
+                <ScrollViewer>
+                    <StackPanel Spacing="16" Margin="20" MaxWidth="560" DataContext="{Binding SettingsViewModel}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="本地 TTS" FontWeight="Bold" FontSize="14" />
+                            <CheckBox Content="启用 sherpa-onnx 本地朗读"
+                                      IsChecked="{Binding TtsEnabled}" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="12" IsEnabled="{Binding TtsEnabled}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="模型类型" FontWeight="Bold" />
+                                <ComboBox ItemsSource="{Binding AvailableTtsModelTypes}"
+                                          SelectedValue="{Binding TtsModelType}"
+                                          SelectedValueBinding="{Binding Value}"
+                                          DisplayMemberBinding="{Binding DisplayName}"
+                                          Width="220"
+                                          HorizontalAlignment="Left" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Model / Acoustic Model" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsModelPath}"
+                                         PlaceholderText="C:\models\tts\model.onnx" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Tokens" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsTokensPath}"
+                                         PlaceholderText="C:\models\tts\tokens.txt" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8" IsVisible="{Binding IsKokoroTtsModel}">
+                                <TextBlock Text="Voices" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsVoicesPath}"
+                                         PlaceholderText="C:\models\tts\voices.bin" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8" IsVisible="{Binding IsMatchaTtsModel}">
+                                <TextBlock Text="Vocoder" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsVocoderPath}"
+                                         PlaceholderText="C:\models\tts\vocoder.onnx" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Data Dir" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsDataDir}"
+                                         PlaceholderText="C:\models\tts\espeak-ng-data" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Lexicon" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsLexiconPath}"
+                                         PlaceholderText="可选，多个文件用英文逗号分隔" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Dict Dir" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsDictDir}"
+                                         PlaceholderText="可选" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Rule FSTs / FARs" FontWeight="Bold" />
+                                <TextBox Text="{Binding TtsRuleFsts}"
+                                         PlaceholderText="可选，多个 FST 文件用英文逗号分隔" />
+                                <TextBox Text="{Binding TtsRuleFars}"
+                                         PlaceholderText="可选，多个 FAR 文件用英文逗号分隔" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="8">
+                                    <TextBlock Text="Provider" FontWeight="Bold" />
+                                    <TextBox Text="{Binding TtsProvider}"
+                                             PlaceholderText="cpu" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Spacing="8">
+                                    <TextBlock Text="线程数" FontWeight="Bold" />
+                                    <NumericUpDown Value="{Binding TtsNumThreads}"
+                                                   Minimum="1"
+                                                   Maximum="16"
+                                                   Increment="1" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="8">
+                                    <TextBlock Text="Speaker ID" FontWeight="Bold" />
+                                    <NumericUpDown Value="{Binding TtsSpeakerId}"
+                                                   Minimum="0"
+                                                   Maximum="999"
+                                                   Increment="1" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Spacing="8">
+                                    <TextBlock Text="语速" FontWeight="Bold" />
+                                    <NumericUpDown Value="{Binding TtsSpeed}"
+                                                   Minimum="0.25"
+                                                   Maximum="4"
+                                                   Increment="0.1"
+                                                   FormatString="F1" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="VITS/Piper 通常填写 model.onnx、tokens.txt、espeak-ng-data；Kokoro 还需要 voices.bin；Matcha 还需要 vocoder.onnx。"
+                                       FontSize="12"
+                                       Opacity="0.6"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- 网络代理标签页 -->
             <TabItem Header="网络代理">
                 <ScrollViewer>
