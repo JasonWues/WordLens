@@ -21,6 +21,8 @@ public class AppSettings
     /// </summary>
     public string LastTargetLanguage { get; set; } = "en";
 
+    public bool StartWithSystem { get; set; } = false;
+
     public string? SelectedProvider { get; set; } = "OpenAI";
 
     public ProviderConfig OcrProvider { get; set; } = new()

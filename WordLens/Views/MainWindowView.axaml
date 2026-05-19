@@ -42,6 +42,20 @@
 
                         <Separator />
 
+                        <!-- 启动设置 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="启动" FontWeight="Bold" FontSize="14" />
+                            <CheckBox Content="开机时自动启动 WordLens"
+                                      IsChecked="{Binding StartWithSystem}"
+                                      IsEnabled="{Binding IsStartupSupported}" />
+                            <TextBlock Text="当前系统不支持自动配置开机自启"
+                                       FontSize="12"
+                                       Opacity="0.6"
+                                       IsVisible="{Binding !IsStartupSupported}" />
+                        </StackPanel>
+
+                        <Separator />
+
                         <!-- 快捷键设置 -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="快捷键" FontWeight="Bold" FontSize="14" />

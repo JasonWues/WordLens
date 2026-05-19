@@ -66,6 +66,7 @@ internal static partial class ScreenshotNative
 
         try
         {
+            
             var length = checked((int)nativeBuffer.Len);
             var buffer = new byte[length];
             Marshal.Copy(nativeBuffer.Data, buffer, 0, length);

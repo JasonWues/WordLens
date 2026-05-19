@@ -27,6 +27,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ILogger<SettingsViewModel>? _logger;
     private readonly IModelProviderService? _modelProviderService;
     private readonly ISettingsService? _settingsService;
+    private readonly IStartupService? _startupService;
     private readonly IThemeService? _themeService;
 
     // 当前正在捕获的热键类型
@@ -77,6 +78,10 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] private string uiLanguage = "zh-CN";
 
+    [ObservableProperty] private bool startWithSystem;
+
+    [ObservableProperty] private bool isStartupSupported = true;
+
     // 流式输出配置
     [ObservableProperty] private bool streamingEnabled = true;
 
@@ -91,6 +96,7 @@ public partial class SettingsViewModel : ViewModelBase
         IModelProviderService modelProviderService,
         IEncryptionService encryptionService,
         IThemeService themeService,
+        IStartupService startupService,
         ILogger<SettingsViewModel> logger)
     {
         _settingsService = settingsService;
@@ -98,6 +104,7 @@ public partial class SettingsViewModel : ViewModelBase
         _modelProviderService = modelProviderService;
         _encryptionService = encryptionService;
         _themeService = themeService;
+        _startupService = startupService;
         _logger = logger;
 
         WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
@@ -136,6 +143,8 @@ public partial class SettingsViewModel : ViewModelBase
         UiLanguage = settings.UILanguage;
         _hotkeyConfig = settings.Hotkey;
         _ocrHotkeyConfig = settings.OcrHotkey;
+        IsStartupSupported = _startupService?.IsSupported ?? false;
+        StartWithSystem = IsStartupSupported ? _startupService?.IsEnabled() ?? settings.StartWithSystem : settings.StartWithSystem;
         UpdateHotkeyDisplay();
         UpdateOcrHotkeyDisplay();
 
@@ -206,6 +215,8 @@ public partial class SettingsViewModel : ViewModelBase
 
         var settings = BuildSettingsFromViewModel();
         var savedSnapshot = CloneSettings(settings);
+        if (_startupService?.IsSupported == true)
+            _startupService.SetEnabled(settings.StartWithSystem);
         await _settingsService.SaveAsync(settings);
         _originalSettings = savedSnapshot;
     }
@@ -219,6 +230,7 @@ public partial class SettingsViewModel : ViewModelBase
             UiLanguage = _originalSettings.UILanguage;
             _hotkeyConfig = _originalSettings.Hotkey;
             _ocrHotkeyConfig = _originalSettings.OcrHotkey;
+            StartWithSystem = _originalSettings.StartWithSystem;
             UpdateHotkeyDisplay();
             UpdateOcrHotkeyDisplay();
 
@@ -436,6 +448,7 @@ public partial class SettingsViewModel : ViewModelBase
         {
             UILanguage = UiLanguage,
             LastTargetLanguage = _originalSettings?.LastTargetLanguage ?? "en",
+            StartWithSystem = StartWithSystem,
             Hotkey = _hotkeyConfig,
             OcrHotkey = _ocrHotkeyConfig,
             SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
@@ -519,6 +532,7 @@ public partial class SettingsViewModel : ViewModelBase
         {
             UILanguage = settings.UILanguage,
             LastTargetLanguage = settings.LastTargetLanguage,
+            StartWithSystem = settings.StartWithSystem,
             Hotkey = settings.Hotkey,
             OcrHotkey = settings.OcrHotkey,
             SelectedProvider = settings.SelectedProvider,

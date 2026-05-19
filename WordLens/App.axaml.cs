@@ -81,6 +81,7 @@ public class App : Application
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
         services.AddSingleton<IThemeService, AvaloniaThemeService>();
+        services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
         services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
