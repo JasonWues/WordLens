@@ -89,6 +89,7 @@ public class App : Application
         services.AddSingleton<OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ProxyAwareHttpClientFactory>();
+        services.AddSingleton<UpdateService>();
         services.AddSingleton<IOcrService, OpenAIOcrService>();
         services.AddSingleton<TranslationService>();
         services.AddSingleton<ISelectionService, SelectionService>();

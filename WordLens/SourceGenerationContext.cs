@@ -10,6 +10,7 @@ namespace WordLens;
 [JsonSerializable(typeof(OcrChatCompletionRequest))]
 [JsonSerializable(typeof(ModelInfo))]
 [JsonSerializable(typeof(OpenAIModelResponse))]
+[JsonSerializable(typeof(GitHubReleaseResponse))]
 [JsonSerializable(typeof(StreamChunk))]
 [JsonSerializable(typeof(List<TranslationHistoryResult>))]
 public partial class SourceGenerationContext : JsonSerializerContext

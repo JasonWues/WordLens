@@ -32,7 +32,16 @@ public class OpenAITranslationProvider : ITranslationProvider
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _decryptedApiKey);
         if (!string.IsNullOrWhiteSpace(_config.BaseUrl)) httpClient.BaseAddress = new Uri(_config.BaseUrl);
 
-        var systemPrompt = "You are a professional, authentic translation engine. You only return the translated text, without any explanations";
+        var systemPrompt = BuildSystemPrompt(
+            "You are a professional, authentic translation engine. You only return the translated text, without any explanations",
+            text,
+            sourceLanguage,
+            targetLanguage);
+        var userPrompt = BuildUserPrompt(
+            $"Please translate into {targetLanguage} (avoid explaining the original text):{text}",
+            text,
+            sourceLanguage,
+            targetLanguage);
 
         var payload = new ChatCompletionRequest
         {
@@ -45,7 +54,7 @@ public class OpenAITranslationProvider : ITranslationProvider
                     Role = "system",
                     Content = systemPrompt
                 },
-                new() { Role = "user", Content = $"Please translate into {targetLanguage} (avoid explaining the original text):{text}" }
+                new() { Role = "user", Content = userPrompt }
             }
         };
 
@@ -81,9 +90,11 @@ public class OpenAITranslationProvider : ITranslationProvider
             httpClient.BaseAddress = new Uri(_config.BaseUrl);
 
         // 构建系统提示
-        var systemPrompt = sourceLanguage == "auto"
+        var defaultSystemPrompt = sourceLanguage == "auto"
             ? $"You are a translation engine. Translate to {targetLanguage}. Only return the translation."
             : $"You are a translation engine. Translate from {sourceLanguage} to {targetLanguage}. Only return the translation.";
+        var systemPrompt = BuildSystemPrompt(defaultSystemPrompt, text, sourceLanguage, targetLanguage);
+        var userPrompt = BuildUserPrompt(text, text, sourceLanguage, targetLanguage);
 
         // 构建流式请求
         var payload = new ChatCompletionRequest
@@ -98,7 +109,7 @@ public class OpenAITranslationProvider : ITranslationProvider
                     Role = "system",
                     Content = systemPrompt
                 },
-                new() { Role = "user", Content = text }
+                new() { Role = "user", Content = userPrompt }
             }
         };
 
@@ -160,5 +171,31 @@ public class OpenAITranslationProvider : ITranslationProvider
         }
 
         return fullContent.ToString();
+    }
+
+    private string BuildSystemPrompt(
+        string defaultPrompt,
+        string text,
+        string sourceLanguage,
+        string targetLanguage)
+    {
+        var template = string.IsNullOrWhiteSpace(_config.SystemPromptTemplate)
+            ? defaultPrompt
+            : _config.SystemPromptTemplate;
+
+        return PromptTemplateRenderer.RenderTranslation(template, text, sourceLanguage, targetLanguage);
+    }
+
+    private string BuildUserPrompt(
+        string defaultPrompt,
+        string text,
+        string sourceLanguage,
+        string targetLanguage)
+    {
+        var template = string.IsNullOrWhiteSpace(_config.UserPromptTemplate)
+            ? defaultPrompt
+            : _config.UserPromptTemplate;
+
+        return PromptTemplateRenderer.RenderTranslation(template, text, sourceLanguage, targetLanguage);
     }
 }

@@ -290,6 +290,8 @@ public partial class PopupWindowViewModel : ViewModelBase
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
             RequestArguments = provider.RequestArguments,
+            SystemPromptTemplate = provider.SystemPromptTemplate,
+            UserPromptTemplate = provider.UserPromptTemplate,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }

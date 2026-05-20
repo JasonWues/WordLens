@@ -395,7 +395,9 @@ public partial class SettingsViewModel : ViewModelBase
             Type = ProviderType.OpenAI,
             BaseUrl = "https://api.openai.com",
             Model = "gpt-4o-mini",
-            RequestArguments = string.Empty
+            RequestArguments = string.Empty,
+            SystemPromptTemplate = string.Empty,
+            UserPromptTemplate = string.Empty
         };
         Providers.Add(newProvider);
         SelectedProvider = newProvider;
@@ -434,7 +436,8 @@ public partial class SettingsViewModel : ViewModelBase
             Type = ProviderType.OpenAI,
             BaseUrl = "https://api.openai.com",
             Model = "gpt-4o-mini",
-            RequestArguments = string.Empty
+            RequestArguments = string.Empty,
+            UserPromptTemplate = string.Empty
         };
         OcrProviders.Add(newProvider);
         SelectedOcrProvider = newProvider;
@@ -732,6 +735,8 @@ public partial class SettingsViewModel : ViewModelBase
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
             RequestArguments = provider.RequestArguments,
+            SystemPromptTemplate = provider.SystemPromptTemplate,
+            UserPromptTemplate = provider.UserPromptTemplate,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }
@@ -747,6 +752,8 @@ public partial class SettingsViewModel : ViewModelBase
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
             RequestArguments = provider.RequestArguments,
+            SystemPromptTemplate = provider.SystemPromptTemplate,
+            UserPromptTemplate = provider.UserPromptTemplate,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }
@@ -762,6 +769,8 @@ public partial class SettingsViewModel : ViewModelBase
             Model = provider.Model,
             IsEnabled = provider.IsEnabled,
             RequestArguments = provider.RequestArguments,
+            SystemPromptTemplate = provider.SystemPromptTemplate,
+            UserPromptTemplate = provider.UserPromptTemplate,
             AllowManualModelInput = provider.AllowManualModelInput
         };
     }

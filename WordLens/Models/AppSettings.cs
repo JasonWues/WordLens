@@ -50,7 +50,9 @@ public class AppSettings
             ApiKey = null,
             Model = "gpt-4o-mini",
             Type = ProviderType.OpenAI,
-            RequestArguments = string.Empty
+            RequestArguments = string.Empty,
+            SystemPromptTemplate = string.Empty,
+            UserPromptTemplate = string.Empty
         }
     };
 
@@ -64,7 +66,8 @@ public class AppSettings
             Model = "gpt-4o-mini",
             Type = ProviderType.OpenAI,
             IsEnabled = true,
-            RequestArguments = string.Empty
+            RequestArguments = string.Empty,
+            UserPromptTemplate = string.Empty
         };
     }
 }
@@ -107,6 +110,16 @@ public class ProviderConfig
     ///     附加到 LLM 请求体的 JSON 对象参数，例如 {"temperature":0.2}
     /// </summary>
     public string RequestArguments { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     系统提示词模板。留空时使用内置默认模板。
+    /// </summary>
+    public string SystemPromptTemplate { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     用户提示词模板。翻译源可使用 {text}、{sourceLanguage}、{targetLanguage}；OCR 源可使用 {languageCode}。
+    /// </summary>
+    public string UserPromptTemplate { get; set; } = string.Empty;
 
     /// <summary>
     ///     是否允许手动输入模型名称（兼容模式）

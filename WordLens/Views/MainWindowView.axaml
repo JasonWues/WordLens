@@ -318,11 +318,29 @@
                                                    FontSize="11"
                                                    TextWrapping="Wrap"
                                                    Opacity="0.8" />
-                                        <TextBlock Text="请检查API Key和网络连接，或手动输入"
+                                <TextBlock Text="请检查API Key和网络连接，或手动输入"
                                                    FontSize="11"
                                                    Opacity="0.6" />
                                     </StackPanel>
                                 </Border>
+
+                                <TextBlock Text="System Prompt 模板" />
+                                <TextBox Text="{Binding SelectedProvider.SystemPromptTemplate}"
+                                         PlaceholderText="留空使用默认系统提示词。可用变量：{sourceLanguage}、{targetLanguage}、{text}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80" />
+
+                                <TextBlock Text="User Prompt 模板" />
+                                <TextBox Text="{Binding SelectedProvider.UserPromptTemplate}"
+                                         PlaceholderText="留空使用默认用户提示词。示例：请将以下内容翻译为 {targetLanguage}，只返回译文：{text}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="100" />
+                                <TextBlock Text="模板变量：{text} 原文，{sourceLanguage} 源语言，{targetLanguage} 目标语言。"
+                                           FontSize="11"
+                                           Opacity="0.6"
+                                           TextWrapping="Wrap" />
 
                                 <TextBlock Text="Request Arguments" />
                                 <TextBox Text="{Binding SelectedProvider.RequestArguments}"
@@ -454,6 +472,13 @@
                                            FontSize="11"
                                            Opacity="0.6"
                                            TextWrapping="Wrap" />
+
+                                <TextBlock Text="OCR Prompt 模板" />
+                                <TextBox Text="{Binding SelectedOcrProvider.UserPromptTemplate}"
+                                         PlaceholderText="留空使用默认 OCR 提示词。可用变量：{languageCode}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="100" />
 
                                 <TextBlock Text="Request Arguments" />
                                 <TextBox Text="{Binding SelectedOcrProvider.RequestArguments}"

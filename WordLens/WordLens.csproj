@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -9,12 +9,22 @@
         <PublishAot>false</PublishAot>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Copyright>CrimsonNinja</Copyright>
-    </PropertyGroup>
+	</PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
         <PublishAot>true</PublishAot>
         <StackTraceSupport>false</StackTraceSupport>
-    </PropertyGroup>
+		<DebuggerSupport>false</DebuggerSupport>
+		<EventSourceSupport>false</EventSourceSupport>
+		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+		<MetricsSupport>false</MetricsSupport>
+		<Http3Support>false</Http3Support>
+		<EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<XmlResolverIsNetworkingEnabledByDefault>false</XmlResolverIsNetworkingEnabledByDefault>
+		<DebugType>none</DebugType>
+		<DebugSymbols>false</DebugSymbols>
+	</PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
@@ -31,8 +41,8 @@
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="Irihi.Ursa" Version="2.0.0" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.3.26207.106" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.3.26207.106" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.4.26230.115" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="org.k2fsa.sherpa.onnx" Version="1.13.2" />
         <PackageReference Include="Semi.Avalonia" Version="12.0.1" />
         <PackageReference Include="SharpHook" Version="7.1.1" />

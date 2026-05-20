@@ -82,7 +82,7 @@ public class OpenAIOcrService : IOcrService
                         new()
                         {
                             Type = "text",
-                            Text = BuildOcrPrompt(languageCode)
+                            Text = BuildOcrPrompt(provider, languageCode)
                         },
                         new()
                         {
@@ -186,13 +186,19 @@ public class OpenAIOcrService : IOcrService
         return new Uri($"{trimmed.TrimEnd('/')}/v1/chat/completions");
     }
 
-    private static string BuildOcrPrompt(string languageCode)
+    private static string BuildOcrPrompt(ProviderConfig provider, string languageCode)
     {
         var languageHint = string.IsNullOrWhiteSpace(languageCode) || languageCode == "auto"
             ? "Detect the text language automatically."
             : $"The expected text language is {languageCode}.";
 
-        return $"{languageHint} Extract all readable text from the image. Preserve line breaks as much as possible. Return only the extracted text. If there is no readable text, return an empty string.";
+        var defaultPrompt =
+            $"{languageHint} Extract all readable text from the image. Preserve line breaks as much as possible. Return only the extracted text. If there is no readable text, return an empty string.";
+        var template = string.IsNullOrWhiteSpace(provider.UserPromptTemplate)
+            ? defaultPrompt
+            : provider.UserPromptTemplate;
+
+        return PromptTemplateRenderer.RenderOcr(template, languageCode);
     }
 
     private static ProviderConfig? SelectOcrProvider(AppSettings settings, string? providerName = null)
