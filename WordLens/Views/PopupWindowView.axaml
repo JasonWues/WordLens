@@ -103,6 +103,17 @@
             <Setter Property="HorizontalContentAlignment" Value="Center" />
         </Style>
 
+        <Style Selector="ComboBox.provider-selector">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="9,0,7,0" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+
         <Style Selector="TextBox.source-editor">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
@@ -196,7 +207,7 @@
             CornerRadius="7"
             ClipToBounds="True">
         <Grid>
-            <Grid RowDefinitions="26,Auto,6,28,6,*">
+            <Grid RowDefinitions="26,Auto,6,28,4,28,6,*">
                 <Grid Grid.Row="0"
                       ColumnDefinitions="Auto,*,Auto"
                       Background="#FBFBFB"
@@ -358,16 +369,49 @@
                 </Grid>
                 </Border>
 
-                <ProgressBar Grid.Row="4"
-                         IsVisible="{Binding IsBusy}"
-                         IsIndeterminate="True"
-                         Height="2"
-                         Margin="4,2,4,0"
-                         Foreground="#288B51" />
+                <Border Grid.Row="5"
+                    Margin="4,0"
+                    Background="#DCDCDC"
+                    CornerRadius="5"
+                    ClipToBounds="True">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="4"
+                      Margin="6,0"
+                      VerticalAlignment="Center">
+                    <ComboBox Grid.Column="0"
+                              Classes="provider-selector"
+                              ItemsSource="{Binding AvailableTranslationProviders}"
+                              SelectedItem="{Binding SelectedTranslationProvider}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="models:ProviderConfig">
+                                <TextBlock Text="{Binding Name}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
-                <ScrollViewer Grid.Row="5"
-                          Margin="4,0,4,4"
-                          VerticalScrollBarVisibility="Auto">
+                    <Button Grid.Column="1"
+                            Classes="translate-button"
+                            Command="{Binding RetranslateWithSelectedProviderCommand}"
+                            ToolTip.Tip="使用所选翻译源重新翻译">
+                        <PathIcon Width="14"
+                                  Height="14"
+                                  Data="{StaticResource translate_regular}" />
+                    </Button>
+                </Grid>
+                </Border>
+
+                <ProgressBar Grid.Row="6"
+                          IsVisible="{Binding IsBusy}"
+                          IsIndeterminate="True"
+                          Height="2"
+                          Margin="4,2,4,0"
+                          Foreground="#288B51" />
+
+                <ScrollViewer Grid.Row="7"
+                           Margin="4,0,4,4"
+                           VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding TranslationResults}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:TranslationResult">

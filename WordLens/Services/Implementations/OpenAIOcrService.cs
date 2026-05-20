@@ -4,6 +4,7 @@ using SherpaOnnx;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -16,15 +17,15 @@ namespace WordLens.Services.Implementations;
 
 public class OpenAIOcrService : IOcrService
 {
-    private readonly IEncryptionService _encryptionService;
+    private readonly EncryptionService _encryptionService;
     private readonly ILogger<OpenAIOcrService> _logger;
-    private readonly IProxyAwareHttpClientFactory _httpClientFactory;
+    private readonly ProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ISettingsService _settingsService;
 
     public OpenAIOcrService(
         ISettingsService settingsService,
-        IProxyAwareHttpClientFactory httpClientFactory,
-        IEncryptionService encryptionService,
+        ProxyAwareHttpClientFactory httpClientFactory,
+        EncryptionService encryptionService,
         ILogger<OpenAIOcrService> logger)
     {
         _settingsService = settingsService;
@@ -33,14 +34,20 @@ public class OpenAIOcrService : IOcrService
         _logger = logger;
     }
 
-    public async Task<string?> RecognizeTextAsync(WriteableBitmap bitmap, string languageCode = "auto")
+    public async Task<string?> RecognizeTextAsync(
+        WriteableBitmap bitmap,
+        string languageCode = "auto",
+        string? providerName = null)
     {
         var settings = await _settingsService.LoadAsync();
-        var provider = settings.OcrProvider;
+        var provider = SelectOcrProvider(settings, providerName);
+
+        if (provider == null)
+            throw new InvalidOperationException("未配置OCR源");
 
         if (!provider.IsEnabled)
         {
-            _logger.ZLogWarning($"OCR源未启用");
+            _logger.ZLogWarning($"OCR源未启用: {provider.Name}");
             return null;
         }
 
@@ -124,9 +131,11 @@ public class OpenAIOcrService : IOcrService
     public async Task<bool> IsAvailableAsync()
     {
         var settings = await _settingsService.LoadAsync();
-        return settings.OcrProvider.IsEnabled &&
-               !string.IsNullOrWhiteSpace(settings.OcrProvider.BaseUrl) &&
-               !string.IsNullOrWhiteSpace(settings.OcrProvider.Model);
+        var provider = SelectOcrProvider(settings);
+        return provider != null &&
+               provider.IsEnabled &&
+               !string.IsNullOrWhiteSpace(provider.BaseUrl) &&
+               !string.IsNullOrWhiteSpace(provider.Model);
     }
 
     public Task<string[]> GetSupportedLanguagesAsync()
@@ -184,5 +193,21 @@ public class OpenAIOcrService : IOcrService
             : $"The expected text language is {languageCode}.";
 
         return $"{languageHint} Extract all readable text from the image. Preserve line breaks as much as possible. Return only the extracted text. If there is no readable text, return an empty string.";
+    }
+
+    private static ProviderConfig? SelectOcrProvider(AppSettings settings, string? providerName = null)
+    {
+        var providers = settings.OcrProviders ?? new List<ProviderConfig>();
+        if (providers.Count == 0)
+            return null;
+
+        var selectedName = string.IsNullOrWhiteSpace(providerName)
+            ? settings.SelectedOcrProvider
+            : providerName;
+
+        return providers.FirstOrDefault(p => p.IsEnabled && p.Name == selectedName) ??
+               providers.FirstOrDefault(p => p.IsEnabled) ??
+               providers.FirstOrDefault(p => p.Name == selectedName) ??
+               providers[0];
     }
 }

@@ -343,68 +343,132 @@
 
             <!-- OCR源配置标签页 -->
             <TabItem Header="OCR">
-                <ScrollViewer>
-                    <StackPanel Spacing="16" Margin="20" MaxWidth="560" DataContext="{Binding SettingsViewModel}">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="OCR 源" FontWeight="Bold" FontSize="14" />
-                            <TextBlock Text="截图 OCR 使用单独的 OpenAI 兼容接口配置，不占用翻译源列表。"
-                                       FontSize="12"
-                                       Opacity="0.6"
-                                       TextWrapping="Wrap" />
+                <Grid ColumnDefinitions="*,Auto" Margin="10" DataContext="{Binding SettingsViewModel}">
+                    <ScrollViewer Grid.Column="0"
+                                  Margin="0,0,10,0"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ListBox ItemsSource="{Binding OcrProviders}"
+                                 SelectedItem="{Binding SelectedOcrProvider}"
+                                 SelectionMode="Single"
+                                 sortable:Sortable.Sortable="True"
+                                 sortable:Sortable.Mode="Sort"
+                                 sortable:Sortable.UpdateCommand="{Binding ReorderOcrProviderCommand}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="6" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border sortable:Sortable.IsSortable="True"
+                                            Cursor="Hand"
+                                            Padding="8"
+                                            Background="#FAFAFA"
+                                            BorderBrush="#DDDDDD"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                        <Grid ColumnDefinitions="Auto,Auto,*">
+                                            <PathIcon Grid.Column="0"
+                                                      Width="14"
+                                                      Height="14"
+                                                      Margin="0,0,8,0"
+                                                      Foreground="#777777"
+                                                      VerticalAlignment="Center"
+                                                      Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
+
+                                            <CheckBox Grid.Column="1"
+                                                      IsChecked="{Binding IsEnabled}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,8,0"
+                                                      ToolTip.Tip="启用/禁用此 OCR 源" />
+
+                                            <StackPanel Grid.Column="2" Spacing="4">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                                <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6" />
+                                                    <TextBlock Text="✓ 已启用"
+                                                               FontSize="11"
+                                                               Foreground="#4CAF50"
+                                                               IsVisible="{Binding IsEnabled}" />
+                                                    <TextBlock Text="✗ 已禁用"
+                                                               FontSize="11"
+                                                               Foreground="#9E9E9E"
+                                                               IsVisible="{Binding !IsEnabled}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+
+                    <Grid Grid.Column="1"
+                          RowDefinitions="Auto,Auto,*"
+                          Width="250"
+                          MinHeight="0">
+                        <StackPanel Grid.Row="0" Spacing="10">
+                            <Button Content="添加 OCR 源"
+                                    Command="{Binding AddOcrProviderCommand}"
+                                    HorizontalAlignment="Stretch" />
+                            <Button Content="删除"
+                                    Command="{Binding DeleteOcrProviderCommand}"
+                                    IsEnabled="{Binding SelectedOcrProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    HorizontalAlignment="Stretch" />
                         </StackPanel>
 
-                        <CheckBox Content="启用 OCR"
-                                  IsChecked="{Binding OcrProvider.IsEnabled}" />
+                        <Separator Grid.Row="1" Margin="0,10" />
 
-                        <StackPanel Spacing="12" IsEnabled="{Binding OcrProvider.IsEnabled}">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="名称" FontWeight="Bold" />
-                                <TextBox Text="{Binding OcrProvider.Name}"
-                                         PlaceholderText="OCR 源名称" />
-                            </StackPanel>
+                        <ScrollViewer Grid.Row="2"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Spacing="8"
+                                        IsVisible="{Binding SelectedOcrProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <TextBlock Text="OCR 源详情" FontWeight="Bold" />
 
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="API URL" FontWeight="Bold" />
-                                <TextBox Text="{Binding OcrProvider.BaseUrl}"
+                                <CheckBox Content="启用此 OCR 源"
+                                          IsChecked="{Binding SelectedOcrProvider.IsEnabled}"
+                                          FontWeight="SemiBold"
+                                          Margin="0,4" />
+
+                                <Separator />
+
+                                <TextBlock Text="名称" />
+                                <TextBox Text="{Binding SelectedOcrProvider.Name}" PlaceholderText="OCR 源名称" />
+
+                                <TextBlock Text="API URL" />
+                                <TextBox Text="{Binding SelectedOcrProvider.BaseUrl}"
                                          PlaceholderText="https://api.openai.com 或 https://api.openai.com/v1/chat/completions" />
-                                <TextBlock Text="可填写 OpenAI 兼容 Base URL，也可直接填写 /v1/chat/completions 完整地址。"
-                                           FontSize="12"
-                                           Opacity="0.6"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
 
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="API Key" FontWeight="Bold" />
-                                <TextBox Text="{Binding OcrProvider.ApiKey}"
+                                <TextBlock Text="API Key" />
+                                <TextBox Text="{Binding SelectedOcrProvider.ApiKey}"
                                          PlaceholderText="输入 OCR API Key"
                                          PasswordChar="●" />
-                            </StackPanel>
 
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Model" FontWeight="Bold" />
-                                <TextBox Text="{Binding OcrProvider.Model}"
+                                <TextBlock Text="Model" />
+                                <TextBox Text="{Binding SelectedOcrProvider.Model}"
                                          PlaceholderText="gpt-4o-mini" />
                                 <TextBlock Text="请选择支持图片输入的 OpenAI 兼容模型。"
-                                           FontSize="12"
+                                           FontSize="11"
                                            Opacity="0.6"
                                            TextWrapping="Wrap" />
-                            </StackPanel>
 
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Request Arguments" FontWeight="Bold" />
-                                <TextBox Text="{Binding OcrProvider.RequestArguments}"
+                                <TextBlock Text="Request Arguments" />
+                                <TextBox Text="{Binding SelectedOcrProvider.RequestArguments}"
                                          PlaceholderText="{}{&quot;temperature&quot;:0.2,&quot;max_tokens&quot;:1000}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
-                                         MinHeight="90" />
+                                         MinHeight="80" />
                                 <TextBlock Text="填写 JSON 对象，会附加到 OCR 的 /v1/chat/completions 请求体；model、messages 由应用管理。"
-                                           FontSize="12"
+                                           FontSize="11"
                                            Opacity="0.6"
                                            TextWrapping="Wrap" />
                             </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
             </TabItem>
 
             <!-- 本地 TTS 标签页 -->

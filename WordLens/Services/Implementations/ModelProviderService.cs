@@ -13,34 +13,16 @@ using ZLogger;
 namespace WordLens.Services.Implementations;
 
 /// <summary>
-///     模型提供服务接口
-/// </summary>
-public interface IModelProviderService
-{
-    /// <summary>
-    ///     获取可用的模型列表
-    /// </summary>
-    /// <param name="apiKey">API密钥</param>
-    /// <param name="baseUrl">API基础URL</param>
-    /// <param name="ct">取消令牌</param>
-    /// <returns>模型信息列表</returns>
-    Task<List<ModelInfo>> GetAvailableModelsAsync(
-        string apiKey,
-        string baseUrl,
-        CancellationToken ct = default);
-}
-
-/// <summary>
 ///     OpenAI模型提供服务实现
 /// </summary>
-public class OpenAIModelProviderService : IModelProviderService
+public class OpenAIModelProviderService
 {
-    private readonly IProxyAwareHttpClientFactory _httpClientFactory;
+    private readonly ProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ILogger<OpenAIModelProviderService> _logger;
     private readonly ISettingsService _settingsService;
 
     public OpenAIModelProviderService(
-        IProxyAwareHttpClientFactory httpClientFactory,
+        ProxyAwareHttpClientFactory httpClientFactory,
         ISettingsService settingsService,
         ILogger<OpenAIModelProviderService> logger)
     {

@@ -4,7 +4,7 @@ using Semi.Avalonia;
 
 namespace WordLens.Services.Implementations;
 
-public class AvaloniaThemeService : IThemeService
+public sealed class AvaloniaThemeService
 {
     public void ApplyLocale(string cultureName)
     {

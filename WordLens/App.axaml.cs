@@ -79,16 +79,16 @@ public class App : Application
         // Services
         services.AddSingleton<IWindowManagerService, WindowManagerService>();
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
-        services.AddSingleton<IEncryptionService, EncryptionService>();
-        services.AddSingleton<IThemeService, AvaloniaThemeService>();
+        services.AddSingleton<EncryptionService>();
+        services.AddSingleton<AvaloniaThemeService>();
         services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
         services.AddSingleton<IPathPickerService, AvaloniaPathPickerService>();
         services.AddSingleton<IAudioPlayerService, SoundFlowAudioPlayerService>();
         services.AddSingleton<ITtsService, SherpaOnnxTtsService>();
-        services.AddSingleton<IModelProviderService, OpenAIModelProviderService>();
+        services.AddSingleton<OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<IProxyAwareHttpClientFactory, ProxyAwareHttpClientFactory>();
+        services.AddSingleton<ProxyAwareHttpClientFactory>();
         services.AddSingleton<IOcrService, OpenAIOcrService>();
         services.AddSingleton<TranslationService>();
         services.AddSingleton<ISelectionService, SelectionService>();

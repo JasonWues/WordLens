@@ -13,8 +13,9 @@ public interface IOcrService
     /// </summary>
     /// <param name="bitmap">要识别的图片</param>
     /// <param name="languageCode">识别语言代码（如"zh-CN", "en-US"等）</param>
+    /// <param name="providerName">OCR 源名称；为空时使用设置中选中的 OCR 源</param>
     /// <returns>识别出的文字，如果识别失败返回null</returns>
-    Task<string?> RecognizeTextAsync(WriteableBitmap bitmap, string languageCode = "zh-CN");
+    Task<string?> RecognizeTextAsync(WriteableBitmap bitmap, string languageCode = "auto", string? providerName = null);
 
     /// <summary>
     ///     检查OCR服务是否可用

@@ -22,14 +22,14 @@ namespace WordLens.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {
-    private readonly IEncryptionService? _encryptionService;
+    private readonly EncryptionService? _encryptionService;
     private readonly IHotkeyManagerService? _hotkeyManagerService;
     private readonly ILogger<SettingsViewModel>? _logger;
-    private readonly IModelProviderService? _modelProviderService;
+    private readonly OpenAIModelProviderService? _modelProviderService;
     private readonly IPathPickerService? _pathPickerService;
     private readonly ISettingsService? _settingsService;
     private readonly IStartupService? _startupService;
-    private readonly IThemeService? _themeService;
+    private readonly AvaloniaThemeService? _themeService;
 
     // 当前正在捕获的热键类型
     private string _currentCapturingType = string.Empty;
@@ -57,7 +57,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] private string ocrHotkeyDisplay = "Ctrl+Shift+W";
 
-    [ObservableProperty] private ProviderConfig ocrProvider = new();
+    [ObservableProperty] private ObservableCollection<ProviderConfig> ocrProviders = new();
 
     [ObservableProperty] private ObservableCollection<ProviderConfig> providers = new();
 
@@ -77,6 +77,8 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool proxyUseSystemProxy;
 
     [ObservableProperty] private ModelInfo? selectedModelInfo;
+
+    [ObservableProperty] private ProviderConfig? selectedOcrProvider;
 
     [ObservableProperty] private ProviderConfig? selectedProvider;
 
@@ -129,9 +131,9 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         ISettingsService settingsService,
         IHotkeyManagerService hotkeyManagerService,
-        IModelProviderService modelProviderService,
-        IEncryptionService encryptionService,
-        IThemeService themeService,
+        OpenAIModelProviderService modelProviderService,
+        EncryptionService encryptionService,
+        AvaloniaThemeService themeService,
         IStartupService startupService,
         IPathPickerService pathPickerService,
         ILogger<SettingsViewModel> logger)
@@ -210,7 +212,10 @@ public partial class SettingsViewModel : ViewModelBase
         foreach (var provider in settings.Providers) Providers.Add(provider);
         SelectedProviderName = settings.SelectedProvider;
         SelectedProvider = Providers.FirstOrDefault(p => p.Name == settings.SelectedProvider);
-        OcrProvider = CloneOcrProviderForEditing(settings.OcrProvider);
+        OcrProviders.Clear();
+        foreach (var provider in settings.OcrProviders) OcrProviders.Add(CloneOcrProviderForEditing(provider));
+        SelectedOcrProvider = OcrProviders.FirstOrDefault(p => p.Name == settings.SelectedOcrProvider) ??
+                              OcrProviders.FirstOrDefault();
 
         // 加载代理设置
         ProxyEnabled = settings.Proxy.Enabled;
@@ -296,7 +301,10 @@ public partial class SettingsViewModel : ViewModelBase
             foreach (var provider in _originalSettings.Providers) Providers.Add(provider);
             SelectedProviderName = _originalSettings.SelectedProvider;
             SelectedProvider = Providers.FirstOrDefault(p => p.Name == _originalSettings.SelectedProvider);
-            OcrProvider = CloneOcrProviderForEditing(_originalSettings.OcrProvider);
+            OcrProviders.Clear();
+            foreach (var provider in _originalSettings.OcrProviders) OcrProviders.Add(CloneOcrProviderForEditing(provider));
+            SelectedOcrProvider = OcrProviders.FirstOrDefault(p => p.Name == _originalSettings.SelectedOcrProvider) ??
+                                  OcrProviders.FirstOrDefault();
 
             ProxyEnabled = _originalSettings.Proxy.Enabled;
             ProxyUseSystemProxy = _originalSettings.Proxy.UseSystemProxy;
@@ -417,6 +425,45 @@ public partial class SettingsViewModel : ViewModelBase
             SelectedProvider = movedProvider;
     }
 
+    [RelayCommand]
+    private void AddOcrProvider()
+    {
+        var newProvider = new ProviderConfig
+        {
+            Name = $"新OCR源 {OcrProviders.Count + 1}",
+            Type = ProviderType.OpenAI,
+            BaseUrl = "https://api.openai.com",
+            Model = "gpt-4o-mini",
+            RequestArguments = string.Empty
+        };
+        OcrProviders.Add(newProvider);
+        SelectedOcrProvider = newProvider;
+    }
+
+    [RelayCommand]
+    private void DeleteOcrProvider()
+    {
+        if (SelectedOcrProvider != null && OcrProviders.Count > 1)
+        {
+            var index = OcrProviders.IndexOf(SelectedOcrProvider);
+            OcrProviders.Remove(SelectedOcrProvider);
+
+            if (OcrProviders.Count > 0)
+                SelectedOcrProvider = OcrProviders[Math.Min(index, OcrProviders.Count - 1)];
+        }
+    }
+
+    [RelayCommand]
+    private void ReorderOcrProvider(SortableUpdateEventArgs? args)
+    {
+        if (args == null)
+            return;
+
+        var movedProvider = args.Item as ProviderConfig;
+        if (args.ApplyUpdateMutation() && movedProvider != null)
+            SelectedOcrProvider = movedProvider;
+    }
+
     /// <summary>
     ///     刷新指定Provider的模型列表
     /// </summary>
@@ -507,7 +554,8 @@ public partial class SettingsViewModel : ViewModelBase
             Tts = BuildTtsSettingsFromViewModel(),
             SelectedProvider = SelectedProvider?.Name ?? Providers.FirstOrDefault()?.Name,
             Providers = Providers.Select(CloneProviderForPersistence).ToList(),
-            OcrProvider = CloneOcrProviderForPersistence(OcrProvider),
+            SelectedOcrProvider = SelectedOcrProvider?.Name ?? OcrProviders.FirstOrDefault()?.Name,
+            OcrProviders = OcrProviders.Select(CloneOcrProviderForPersistence).ToList(),
             Streaming = new StreamingConfig
             {
                 Enabled = StreamingEnabled,
@@ -730,7 +778,8 @@ public partial class SettingsViewModel : ViewModelBase
             Tts = CloneTtsConfig(settings.Tts),
             SelectedProvider = settings.SelectedProvider,
             Providers = settings.Providers.Select(CloneProviderForPersistence).ToList(),
-            OcrProvider = CloneOcrProviderForPersistence(settings.OcrProvider),
+            SelectedOcrProvider = settings.SelectedOcrProvider,
+            OcrProviders = settings.OcrProviders.Select(CloneOcrProviderForPersistence).ToList(),
             Streaming = new StreamingConfig
             {
                 Enabled = settings.Streaming.Enabled,

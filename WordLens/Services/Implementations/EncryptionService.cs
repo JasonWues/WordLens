@@ -7,7 +7,7 @@ namespace WordLens.Services.Implementations;
 /// 加密服务实现
 /// 使用XOR + Base64简单混淆方案
 /// </summary>
-public class EncryptionService : IEncryptionService
+public sealed class EncryptionService
 {
     private const string EncryptionPrefix = "ENC::";
     private const string EncryptionKey = "WordLens-Secret-Key-2024-Avalonia-MVVM";

@@ -25,15 +25,11 @@ public class AppSettings
 
     public string? SelectedProvider { get; set; } = "OpenAI";
 
-    public ProviderConfig OcrProvider { get; set; } = new()
+    public string? SelectedOcrProvider { get; set; } = "OpenAI OCR";
+
+    public List<ProviderConfig> OcrProviders { get; set; } = new()
     {
-        Name = "OpenAI OCR",
-        BaseUrl = "https://api.openai.com",
-        ApiKey = null,
-        Model = "gpt-4o-mini",
-        Type = ProviderType.OpenAI,
-        IsEnabled = true,
-        RequestArguments = string.Empty
+        CreateDefaultOcrProvider()
     };
 
     public ProxyConfig Proxy { get; set; } = new();
@@ -57,6 +53,20 @@ public class AppSettings
             RequestArguments = string.Empty
         }
     };
+
+    public static ProviderConfig CreateDefaultOcrProvider()
+    {
+        return new ProviderConfig
+        {
+            Name = "OpenAI OCR",
+            BaseUrl = "https://api.openai.com",
+            ApiKey = null,
+            Model = "gpt-4o-mini",
+            Type = ProviderType.OpenAI,
+            IsEnabled = true,
+            RequestArguments = string.Empty
+        };
+    }
 }
 
 public class HotkeyConfig

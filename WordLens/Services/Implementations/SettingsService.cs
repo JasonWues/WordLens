@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -13,13 +15,13 @@ namespace WordLens.Services.Implementations;
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly IEncryptionService _encryptionService;
+    private readonly EncryptionService _encryptionService;
     private readonly ILogger<SettingsService> _logger;
     private readonly string _path;
 
     public SettingsService(
         ILogger<SettingsService> logger,
-        IEncryptionService encryptionService)
+        EncryptionService encryptionService)
     {
         _logger = logger;
         _encryptionService = encryptionService;
@@ -56,6 +58,10 @@ public class SettingsService : ISettingsService
 
             // 自动迁移：检查并加密未加密的API Key
             var needsSave = false;
+            settings.Providers ??= new AppSettings().Providers;
+            settings.OcrProviders ??= new List<ProviderConfig>();
+            needsSave |= NormalizeOcrProviders(settings);
+
             foreach (var provider in settings.Providers)
                 if (!string.IsNullOrEmpty(provider.ApiKey) &&
                     !_encryptionService.IsEncrypted(provider.ApiKey))
@@ -65,13 +71,14 @@ public class SettingsService : ISettingsService
                     needsSave = true;
                 }
 
-            if (!string.IsNullOrEmpty(settings.OcrProvider.ApiKey) &&
-                !_encryptionService.IsEncrypted(settings.OcrProvider.ApiKey))
-            {
-                _logger.ZLogInformation($"检测到未加密的OCR API Key，正在加密: {settings.OcrProvider.Name}");
-                settings.OcrProvider.ApiKey = _encryptionService.Encrypt(settings.OcrProvider.ApiKey);
-                needsSave = true;
-            }
+            foreach (var provider in settings.OcrProviders)
+                if (!string.IsNullOrEmpty(provider.ApiKey) &&
+                    !_encryptionService.IsEncrypted(provider.ApiKey))
+                {
+                    _logger.ZLogInformation($"检测到未加密的OCR API Key，正在加密: {provider.Name}");
+                    provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
+                    needsSave = true;
+                }
 
             // 如果有未加密的配置，自动保存加密后的版本
             if (needsSave)
@@ -80,7 +87,7 @@ public class SettingsService : ISettingsService
                 await SaveAsync(settings);
             }
 
-            _logger.ZLogInformation($"配置加载成功，翻译源数量: {settings.Providers.Count}");
+            _logger.ZLogInformation($"配置加载成功，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}");
             return settings;
         }
         catch (Exception ex)
@@ -95,7 +102,11 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}");
+            settings.Providers ??= new AppSettings().Providers;
+            settings.OcrProviders ??= new List<ProviderConfig>();
+            NormalizeOcrProviders(settings);
+
+            _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}");
 
             // 确保所有API Key都已加密
             foreach (var provider in settings.Providers)
@@ -106,12 +117,13 @@ public class SettingsService : ISettingsService
                     provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
                 }
 
-            if (!string.IsNullOrEmpty(settings.OcrProvider.ApiKey) &&
-                !_encryptionService.IsEncrypted(settings.OcrProvider.ApiKey))
-            {
-                _logger.ZLogDebug($"保存前加密OCR API Key: {settings.OcrProvider.Name}");
-                settings.OcrProvider.ApiKey = _encryptionService.Encrypt(settings.OcrProvider.ApiKey);
-            }
+            foreach (var provider in settings.OcrProviders)
+                if (!string.IsNullOrEmpty(provider.ApiKey) &&
+                    !_encryptionService.IsEncrypted(provider.ApiKey))
+                {
+                    _logger.ZLogDebug($"保存前加密OCR API Key: {provider.Name}");
+                    provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
+                }
 
             var json = JsonSerializer.Serialize(settings, SourceGenerationContext.Default.AppSettings);
             await File.WriteAllTextAsync(_path, json);
@@ -122,5 +134,27 @@ public class SettingsService : ISettingsService
             _logger.ZLogError(ex, $"保存配置失败: {ex.Message}");
             throw;
         }
+    }
+
+    private static bool NormalizeOcrProviders(AppSettings settings)
+    {
+        var needsSave = false;
+
+        if (settings.OcrProviders.Count == 0)
+        {
+            settings.OcrProviders.Add(AppSettings.CreateDefaultOcrProvider());
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.SelectedOcrProvider) ||
+            settings.OcrProviders.All(p => p.Name != settings.SelectedOcrProvider))
+        {
+            settings.SelectedOcrProvider =
+                settings.OcrProviders.FirstOrDefault(p => p.IsEnabled)?.Name ??
+                settings.OcrProviders[0].Name;
+            needsSave = true;
+        }
+
+        return needsSave;
     }
 }

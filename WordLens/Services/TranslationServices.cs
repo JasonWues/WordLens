@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
 using WordLens.Models;
+using WordLens.Services.Implementations;
 using WordLens.Services.Implementations.Translation;
 using ZLogger;
 
@@ -46,15 +47,15 @@ public class TranslationService
     private const int StreamFlushIntervalMs = 33;
     private const int StreamFlushCharacterThreshold = 64;
 
-    private readonly IEncryptionService _encryptionService;
+    private readonly EncryptionService _encryptionService;
     private readonly ILogger<TranslationService> _logger;
-    private readonly IProxyAwareHttpClientFactory _httpClientFactory;
+    private readonly ProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ISettingsService _settings;
 
     public TranslationService(
         ISettingsService settings,
-        IProxyAwareHttpClientFactory httpClientFactory,
-        IEncryptionService encryptionService,
+        ProxyAwareHttpClientFactory httpClientFactory,
+        EncryptionService encryptionService,
         ILogger<TranslationService> logger)
     {
         _settings = settings;
@@ -113,6 +114,40 @@ public class TranslationService
     }
 
     /// <summary>
+    ///     使用指定翻译源重新翻译文本。
+    /// </summary>
+    public async Task<TranslationResult> TranslateWithProviderAsync(
+        string providerName,
+        string text,
+        string targetLanguage,
+        string sourceLanguage = "auto",
+        CancellationToken ct = default)
+    {
+        var settings = await _settings.LoadAsync();
+        var provider = settings.Providers.FirstOrDefault(p => p.IsEnabled && p.Name == providerName);
+
+        if (provider == null)
+        {
+            _logger.ZLogWarning($"未找到启用的翻译源: {providerName}");
+            return new TranslationResult
+            {
+                ProviderName = providerName,
+                IsSuccess = false,
+                IsLoading = false,
+                ErrorMessage = "翻译源不存在或未启用"
+            };
+        }
+
+        _logger.ZLogInformation(
+            $"开始使用指定翻译源重新翻译，翻译源: {provider.Name}，文本长度: {text.Length}，源语言: {sourceLanguage}，目标语言: {targetLanguage}");
+
+        if (settings.Streaming.Enabled)
+            return StartSingleProviderStream(provider, text, targetLanguage, sourceLanguage, settings, ct);
+
+        return await TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, settings, ct);
+    }
+
+    /// <summary>
     ///     流式翻译所有启用的提供商
     /// </summary>
     private Task<List<TranslationResult>> TranslateStreamAsync(
@@ -167,6 +202,28 @@ public class TranslationService
 
         // 立即返回results，让ViewModel可以显示并接收实时更新
         return Task.FromResult(results);
+    }
+
+    private TranslationResult StartSingleProviderStream(
+        ProviderConfig provider,
+        string text,
+        string targetLanguage,
+        string sourceLanguage,
+        AppSettings settings,
+        CancellationToken ct)
+    {
+        var result = new TranslationResult
+        {
+            ProviderName = provider.Name,
+            IsLoading = true,
+            Result = string.Empty
+        };
+
+        _ = Task.Run(
+            () => TranslateSingleProviderStreamAsync(provider, text, targetLanguage, sourceLanguage, settings, result, ct),
+            ct);
+
+        return result;
     }
 
     /// <summary>

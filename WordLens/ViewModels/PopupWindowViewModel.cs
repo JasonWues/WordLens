@@ -37,8 +37,12 @@ public partial class PopupWindowViewModel : ViewModelBase
     // 源语言选择
     [ObservableProperty] private LanguageInfo? selectedSourceLanguage;
 
+    [ObservableProperty] private ProviderConfig? selectedTranslationProvider;
+
     // 目标语言选择
     [ObservableProperty] private LanguageInfo? selectedTargetLanguage;
+
+    [ObservableProperty] private ObservableCollection<ProviderConfig> availableTranslationProviders = new();
 
     [ObservableProperty] private ObservableCollection<LanguageInfo> sourceLanguages = new();
 
@@ -89,6 +93,12 @@ public partial class PopupWindowViewModel : ViewModelBase
     public bool CanUseTranslationAsSource =>
         TranslationResults.Any(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
 
+    public bool CanRetranslateWithSelectedProvider =>
+        SelectedTranslationProvider != null &&
+        !string.IsNullOrWhiteSpace(SourceText) &&
+        !IsBusy &&
+        TranslationResults.All(static r => !r.IsLoading);
+
     public bool HasTranslationResults => TranslationResults.Count > 0;
 
     public int SourceCharacterCount => SourceText?.Length ?? 0;
@@ -124,6 +134,7 @@ public partial class PopupWindowViewModel : ViewModelBase
             SelectedTargetLanguage = TargetLanguages.FirstOrDefault(l => l.Code == settings.LastTargetLanguage) ??
                                      TargetLanguages.FirstOrDefault(l => l.Code == "en") ??
                                      TargetLanguages.FirstOrDefault();
+            ApplyTranslationProviders(settings);
 
             _logger.ZLogInformation(
                 $"语言初始化完成，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
@@ -143,8 +154,22 @@ public partial class PopupWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanCopySource));
         OnPropertyChanged(nameof(CanSpeakSource));
         OnPropertyChanged(nameof(SourceCharacterCount));
+        OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
         CopySourceCommand.NotifyCanExecuteChanged();
         SpeakSourceCommand.NotifyCanExecuteChanged();
+        RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsBusyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedTranslationProviderChanged(ProviderConfig? value)
+    {
+        OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnTranslationResultsChanged(ObservableCollection<TranslationResult> value)
@@ -199,6 +224,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasTranslationResults));
         OnPropertyChanged(nameof(CanUseTranslationAsSource));
+        OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedTargetLanguageChanged(LanguageInfo? value)
@@ -221,6 +248,50 @@ public partial class PopupWindowViewModel : ViewModelBase
         {
             _logger.ZLogError(ex, $"保存目标语言设置失败");
         }
+    }
+
+    private async Task RefreshTranslationProvidersAsync()
+    {
+        try
+        {
+            var settings = await _settingsService.LoadAsync();
+            ApplyTranslationProviders(settings);
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"刷新翻译源列表失败");
+        }
+    }
+
+    private void ApplyTranslationProviders(AppSettings settings)
+    {
+        var selectedName = SelectedTranslationProvider?.Name ?? settings.SelectedProvider;
+
+        AvailableTranslationProviders.Clear();
+        foreach (var provider in settings.Providers.Where(static p => p.IsEnabled))
+            AvailableTranslationProviders.Add(CloneProviderForSelection(provider));
+
+        SelectedTranslationProvider =
+            AvailableTranslationProviders.FirstOrDefault(p => p.Name == selectedName) ??
+            AvailableTranslationProviders.FirstOrDefault(p => p.Name == settings.SelectedProvider) ??
+            AvailableTranslationProviders.FirstOrDefault();
+
+        OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+    }
+
+    private static ProviderConfig CloneProviderForSelection(ProviderConfig provider)
+    {
+        return new ProviderConfig
+        {
+            Name = provider.Name,
+            Type = provider.Type,
+            BaseUrl = provider.BaseUrl,
+            Model = provider.Model,
+            IsEnabled = provider.IsEnabled,
+            RequestArguments = provider.RequestArguments,
+            AllowManualModelInput = provider.AllowManualModelInput
+        };
     }
 
     [RelayCommand]
@@ -252,6 +323,7 @@ public partial class PopupWindowViewModel : ViewModelBase
 
             var sourceLanguageCode = SelectedSourceLanguage?.Code ?? "auto";
             var targetLanguageCode = targetLanguage.Code;
+            await RefreshTranslationProvidersAsync();
 
             _logger.ZLogInformation($"开始翻译，源语言: {sourceLanguageCode}, 目标语言: {targetLanguageCode}");
 
@@ -285,6 +357,90 @@ public partial class PopupWindowViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanRetranslateWithSelectedProvider))]
+    public async Task RetranslateWithSelectedProviderAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+
+        try
+        {
+            await _languageInitializationTask;
+            await RefreshTranslationProvidersAsync();
+
+            var providerName = SelectedTranslationProvider?.Name;
+            if (string.IsNullOrWhiteSpace(providerName))
+            {
+                _logger.ZLogWarning($"未选择翻译源，跳过重新翻译");
+                return;
+            }
+
+            var sourceText = SourceText;
+            if (string.IsNullOrWhiteSpace(sourceText))
+            {
+                _logger.ZLogWarning($"原文为空，跳过重新翻译");
+                return;
+            }
+
+            var targetLanguage = SelectedTargetLanguage ??
+                                 TargetLanguages.FirstOrDefault(l => l.Code == "en") ??
+                                 TargetLanguages.FirstOrDefault();
+            if (targetLanguage == null)
+            {
+                _logger.ZLogWarning($"目标语言未初始化，跳过重新翻译");
+                return;
+            }
+
+            var sourceLanguageCode = SelectedSourceLanguage?.Code ?? "auto";
+            var targetLanguageCode = targetLanguage.Code;
+
+            _logger.ZLogInformation(
+                $"使用翻译源重新翻译，翻译源: {providerName}, 源语言: {sourceLanguageCode}, 目标语言: {targetLanguageCode}");
+
+            var result = await _translationService.TranslateWithProviderAsync(
+                providerName,
+                sourceText,
+                targetLanguageCode,
+                sourceLanguageCode,
+                cancellationToken);
+
+            InsertOrReplaceTranslationResult(result);
+
+            if (result.IsLoading)
+            {
+                _pendingHistorySave = new PendingHistorySave(
+                    sourceText,
+                    sourceLanguageCode,
+                    targetLanguageCode,
+                    providerName);
+                await TrySavePendingHistoryAsync();
+            }
+            else
+            {
+                await SaveToHistoryAsync(new List<TranslationResult> { result }, sourceText, sourceLanguageCode, targetLanguageCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"重新翻译过程中发生异常");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void InsertOrReplaceTranslationResult(TranslationResult result)
+    {
+        for (var i = 0; i < TranslationResults.Count; i++)
+            if (TranslationResults[i].ProviderName == result.ProviderName)
+            {
+                TranslationResults[i] = result;
+                return;
+            }
+
+        TranslationResults.Add(result);
+    }
+
     private async Task TrySavePendingHistoryAsync()
     {
         if (_pendingHistorySave == null ||
@@ -300,8 +456,12 @@ public partial class PopupWindowViewModel : ViewModelBase
 
         try
         {
+            var results = string.IsNullOrWhiteSpace(pending.ProviderName)
+                ? TranslationResults.ToList()
+                : TranslationResults.Where(r => r.ProviderName == pending.ProviderName).ToList();
+
             await SaveToHistoryAsync(
-                TranslationResults.ToList(),
+                results,
                 pending.SourceText,
                 pending.SourceLanguageCode,
                 pending.TargetLanguageCode);
@@ -370,7 +530,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     private sealed record PendingHistorySave(
         string SourceText,
         string SourceLanguageCode,
-        string TargetLanguageCode);
+        string TargetLanguageCode,
+        string? ProviderName = null);
 
     [RelayCommand]
     public void ToggleTopmost()

@@ -6,10 +6,10 @@ using WordLens.Models;
 
 namespace WordLens.Services.Implementations;
 
-public sealed class ProxyAwareHttpClientFactory : IProxyAwareHttpClientFactory, IDisposable
+public sealed class ProxyAwareHttpClientFactory : IDisposable
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ConcurrentDictionary<ProxyCacheKey, HttpMessageHandler> _proxyHandlers = new();
+    private readonly ConcurrentDictionary<ProxyCacheKey, HttpClientHandler> _proxyHandlers = new();
 
     public ProxyAwareHttpClientFactory(IHttpClientFactory httpClientFactory)
     {
@@ -39,7 +39,7 @@ public sealed class ProxyAwareHttpClientFactory : IProxyAwareHttpClientFactory, 
         _proxyHandlers.Clear();
     }
 
-    private static HttpMessageHandler CreateProxyHandler(ProxyCacheKey key)
+    private static HttpClientHandler CreateProxyHandler(ProxyCacheKey key)
     {
         var handler = new HttpClientHandler
         {
