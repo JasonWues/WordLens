@@ -1,0 +1,207 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:behaviors="using:WordLens.Behaviors"
+             xmlns:models="using:WordLens.Models"
+             xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+             xmlns:vm="using:WordLens.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="500"
+             x:Class="WordLens.Views.Settings.TranslationSettingsView"
+             x:DataType="vm:TranslationSettingsViewModel">
+
+    <Grid ColumnDefinitions="*,Auto" Margin="10">
+        <ScrollViewer Grid.Column="0"
+                      Margin="0,0,10,0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Providers}"
+                          sortable:Sortable.Sortable="True"
+                          sortable:Sortable.Mode="Sort"
+                          sortable:Sortable.UpdateCommand="{Binding ReorderProviderCommand}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="6" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:ProviderConfig">
+                        <Border sortable:Sortable.IsSortable="True"
+                                Cursor="Hand"
+                                behaviors:TapCommand.Command="{Binding $parent[ItemsControl].((vm:TranslationSettingsViewModel)DataContext).SelectProviderCommand}"
+                                behaviors:TapCommand.CommandParameter="{Binding}"
+                                Padding="8"
+                                Background="#FAFAFA"
+                                BorderBrush="#DDDDDD"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <Grid ColumnDefinitions="Auto,Auto,*">
+                                <PathIcon Grid.Column="0"
+                                          Width="14"
+                                          Height="14"
+                                          Margin="0,0,8,0"
+                                          Foreground="#777777"
+                                          Cursor="Hand"
+                                          sortable:Sortable.IsDragHandle="True"
+                                          VerticalAlignment="Center"
+                                          Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
+
+                                <CheckBox Grid.Column="1"
+                                          IsChecked="{Binding IsEnabled}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,8,0"
+                                          ToolTip.Tip="启用/禁用此翻译源" />
+
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                    <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6" />
+                                        <TextBlock Text="✓ 已启用"
+                                                   FontSize="11"
+                                                   Foreground="#4CAF50"
+                                                   IsVisible="{Binding IsEnabled}" />
+                                        <TextBlock Text="✗ 已禁用"
+                                                   FontSize="11"
+                                                   Foreground="#9E9E9E"
+                                                   IsVisible="{Binding !IsEnabled}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Grid Grid.Column="1"
+              RowDefinitions="Auto,Auto,*"
+              Width="250"
+              MinHeight="0">
+            <StackPanel Grid.Row="0" Spacing="10">
+                <Button Content="添加翻译源"
+                        Command="{Binding AddProviderCommand}"
+                        HorizontalAlignment="Stretch" />
+                <Button Content="删除"
+                        Command="{Binding DeleteProviderCommand}"
+                        IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <Separator Grid.Row="1" Margin="0,10" />
+
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="8"
+                            IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <TextBlock Text="翻译源详情" FontWeight="Bold" />
+
+                    <CheckBox Content="启用此翻译源"
+                              IsChecked="{Binding SelectedProvider.IsEnabled}"
+                              FontWeight="SemiBold"
+                              Margin="0,4" />
+
+                    <Separator />
+
+                    <TextBlock Text="名称" />
+                    <TextBox Text="{Binding SelectedProvider.Name}" PlaceholderText="翻译源名称" />
+
+                    <TextBlock Text="Base URL" />
+                    <TextBox Text="{Binding SelectedProvider.BaseUrl}" PlaceholderText="https://api.openai.com" />
+
+                    <TextBlock Text="API Key" />
+                    <TextBox Text="{Binding SelectedProvider.ApiKey}"
+                             PlaceholderText="输入 API Key"
+                             PasswordChar="●" />
+
+                    <TextBlock Text="Model" />
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding SelectedProvider.AvailableModels}"
+                                  SelectedItem="{Binding SelectedModelInfo}"
+                                  DisplayMemberBinding="{Binding Id}"
+                                  IsEnabled="{Binding !IsLoadingModels}"
+                                  IsEditable="{Binding SelectedProvider.AllowManualModelInput}"
+                                  PlaceholderText="选择模型或手动输入"
+                                  Margin="0,0,4,0" />
+
+                        <Button Grid.Column="1"
+                                Content="🔄"
+                                Command="{Binding RefreshModelsCommand}"
+                                CommandParameter="{Binding SelectedProvider}"
+                                ToolTip.Tip="刷新模型列表"
+                                IsEnabled="{Binding !IsLoadingModels}"
+                                Width="40" />
+                    </Grid>
+
+                    <Border Background="#FFF3E0"
+                            Padding="8"
+                            CornerRadius="4"
+                            IsVisible="{Binding IsLoadingModels}"
+                            Margin="0,4,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="⏳" FontSize="14" />
+                            <TextBlock Text="正在获取模型列表..."
+                                       VerticalAlignment="Center"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#FFEBEE"
+                            Padding="8"
+                            CornerRadius="4"
+                            IsVisible="{Binding HasModelLoadError}"
+                            Margin="0,4,0,0">
+                        <StackPanel Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="⚠️" FontSize="14" />
+                                <TextBlock Text="无法获取模型列表"
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold"
+                                           FontSize="12" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding ModelLoadErrorMessage}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.8" />
+                            <TextBlock Text="请检查API Key和网络连接，或手动输入"
+                                       FontSize="11"
+                                       Opacity="0.6" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="System Prompt 模板" />
+                    <TextBox Text="{Binding SelectedProvider.SystemPromptTemplate}"
+                             PlaceholderText="留空使用默认系统提示词。可用变量：{sourceLanguage}、{targetLanguage}、{text}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="80" />
+
+                    <TextBlock Text="User Prompt 模板" />
+                    <TextBox Text="{Binding SelectedProvider.UserPromptTemplate}"
+                             PlaceholderText="留空使用默认用户提示词。示例：请将以下内容翻译为 {targetLanguage}，只返回译文：{text}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="100" />
+                    <TextBlock Text="模板变量：{text} 原文，{sourceLanguage} 源语言，{targetLanguage} 目标语言。"
+                               FontSize="11"
+                               Opacity="0.6"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock Text="Request Arguments" />
+                    <TextBox Text="{Binding SelectedProvider.RequestArguments}"
+                             PlaceholderText="{}{&quot;temperature&quot;:0.2,&quot;max_tokens&quot;:1000}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="80" />
+                    <TextBlock Text="填写 JSON 对象，会附加到 /v1/chat/completions 请求体；model、messages、stream 由应用管理。"
+                               FontSize="11"
+                               Opacity="0.6"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

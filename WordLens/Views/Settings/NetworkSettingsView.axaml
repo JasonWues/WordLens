@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WordLens.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="500"
+             x:Class="WordLens.Views.Settings.NetworkSettingsView"
+             x:DataType="vm:NetworkSettingsViewModel">
+
+    <ScrollViewer>
+        <StackPanel Spacing="16" Margin="20" MaxWidth="500">
+            <CheckBox Content="启用 HTTP 代理" IsChecked="{Binding ProxyEnabled}" />
+
+            <StackPanel Spacing="12" IsEnabled="{Binding ProxyEnabled}">
+                <CheckBox Content="使用系统代理"
+                          IsChecked="{Binding ProxyUseSystemProxy}"
+                          ToolTip.Tip="使用操作系统配置的代理设置" />
+
+                <TextBlock Text="启用后将自动使用系统代理设置，无需手动配置地址和端口"
+                           FontSize="12"
+                           Opacity="0.6"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding ProxyUseSystemProxy}" />
+
+                <Separator IsVisible="{Binding ProxyUseSystemProxy}" />
+
+                <StackPanel Spacing="12" IsEnabled="{Binding !ProxyUseSystemProxy}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="代理地址" FontWeight="Bold" />
+                        <TextBox Text="{Binding ProxyAddress}"
+                                 PlaceholderText="http://127.0.0.1" />
+                        <TextBlock Text="HTTP 代理服务器地址"
+                                   FontSize="12"
+                                   Opacity="0.6" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="端口" FontWeight="Bold" />
+                        <NumericUpDown Value="{Binding ProxyPort}"
+                                       Minimum="1"
+                                       Maximum="65535"
+                                       Width="200"
+                                       HorizontalAlignment="Left" />
+                    </StackPanel>
+
+                    <Separator />
+
+                    <CheckBox Content="需要身份验证" IsChecked="{Binding ProxyUseAuthentication}" />
+
+                    <StackPanel Spacing="12" IsEnabled="{Binding ProxyUseAuthentication}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="用户名" FontWeight="Bold" />
+                            <TextBox Text="{Binding ProxyUsername}"
+                                     PlaceholderText="代理用户名" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="密码" FontWeight="Bold" />
+                            <TextBox Text="{Binding ProxyPassword}"
+                                     PlaceholderText="代理密码"
+                                     PasswordChar="●" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

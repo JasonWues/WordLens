@@ -2,11 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:WordLens.ViewModels"
         xmlns:views="using:WordLens.Views"
-        xmlns:behaviors="using:WordLens.Behaviors"
-        xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+        xmlns:settings="using:WordLens.Views.Settings"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:conv="using:WordLens.Converter"
         mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="550"
         x:Class="WordLens.Views.MainWindowView"
         x:DataType="vm:MainWindowViewModel"
@@ -22,729 +20,73 @@
 
     <Grid RowDefinitions="*,Auto" Margin="0">
         <!-- 主内容区域 -->
-        <TabControl Grid.Row="0" Margin="10" x:Name="SettingsTabControl">
-            <!-- 常规设置标签页 -->
-            <TabItem Header="常规">
-                <ScrollViewer>
-                    <StackPanel Spacing="16" Margin="20" DataContext="{Binding SettingsViewModel}">
-                        <!-- 应用界面语言 -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="界面语言" FontWeight="Bold" FontSize="14" />
-                            <ComboBox ItemsSource="{Binding AvailableUILanguages}"
-                                      SelectedValue="{Binding UiLanguage}"
-                                      SelectedValueBinding="{Binding Code}"
-                                      DisplayMemberBinding="{Binding DisplayName}"
-                                      Width="300"
-                                      HorizontalAlignment="Left" />
-                            <TextBlock Text="选择应用界面显示语言（翻译语言请在翻译窗口中选择）"
-                                       FontSize="12"
-                                       Opacity="0.6" />
-                        </StackPanel>
-
-                        <Separator />
-
-                        <!-- 启动设置 -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="启动" FontWeight="Bold" FontSize="14" />
-                            <CheckBox Content="开机时自动启动 WordLens"
-                                      IsChecked="{Binding StartWithSystem}"
-                                      IsEnabled="{Binding IsStartupSupported}" />
-                            <TextBlock Text="当前系统不支持自动配置开机自启"
-                                       FontSize="12"
-                                       Opacity="0.6"
-                                       IsVisible="{Binding !IsStartupSupported}" />
-                        </StackPanel>
-
-                        <Separator />
-
-                        <!-- 快捷键设置 -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="快捷键" FontWeight="Bold" FontSize="14" />
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBox Text="{Binding HotkeyDisplay}"
-                                         IsReadOnly="True"
-                                         Width="200"
-                                         VerticalContentAlignment="Center" />
-                                <Button Content="设置快捷键"
-                                        Command="{Binding StartCaptureHotkeyCommand}"
-                                        CommandParameter="text"
-                                        IsEnabled="{Binding !IsCapturingHotkey}"
-                                        MinWidth="100" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBox Text="{Binding OcrHotkeyDisplay}"
-                                         IsReadOnly="True"
-                                         Width="200"
-                                         VerticalContentAlignment="Center" />
-                                <Button Content="设置OCR快捷键"
-                                        Command="{Binding StartCaptureHotkeyCommand}"
-                                        CommandParameter="ocr"
-                                        IsEnabled="{Binding !IsCapturingHotkey}"
-                                        MinWidth="100" />
-                            </StackPanel>
-                            <TextBlock IsVisible="{Binding IsCapturingHotkey}"
-                                       Text="请按下想要设置的快捷键组合（按 ESC 取消）"
-                                       FontSize="12"
-                                       Foreground="Orange"
+        <DrawerPage Grid.Row="0"
+                    IsOpen="True"
+                    DrawerBehavior="Locked"
+                    DrawerLayoutBehavior="Split"
+                    DrawerLength="220"
+                    CompactDrawerLength="56">
+            <DrawerPage.Drawer>
+                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                        BorderThickness="0,0,1,0"
+                        Padding="16"
+                        DataContext="{Binding SettingsViewModel}">
+                    <Grid RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Spacing="8" Margin="0,4,0,20">
+                            <TextBlock Text="WordLens"
+                                       FontSize="20"
                                        FontWeight="Bold" />
-                            <TextBlock IsVisible="{Binding !IsCapturingHotkey}"
-                                       Text="点击按钮后按下想要设置的快捷键组合"
+                            <TextBlock Text="设置"
                                        FontSize="12"
-                                       Opacity="0.6" />
+                                       Opacity="0.65" />
                         </StackPanel>
 
-                        <Separator />
-
-                        <!-- 流式输出设置 -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="流式输出" FontWeight="Bold" FontSize="14" />
-                            
-                            <CheckBox Content="启用流式输出（实时显示翻译结果）"
-                                      IsChecked="{Binding StreamingEnabled}"
-                                      ToolTip.Tip="启用后翻译内容将实时逐步显示，提供更好的用户体验" />
-                            
-                            <StackPanel Spacing="12"
-                                        IsEnabled="{Binding StreamingEnabled}"
-                                        Margin="24,8,0,0"
-                                        Opacity="{Binding StreamingEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
-                                
-                                <!-- 打字机效果延迟 -->
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="打字机效果延迟（毫秒）" FontSize="13" />
-                                    <NumericUpDown Value="{Binding TypewriterDelayMs}"
-                                                   Minimum="0"
-                                                   Maximum="200"
-                                                   Increment="10"
-                                                   Width="200"
-                                                   HorizontalAlignment="Left"
-                                                   ToolTip.Tip="每个字符显示之间的延迟时间" />
-                                    <TextBlock Text="0 = 无延迟，实时显示；推荐值：30-50毫秒"
-                                               FontSize="11"
-                                               Opacity="0.6"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                                
-                                <!-- 每次显示字符数 -->
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="每次显示字符数" FontSize="13" />
-                                    <NumericUpDown Value="{Binding CharsPerUpdate}"
-                                                   Minimum="1"
-                                                   Maximum="10"
-                                                   Increment="1"
-                                                   Width="200"
-                                                   HorizontalAlignment="Left"
-                                                   ToolTip.Tip="一次性显示的字符数量" />
-                                    <TextBlock Text="1 = 逐字显示；较大值可加快显示速度"
-                                               FontSize="11"
-                                               Opacity="0.6"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </StackPanel>
-                            
-                            <TextBlock Text="提示：流式输出可以让翻译过程更加流畅，但如果网络不稳定可以关闭此功能"
-                                       FontSize="11"
-                                       Opacity="0.6"
-                                       TextWrapping="Wrap"
-                                       Margin="0,4,0,0" />
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- 翻译源管理标签页 -->
-            <TabItem Header="翻译源">
-                <Grid ColumnDefinitions="*,Auto" Margin="10" DataContext="{Binding SettingsViewModel}">
-                    <!-- 左侧列表 -->
-                    <ScrollViewer Grid.Column="0"
-                                  Margin="0,0,10,0"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding Providers}"
-                                      sortable:Sortable.Sortable="True"
-                                      sortable:Sortable.Mode="Sort"
-                                      sortable:Sortable.UpdateCommand="{Binding ReorderProviderCommand}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Spacing="6" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border sortable:Sortable.IsSortable="True"
-                                            Cursor="Hand"
-                                            behaviors:TapCommand.Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SelectProviderCommand}"
-                                            behaviors:TapCommand.CommandParameter="{Binding}"
-                                            Padding="8"
-                                            Background="#FAFAFA"
-                                            BorderBrush="#DDDDDD"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-                                        <Grid ColumnDefinitions="Auto,Auto,*">
-                                            <PathIcon Grid.Column="0"
-                                                      Width="14"
-                                                      Height="14"
-                                                      Margin="0,0,8,0"
-                                                      Foreground="#777777"
-                                                      Cursor="Hand"
-                                                      sortable:Sortable.IsDragHandle="True"
-                                                      VerticalAlignment="Center"
-                                                      Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
-
-                                            <!-- 启用/禁用复选框 -->
-                                            <CheckBox Grid.Column="1"
-                                                      IsChecked="{Binding IsEnabled}"
-                                                      VerticalAlignment="Center"
-                                                      Margin="0,0,8,0"
-                                                      ToolTip.Tip="启用/禁用此翻译源" />
-
-                                            <!-- 翻译源信息 -->
-                                            <StackPanel Grid.Column="2" Spacing="4">
-                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" />
-                                                <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7" />
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6" />
-                                                    <TextBlock Text="✓ 已启用"
-                                                               FontSize="11"
-                                                               Foreground="#4CAF50"
-                                                               IsVisible="{Binding IsEnabled}" />
-                                                    <TextBlock Text="✗ 已禁用"
-                                                               FontSize="11"
-                                                               Foreground="#9E9E9E"
-                                                               IsVisible="{Binding !IsEnabled}" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-
-                    <!-- 右侧按钮和详情 -->
-                    <Grid Grid.Column="1"
-                          RowDefinitions="Auto,Auto,*"
-                          Width="250"
-                          MinHeight="0">
-                        <StackPanel Grid.Row="0" Spacing="10">
-                            <Button Content="添加翻译源"
-                                    Command="{Binding AddProviderCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            <Button Content="删除"
-                                    Command="{Binding DeleteProviderCommand}"
-                                    IsEnabled="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                    HorizontalAlignment="Stretch" />
-                        </StackPanel>
-
-                        <Separator Grid.Row="1" Margin="0,10" />
-
-                        <!-- 翻译源详情编辑 -->
-                        <ScrollViewer Grid.Row="2"
-                                      VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel Spacing="8"
-                                        IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                <TextBlock Text="翻译源详情" FontWeight="Bold" />
-
-                                <!-- 启用/禁用 -->
-                                <CheckBox Content="启用此翻译源"
-                                          IsChecked="{Binding SelectedProvider.IsEnabled}"
-                                          FontWeight="SemiBold"
-                                          Margin="0,4" />
-
-                                <Separator />
-
-                                <TextBlock Text="名称" />
-                                <TextBox Text="{Binding SelectedProvider.Name}" PlaceholderText="翻译源名称" />
-
-                                <TextBlock Text="Base URL" />
-                                <TextBox Text="{Binding SelectedProvider.BaseUrl}" PlaceholderText="https://api.openai.com" />
-
-                                <TextBlock Text="API Key" />
-                                <TextBox Text="{Binding SelectedProvider.ApiKey}"
-                                         PlaceholderText="输入 API Key"
-                                         PasswordChar="●" />
-
-                                <TextBlock Text="Model" />
-
-                                <!-- 模型选择区域 -->
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <!-- 模型下拉选择 -->
-                                    <ComboBox Grid.Column="0"
-                                              ItemsSource="{Binding SelectedProvider.AvailableModels}"
-                                              SelectedItem="{Binding SelectedModelInfo}"
-                                              DisplayMemberBinding="{Binding Id}"
-                                              IsEnabled="{Binding !IsLoadingModels}"
-                                              IsEditable="{Binding SelectedProvider.AllowManualModelInput}"
-                                              PlaceholderText="选择模型或手动输入"
-                                              Margin="0,0,4,0">
-                                    </ComboBox>
-
-                                    <!-- 刷新按钮 -->
-                                    <Button Grid.Column="1"
-                                            Content="🔄"
-                                            Command="{Binding RefreshModelsCommand}"
-                                            CommandParameter="{Binding SelectedProvider}"
-                                            ToolTip.Tip="刷新模型列表"
-                                            IsEnabled="{Binding !IsLoadingModels}"
-                                            Width="40" />
-                                </Grid>
-
-                                <!-- 加载状态 -->
-                                <Border Background="#FFF3E0"
-                                        Padding="8"
-                                        CornerRadius="4"
-                                        IsVisible="{Binding IsLoadingModels}"
-                                        Margin="0,4,0,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="⏳" FontSize="14" />
-                                        <TextBlock Text="正在获取模型列表..."
-                                                   VerticalAlignment="Center"
-                                                   FontSize="12" />
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- 错误提示 -->
-                                <Border Background="#FFEBEE"
-                                        Padding="8"
-                                        CornerRadius="4"
-                                        IsVisible="{Binding HasModelLoadError}"
-                                        Margin="0,4,0,0">
-                                    <StackPanel Spacing="4">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="⚠️" FontSize="14" />
-                                            <TextBlock Text="无法获取模型列表"
-                                                       VerticalAlignment="Center"
-                                                       FontWeight="Bold"
-                                                       FontSize="12" />
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding ModelLoadErrorMessage}"
-                                                   FontSize="11"
-                                                   TextWrapping="Wrap"
-                                                   Opacity="0.8" />
-                                <TextBlock Text="请检查API Key和网络连接，或手动输入"
-                                                   FontSize="11"
-                                                   Opacity="0.6" />
-                                    </StackPanel>
-                                </Border>
-
-                                <TextBlock Text="System Prompt 模板" />
-                                <TextBox Text="{Binding SelectedProvider.SystemPromptTemplate}"
-                                         PlaceholderText="留空使用默认系统提示词。可用变量：{sourceLanguage}、{targetLanguage}、{text}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80" />
-
-                                <TextBlock Text="User Prompt 模板" />
-                                <TextBox Text="{Binding SelectedProvider.UserPromptTemplate}"
-                                         PlaceholderText="留空使用默认用户提示词。示例：请将以下内容翻译为 {targetLanguage}，只返回译文：{text}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="100" />
-                                <TextBlock Text="模板变量：{text} 原文，{sourceLanguage} 源语言，{targetLanguage} 目标语言。"
-                                           FontSize="11"
-                                           Opacity="0.6"
-                                           TextWrapping="Wrap" />
-
-                                <TextBlock Text="Request Arguments" />
-                                <TextBox Text="{Binding SelectedProvider.RequestArguments}"
-                                         PlaceholderText="{}{&quot;temperature&quot;:0.2,&quot;max_tokens&quot;:1000}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80" />
-                                <TextBlock Text="填写 JSON 对象，会附加到 /v1/chat/completions 请求体；model、messages、stream 由应用管理。"
-                                           FontSize="11"
-                                           Opacity="0.6"
-                                           TextWrapping="Wrap" />
-                                
-                            </StackPanel>
-                        </ScrollViewer>
+                        <ListBox Grid.Row="1"
+                                 SelectedIndex="{Binding SelectedSettingsSectionIndex}"
+                                 BorderThickness="0"
+                                 Background="Transparent">
+                            <ListBoxItem Content="常规" />
+                            <ListBoxItem Content="翻译源" />
+                            <ListBoxItem Content="OCR" />
+                            <ListBoxItem Content="TTS" />
+                            <ListBoxItem Content="网络代理" />
+                            <ListBoxItem Content="关于" />
+                        </ListBox>
                     </Grid>
+                </Border>
+            </DrawerPage.Drawer>
+
+            <DrawerPage.Content>
+                <Grid Margin="10"
+                      x:DataType="vm:SettingsViewModel"
+                      DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}">
+                    <Border IsVisible="{Binding IsGeneralSectionSelected}">
+                        <settings:GeneralSettingsView DataContext="{Binding GeneralSettings}" />
+                    </Border>
+
+                    <Border IsVisible="{Binding IsTranslationSectionSelected}">
+                        <settings:TranslationSettingsView DataContext="{Binding TranslationSettings}" />
+                    </Border>
+
+                    <Border IsVisible="{Binding IsOcrSectionSelected}">
+                        <settings:OcrSettingsView DataContext="{Binding OcrSettings}" />
+                    </Border>
+
+                    <Border IsVisible="{Binding IsTtsSectionSelected}">
+                        <settings:TtsSettingsView DataContext="{Binding TtsSettings}" />
+                    </Border>
+
+                    <Border IsVisible="{Binding IsNetworkSectionSelected}">
+                        <settings:NetworkSettingsView DataContext="{Binding NetworkSettings}" />
+                    </Border>
+
+                    <Border IsVisible="{Binding IsAboutSectionSelected}">
+                        <views:AboutView DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AboutViewModel}" />
+                    </Border>
                 </Grid>
-            </TabItem>
-
-            <!-- OCR源配置标签页 -->
-            <TabItem Header="OCR">
-                <Grid ColumnDefinitions="*,Auto" Margin="10" DataContext="{Binding SettingsViewModel}">
-                    <ScrollViewer Grid.Column="0"
-                                  Margin="0,0,10,0"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding OcrProviders}"
-                                      sortable:Sortable.Sortable="True"
-                                      sortable:Sortable.Mode="Sort"
-                                      sortable:Sortable.UpdateCommand="{Binding ReorderOcrProviderCommand}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Spacing="6" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border sortable:Sortable.IsSortable="True"
-                                            Cursor="Hand"
-                                            behaviors:TapCommand.Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SelectOcrProviderCommand}"
-                                            behaviors:TapCommand.CommandParameter="{Binding}"
-                                            Padding="8"
-                                            Background="#FAFAFA"
-                                            BorderBrush="#DDDDDD"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-                                        <Grid ColumnDefinitions="Auto,Auto,*">
-                                            <PathIcon Grid.Column="0"
-                                                      Width="14"
-                                                      Height="14"
-                                                      Margin="0,0,8,0"
-                                                      Foreground="#777777"
-                                                      Cursor="Hand"
-                                                      sortable:Sortable.IsDragHandle="True"
-                                                      VerticalAlignment="Center"
-                                                      Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
-
-                                            <CheckBox Grid.Column="1"
-                                                      IsChecked="{Binding IsEnabled}"
-                                                      VerticalAlignment="Center"
-                                                      Margin="0,0,8,0"
-                                                      ToolTip.Tip="启用/禁用此 OCR 源" />
-
-                                            <StackPanel Grid.Column="2" Spacing="4">
-                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" />
-                                                <TextBlock Text="{Binding BaseUrl}" FontSize="11" Opacity="0.7" />
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{Binding Model}" FontSize="11" Opacity="0.6" />
-                                                    <TextBlock Text="✓ 已启用"
-                                                               FontSize="11"
-                                                               Foreground="#4CAF50"
-                                                               IsVisible="{Binding IsEnabled}" />
-                                                    <TextBlock Text="✗ 已禁用"
-                                                               FontSize="11"
-                                                               Foreground="#9E9E9E"
-                                                               IsVisible="{Binding !IsEnabled}" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-
-                    <Grid Grid.Column="1"
-                          RowDefinitions="Auto,Auto,*"
-                          Width="250"
-                          MinHeight="0">
-                        <StackPanel Grid.Row="0" Spacing="10">
-                            <Button Content="添加 OCR 源"
-                                    Command="{Binding AddOcrProviderCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            <Button Content="删除"
-                                    Command="{Binding DeleteOcrProviderCommand}"
-                                    IsEnabled="{Binding SelectedOcrProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                    HorizontalAlignment="Stretch" />
-                        </StackPanel>
-
-                        <Separator Grid.Row="1" Margin="0,10" />
-
-                        <ScrollViewer Grid.Row="2"
-                                      VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel Spacing="8"
-                                        IsVisible="{Binding SelectedOcrProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                <TextBlock Text="OCR 源详情" FontWeight="Bold" />
-
-                                <CheckBox Content="启用此 OCR 源"
-                                          IsChecked="{Binding SelectedOcrProvider.IsEnabled}"
-                                          FontWeight="SemiBold"
-                                          Margin="0,4" />
-
-                                <Separator />
-
-                                <TextBlock Text="名称" />
-                                <TextBox Text="{Binding SelectedOcrProvider.Name}" PlaceholderText="OCR 源名称" />
-
-                                <TextBlock Text="API URL" />
-                                <TextBox Text="{Binding SelectedOcrProvider.BaseUrl}"
-                                         PlaceholderText="https://api.openai.com 或 https://api.openai.com/v1/chat/completions" />
-
-                                <TextBlock Text="API Key" />
-                                <TextBox Text="{Binding SelectedOcrProvider.ApiKey}"
-                                         PlaceholderText="输入 OCR API Key"
-                                         PasswordChar="●" />
-
-                                <TextBlock Text="Model" />
-                                <TextBox Text="{Binding SelectedOcrProvider.Model}"
-                                         PlaceholderText="gpt-4o-mini" />
-                                <TextBlock Text="请选择支持图片输入的 OpenAI 兼容模型。"
-                                           FontSize="11"
-                                           Opacity="0.6"
-                                           TextWrapping="Wrap" />
-
-                                <TextBlock Text="OCR Prompt 模板" />
-                                <TextBox Text="{Binding SelectedOcrProvider.UserPromptTemplate}"
-                                         PlaceholderText="留空使用默认 OCR 提示词。可用变量：{languageCode}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="100" />
-
-                                <TextBlock Text="Request Arguments" />
-                                <TextBox Text="{Binding SelectedOcrProvider.RequestArguments}"
-                                         PlaceholderText="{}{&quot;temperature&quot;:0.2,&quot;max_tokens&quot;:1000}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80" />
-                                <TextBlock Text="填写 JSON 对象，会附加到 OCR 的 /v1/chat/completions 请求体；model、messages 由应用管理。"
-                                           FontSize="11"
-                                           Opacity="0.6"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Grid>
-                </Grid>
-            </TabItem>
-
-            <!-- 本地 TTS 标签页 -->
-            <TabItem Header="TTS">
-                <ScrollViewer>
-                    <StackPanel Spacing="16" Margin="20" MaxWidth="560" DataContext="{Binding SettingsViewModel}">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="本地 TTS" FontWeight="Bold" FontSize="14" />
-                            <CheckBox Content="启用 sherpa-onnx 本地朗读"
-                                      IsChecked="{Binding TtsEnabled}" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="12" IsEnabled="{Binding TtsEnabled}">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="模型类型" FontWeight="Bold" />
-                                <ComboBox ItemsSource="{Binding AvailableTtsModelTypes}"
-                                          SelectedValue="{Binding TtsModelType}"
-                                          SelectedValueBinding="{Binding Value}"
-                                          DisplayMemberBinding="{Binding DisplayName}"
-                                          Width="220"
-                                          HorizontalAlignment="Left" />
-                            </StackPanel>
-
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Model / Acoustic Model" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsModelPath}"
-                                             PlaceholderText="C:\models\tts\model.onnx" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsModelPathCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Tokens" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsTokensPath}"
-                                             PlaceholderText="C:\models\tts\tokens.txt" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsTokensPathCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8" IsVisible="{Binding IsKokoroTtsModel}">
-                                <TextBlock Text="Voices" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsVoicesPath}"
-                                             PlaceholderText="C:\models\tts\voices.bin" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsVoicesPathCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8" IsVisible="{Binding IsMatchaTtsModel}">
-                                <TextBlock Text="Vocoder" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsVocoderPath}"
-                                             PlaceholderText="C:\models\tts\vocoder.onnx" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsVocoderPathCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Data Dir" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsDataDir}"
-                                             PlaceholderText="C:\models\tts\espeak-ng-data" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsDataDirCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Lexicon" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsLexiconPath}"
-                                             PlaceholderText="可选，多个文件用英文逗号分隔" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsLexiconPathCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Dict Dir" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsDictDir}"
-                                             PlaceholderText="可选" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsDictDirCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Rule FSTs / FARs" FontWeight="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsRuleFsts}"
-                                             PlaceholderText="可选，多个 FST 文件用英文逗号分隔" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsRuleFstsCommand}" />
-                                </Grid>
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding TtsRuleFars}"
-                                             PlaceholderText="可选，多个 FAR 文件用英文逗号分隔" />
-                                    <Button Grid.Column="1"
-                                            Content="选择"
-                                            Command="{Binding PickTtsRuleFarsCommand}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="Provider" FontWeight="Bold" />
-                                    <TextBox Text="{Binding TtsProvider}"
-                                             PlaceholderText="cpu" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="线程数" FontWeight="Bold" />
-                                    <NumericUpDown Value="{Binding TtsNumThreads}"
-                                                   Minimum="1"
-                                                   Maximum="16"
-                                                   Increment="1" />
-                                </StackPanel>
-                            </Grid>
-
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="Speaker ID" FontWeight="Bold" />
-                                    <NumericUpDown Value="{Binding TtsSpeakerId}"
-                                                   Minimum="0"
-                                                   Maximum="999"
-                                                   Increment="1" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="语速" FontWeight="Bold" />
-                                    <NumericUpDown Value="{Binding TtsSpeed}"
-                                                   Minimum="0.25"
-                                                   Maximum="4"
-                                                   Increment="0.1"
-                                                   FormatString="F1" />
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Text="VITS/Piper 通常填写 model.onnx、tokens.txt、espeak-ng-data；Kokoro 还需要 voices.bin；Matcha 还需要 vocoder.onnx。"
-                                       FontSize="12"
-                                       Opacity="0.6"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- 网络代理标签页 -->
-            <TabItem Header="网络代理">
-                <ScrollViewer>
-                    <StackPanel Spacing="16" Margin="20" MaxWidth="500" DataContext="{Binding SettingsViewModel}">
-                        <!-- 启用代理 -->
-                        <CheckBox Content="启用 HTTP 代理" IsChecked="{Binding ProxyEnabled}" />
-
-                        <StackPanel Spacing="12" IsEnabled="{Binding ProxyEnabled}">
-                            <!-- 使用系统代理 -->
-                            <CheckBox Content="使用系统代理"
-                                      IsChecked="{Binding ProxyUseSystemProxy}"
-                                      ToolTip.Tip="使用操作系统配置的代理设置" />
-
-                            <TextBlock Text="启用后将自动使用系统代理设置，无需手动配置地址和端口"
-                                       FontSize="12"
-                                       Opacity="0.6"
-                                       TextWrapping="Wrap"
-                                       IsVisible="{Binding ProxyUseSystemProxy}" />
-
-                            <Separator IsVisible="{Binding ProxyUseSystemProxy}" />
-
-                            <!-- 自定义代理配置区域 -->
-                            <StackPanel Spacing="12" IsEnabled="{Binding !ProxyUseSystemProxy}">
-                                <!-- 代理地址 -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="代理地址" FontWeight="Bold" />
-                                    <TextBox Text="{Binding ProxyAddress}"
-                                             PlaceholderText="http://127.0.0.1" />
-                                    <TextBlock Text="HTTP 代理服务器地址"
-                                               FontSize="12"
-                                               Opacity="0.6" />
-                                </StackPanel>
-
-                                <!-- 代理端口 -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="端口" FontWeight="Bold" />
-                                    <NumericUpDown Value="{Binding ProxyPort}"
-                                                   Minimum="1"
-                                                   Maximum="65535"
-                                                   Width="200"
-                                                   HorizontalAlignment="Left" />
-                                </StackPanel>
-
-                                <Separator />
-
-                                <!-- 需要认证 -->
-                                <CheckBox Content="需要身份验证" IsChecked="{Binding ProxyUseAuthentication}" />
-
-                                <StackPanel Spacing="12" IsEnabled="{Binding ProxyUseAuthentication}">
-                                    <!-- 用户名 -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="用户名" FontWeight="Bold" />
-                                        <TextBox Text="{Binding ProxyUsername}"
-                                                 PlaceholderText="代理用户名" />
-                                    </StackPanel>
-
-                                    <!-- 密码 -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="密码" FontWeight="Bold" />
-                                        <TextBox Text="{Binding ProxyPassword}"
-                                                 PlaceholderText="代理密码"
-                                                 PasswordChar="●" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- 关于标签页 -->
-            <TabItem Header="关于">
-                <views:AboutView DataContext="{Binding AboutViewModel}" />
-            </TabItem>
-        </TabControl>
+            </DrawerPage.Content>
+        </DrawerPage>
 
         <!-- 底部按钮栏 -->
         <Border Grid.Row="1"

@@ -67,6 +67,11 @@ public class App : Application
         // ViewModels
         services.AddSingleton<ApplicationViewModel>();
         services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<GeneralSettingsViewModel>();
+        services.AddSingleton<TranslationSettingsViewModel>();
+        services.AddSingleton<OcrSettingsViewModel>();
+        services.AddSingleton<TtsSettingsViewModel>();
+        services.AddSingleton<NetworkSettingsViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddTransient<PopupWindowViewModel>();
         services.AddTransient<ScreenCaptureViewModel>();
