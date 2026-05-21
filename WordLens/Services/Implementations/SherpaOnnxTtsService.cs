@@ -34,7 +34,7 @@ public sealed class SherpaOnnxTtsService : ITtsService, IDisposable
     {
         if (string.IsNullOrWhiteSpace(text))
             return;
-
+        
         await _gate.WaitAsync(cancellationToken);
 
         try

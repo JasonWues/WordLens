@@ -28,7 +28,6 @@ public class WindowManagerService : IWindowManagerService
     private Window? _settingsWindow;
     private Window? _screenCaptureWindow;
     private Window? _ocrResultWindow;
-    private Window? _historyWindow;
 
     public WindowManagerService(
         IServiceProvider serviceProvider,
@@ -296,63 +295,6 @@ public class WindowManagerService : IWindowManagerService
     }
 
     /// <summary>
-    /// 显示或激活历史记录窗口
-    /// </summary>
-    public void ShowHistoryWindow()
-    {
-        _semaphore.Wait();
-        try
-        {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                if (_historyWindow == null)
-                {
-                    _logger.ZLogInformation($"创建新的历史记录窗口");
-                    
-                    var viewModel = _serviceProvider.GetRequiredService<TranslationHistoryViewModel>();
-                    
-                    _historyWindow = new TranslationHistoryView
-                    {
-                        DataContext = viewModel
-                    };
-
-                    // 订阅窗口关闭事件，清理引用
-                    _historyWindow.Closed += (s, e) =>
-                    {
-                        _semaphore.Wait();
-                        try
-                        {
-                            _logger.ZLogInformation($"历史记录窗口已关闭，清理引用");
-                            _historyWindow = null;
-                        }
-                        finally
-                        {
-                            _semaphore.Release();
-                        }
-                    };
-
-                    _historyWindow.Show();
-                    _ = viewModel.InitializeAsync();
-                }
-                else
-                {
-                    _logger.ZLogInformation($"历史记录窗口已存在，激活");
-                    
-                    // 激活窗口
-                    ActivateWindow(_historyWindow);
-                    if (_historyWindow.DataContext is TranslationHistoryViewModel vm)
-                        _ = vm.InitializeAsync();
-                }
-
-            });
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
-
-    /// <summary>
     /// 关闭所有窗口
     /// </summary>
     public void CloseAllWindows()
@@ -369,8 +311,7 @@ public class WindowManagerService : IWindowManagerService
                 _translationWindow,
                 _settingsWindow,
                 _screenCaptureWindow,
-                _ocrResultWindow,
-                _historyWindow
+                _ocrResultWindow
             };
 
             // 清理所有引用
@@ -378,7 +319,6 @@ public class WindowManagerService : IWindowManagerService
             _settingsWindow = null;
             _screenCaptureWindow = null;
             _ocrResultWindow = null;
-            _historyWindow = null;
         }
         finally
         {

@@ -24,7 +24,9 @@ public partial class SettingsViewModel : ViewModelBase
         TranslationSettingsViewModel translationSettings,
         OcrSettingsViewModel ocrSettings,
         TtsSettingsViewModel ttsSettings,
-        NetworkSettingsViewModel networkSettings)
+        NetworkSettingsViewModel networkSettings,
+        TranslationHistoryViewModel history,
+        AboutViewModel aboutViewModel)
     {
         _settingsService = settingsService;
         _hotkeyManagerService = hotkeyManagerService;
@@ -33,6 +35,8 @@ public partial class SettingsViewModel : ViewModelBase
         OcrSettings = ocrSettings;
         TtsSettings = ttsSettings;
         NetworkSettings = networkSettings;
+        History = history;
+        About = aboutViewModel;
     }
 
     public GeneralSettingsViewModel GeneralSettings { get; }
@@ -45,6 +49,21 @@ public partial class SettingsViewModel : ViewModelBase
 
     public NetworkSettingsViewModel NetworkSettings { get; }
 
+    public TranslationHistoryViewModel History { get; }
+
+    public AboutViewModel About { get; }
+
+    public ViewModelBase CurrentSectionViewModel => SelectedSettingsSectionIndex switch
+    {
+        0 => GeneralSettings,
+        1 => TranslationSettings,
+        2 => OcrSettings,
+        3 => TtsSettings,
+        4 => NetworkSettings,
+        5 => History,
+        _ => About
+    };
+
     public bool IsGeneralSectionSelected => SelectedSettingsSectionIndex == 0;
 
     public bool IsTranslationSectionSelected => SelectedSettingsSectionIndex == 1;
@@ -55,7 +74,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     public bool IsNetworkSectionSelected => SelectedSettingsSectionIndex == 4;
 
-    public bool IsAboutSectionSelected => SelectedSettingsSectionIndex == 5;
+    public bool IsHistorySectionSelected => SelectedSettingsSectionIndex == 5;
+
+    public bool IsAboutSectionSelected => SelectedSettingsSectionIndex == 6;
 
     public async Task InitializeAsync()
     {
@@ -69,10 +90,14 @@ public partial class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsOcrSectionSelected));
         OnPropertyChanged(nameof(IsTtsSectionSelected));
         OnPropertyChanged(nameof(IsNetworkSectionSelected));
+        OnPropertyChanged(nameof(IsHistorySectionSelected));
         OnPropertyChanged(nameof(IsAboutSectionSelected));
+        OnPropertyChanged(nameof(CurrentSectionViewModel));
 
         if (value == 1)
             _ = TranslationSettings.LoadProviderModelsOnceAsync();
+        else if (value == 5)
+            _ = History.InitializeAsync();
     }
 
     [RelayCommand]

@@ -37,12 +37,6 @@ public interface IWindowManagerService
     void ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null);
 
     /// <summary>
-    /// 显示或激活历史记录窗口
-    /// 如果窗口已存在，则激活并显示；否则创建新窗口
-    /// </summary>
-    void ShowHistoryWindow();
-
-    /// <summary>
     /// 关闭所有窗口（应用程序退出时调用）
     /// </summary>
     void CloseAllWindows();
