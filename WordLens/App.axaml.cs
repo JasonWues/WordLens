@@ -106,8 +106,10 @@ public class App : Application
             logging.ClearProviders();
             logging.SetMinimumLevel(LogLevel.Information);
 
+#if DEBUG
             // 控制台输出（开发时）
             logging.AddZLoggerConsole();
+#endif
 
             // 文件输出到 AppData 目录
             var logDir = Path.Combine(

@@ -151,7 +151,8 @@
                               Width="92"
                               HorizontalAlignment="Left">
                         <ComboBox.ItemTemplate>
-                            <DataTemplate DataType="models:LanguageInfo">
+                            <DataTemplate DataType="models:LanguageInfo"
+                                          x:DataType="models:LanguageInfo">
                                 <TextBlock Text="{Binding DisplayName}" />
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
@@ -176,7 +177,8 @@
                               Width="92"
                               HorizontalAlignment="Right">
                         <ComboBox.ItemTemplate>
-                            <DataTemplate DataType="models:LanguageInfo">
+                            <DataTemplate DataType="models:LanguageInfo"
+                                          x:DataType="models:LanguageInfo">
                                 <TextBlock Text="{Binding DisplayName}" />
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
@@ -199,7 +201,8 @@
                               SelectedItem="{Binding SelectedTranslationProvider}"
                               HorizontalAlignment="Stretch">
                         <ComboBox.ItemTemplate>
-                            <DataTemplate DataType="models:ProviderConfig">
+                            <DataTemplate DataType="models:ProviderConfig"
+                                          x:DataType="models:ProviderConfig">
                                 <TextBlock Text="{Binding Name}"
                                            TextTrimming="CharacterEllipsis" />
                             </DataTemplate>
@@ -229,7 +232,8 @@
                            VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding TranslationResults}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="models:TranslationResult">
+                        <DataTemplate DataType="models:TranslationResult"
+                                      x:DataType="models:TranslationResult">
                             <Border Margin="0,0,0,6"
                                     CornerRadius="5"
                                     ClipToBounds="True">

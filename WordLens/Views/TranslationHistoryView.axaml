@@ -12,7 +12,7 @@
         Title="翻译历史">
     <Border Padding="16">
         <Grid RowDefinitions="Auto,12,Auto,12,*,12,Auto">
-            
+
             <!-- 顶部工具栏 -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto">
                 <!-- 标题 -->
@@ -86,14 +86,14 @@
                               Foreground="#666"
                               VerticalAlignment="Center"
                               Margin="0,0,8,0" />
-                    
+
                     <TextBox Grid.Column="1"
                              Text="{Binding SearchKeyword}"
                              PlaceholderText="搜索源文本..."
                              BorderThickness="0"
                              Background="Transparent"
                              VerticalAlignment="Center" />
-                    
+
                     <Button Grid.Column="2"
                             Classes="icon-button"
                             Command="{Binding SearchCommand}"
@@ -114,152 +114,162 @@
                          Height="3" />
 
             <!-- 历史记录列表 -->
-            <ScrollViewer Grid.Row="4">
-                <ItemsControl ItemsSource="{Binding Histories}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="models:TranslationHistory">
-                            <Border Classes="history-card">
-                                <Grid RowDefinitions="Auto,8,Auto,8,Auto">
-                                    
-                                    <!-- 顶部：时间和操作按钮 -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
-                                        <!-- 时间戳 -->
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
-                                            <PathIcon Width="14" Height="14"
-                                                      Data="{StaticResource clock_regular}"
-                                                      Foreground="#666"
-                                                      VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
-                                                       FontSize="11"
-                                                       Foreground="#666"
-                                                       VerticalAlignment="Center" />
-                                        </StackPanel>
+            <ListBox Grid.Row="4"
+                     Classes="history-list"
+                     ItemsSource="{Binding Histories}"
+                     SelectedItem="{Binding SelectedHistory}"
+                     SelectionMode="Single"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="models:TranslationHistory"
+                                  x:DataType="models:TranslationHistory">
+                        <Border Classes="history-card">
+                            <Grid RowDefinitions="Auto,8,Auto,8,Auto">
 
-                                        <!-- 语言标签 -->
-                                        <Border Grid.Column="1"
-                                                Background="#E3F2FD"
-                                                BorderBrush="#2196F3"
-                                                BorderThickness="1"
-                                                CornerRadius="4"
-                                                Padding="6,2"
-                                                Margin="0,0,4,0">
-                                            <TextBlock Text="{Binding SourceLanguage, StringFormat='{}{0} → '}"
-                                                       FontSize="10"
-                                                       Foreground="#2196F3"
-                                                       FontWeight="SemiBold" />
-                                        </Border>
-                                        
-                                        <Border Grid.Column="2"
-                                                Background="#E8F5E9"
-                                                BorderBrush="#4CAF50"
-                                                BorderThickness="1"
-                                                CornerRadius="4"
-                                                Padding="6,2"
-                                                Margin="0,0,8,0">
-                                            <TextBlock Text="{Binding TargetLanguage}"
-                                                       FontSize="10"
-                                                       Foreground="#4CAF50"
-                                                       FontWeight="SemiBold" />
-                                        </Border>
+                                <!-- 顶部：时间和操作按钮 -->
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                                    <!-- 时间戳 -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                                        <PathIcon Width="14" Height="14"
+                                                  Data="{StaticResource clock_regular}"
+                                                  Foreground="#666"
+                                                  VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                                   FontSize="11"
+                                                   Foreground="#666"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
 
-                                        <!-- 收藏按钮 -->
-                                        <Button Grid.Column="3"
-                                                Classes="icon-button favorite-button"
-                                                Classes.is-favorite="{Binding IsFavorite}"
-                                                Command="{Binding $parent[Window].((vm:TranslationHistoryViewModel)DataContext).ToggleFavoriteCommand}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip.Tip="收藏">
-                                            <PathIcon Width="14" Height="14"
-                                                      Data="{StaticResource star_regular}" />
-                                        </Button>
+                                    <!-- 语言标签 -->
+                                    <Border Grid.Column="1"
+                                            Background="#E3F2FD"
+                                            BorderBrush="#2196F3"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            Margin="0,0,4,0">
+                                        <TextBlock Text="{Binding SourceLanguage, StringFormat='{}{0} → '}"
+                                                   FontSize="10"
+                                                   Foreground="#2196F3"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
 
-                                        <!-- 删除按钮 -->
-                                        <Button Grid.Column="4"
-                                                Classes="icon-button"
-                                                Command="{Binding $parent[Window].((vm:TranslationHistoryViewModel)DataContext).DeleteHistoryCommand}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip.Tip="删除"
-                                                Foreground="#F44336">
-                                            <PathIcon Width="14" Height="14"
-                                                      Data="{StaticResource delete_regular}" />
-                                        </Button>
-                                    </Grid>
+                                    <Border Grid.Column="2"
+                                            Background="#E8F5E9"
+                                            BorderBrush="#4CAF50"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            Margin="0,0,8,0">
+                                        <TextBlock Text="{Binding TargetLanguage}"
+                                                   FontSize="10"
+                                                   Foreground="#4CAF50"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
 
-                                    <!-- 分隔线 -->
-                                    <Border Grid.Row="1"
-                                            Height="1"
-                                            Background="#F0F0F0" />
+                                    <!-- 收藏按钮 -->
+                                    <Button Grid.Column="3"
+                                            Classes="icon-button favorite-button"
+                                            Classes.is-favorite="{Binding IsFavorite}"
+                                            Command="{Binding $parent[Window].((vm:TranslationHistoryViewModel)DataContext).ToggleFavoriteCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="收藏">
+                                        <PathIcon Width="14" Height="14"
+                                                  Data="{StaticResource star_regular}" />
+                                    </Button>
 
-                                    <!-- 源文本 -->
-                                    <StackPanel Grid.Row="2" Spacing="4">
-                                        <TextBlock Text="原文"
+                                    <!-- 删除按钮 -->
+                                    <Button Grid.Column="4"
+                                            Classes="icon-button"
+                                            Command="{Binding $parent[Window].((vm:TranslationHistoryViewModel)DataContext).DeleteHistoryCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="删除"
+                                            Foreground="#F44336">
+                                        <PathIcon Width="14" Height="14"
+                                                  Data="{StaticResource delete_regular}" />
+                                    </Button>
+                                </Grid>
+
+                                <!-- 分隔线 -->
+                                <Border Grid.Row="1"
+                                        Height="1"
+                                        Background="#F0F0F0" />
+
+                                <!-- 源文本 -->
+                                <StackPanel Grid.Row="2" Spacing="4">
+                                    <TextBlock Text="原文"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               Foreground="#666" />
+                                    <TextBlock Text="{Binding SourceText}"
+                                               TextWrapping="Wrap"
+                                               MaxLines="3"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontSize="13"
+                                               LineHeight="18" />
+                                </StackPanel>
+
+                                <!-- 翻译结果摘要 -->
+                                <StackPanel Grid.Row="4" Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="翻译结果"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"
                                                    Foreground="#666" />
-                                        <TextBlock Text="{Binding SourceText}"
-                                                   TextWrapping="Wrap"
-                                                   MaxLines="3"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   FontSize="13"
-                                                   LineHeight="18" />
-                                    </StackPanel>
-
-                                    <!-- 翻译结果摘要 -->
-                                    <StackPanel Grid.Row="4" Spacing="4">
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ProviderNames}"
+                                                   FontSize="10"
+                                                   Foreground="#999" />
+                                    </Grid>
+                                    <Border Background="#F5F9FF"
+                                            BorderBrush="#B3D9FF"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="8">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0"
-                                                       Text="翻译结果"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="#666" />
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding ProviderNames}"
-                                                       FontSize="10"
-                                                       Foreground="#999" />
+                                                       Text="{Binding ResultsJson, Converter={x:Static conv:TranslationResultSummaryConverter.Summary}}"
+                                                       TextWrapping="Wrap"
+                                                       MaxLines="2"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       FontSize="12"
+                                                       LineHeight="16"
+                                                       Foreground="#333" />
+
+                                            <!-- 重新翻译按钮 -->
+                                            <Button Grid.Column="1"
+                                                    Command="{Binding $parent[Window].((vm:TranslationHistoryViewModel)DataContext).OpenTranslationCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="#409EFF"
+                                                    Foreground="White"
+                                                    CornerRadius="4"
+                                                    Padding="12,4"
+                                                    BorderThickness="0"
+                                                    Margin="8,0,0,0"
+                                                    ToolTip.Tip="重新翻译">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <PathIcon Width="12" Height="12"
+                                                              Data="{StaticResource translate_regular}"
+                                                              Foreground="White" />
+                                                    <TextBlock Text="翻译"
+                                                               FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
                                         </Grid>
-                                        <Border Background="#F5F9FF"
-                                                BorderBrush="#B3D9FF"
-                                                BorderThickness="1"
-                                                CornerRadius="4"
-                                                Padding="8">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0"
-                                                           Text="{Binding ResultsJson, Converter={x:Static conv:TranslationResultSummaryConverter.Summary}}"
-                                                           TextWrapping="Wrap"
-                                                           MaxLines="2"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           FontSize="12"
-                                                           LineHeight="16"
-                                                           Foreground="#333" />
-                                                
-                                                <!-- 重新翻译按钮 -->
-                                                <Button Grid.Column="1"
-                                                        Command="{Binding $parent[Window].((vm:TranslationHistoryViewModel)DataContext).OpenTranslationCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Background="#409EFF"
-                                                        Foreground="White"
-                                                        CornerRadius="4"
-                                                        Padding="12,4"
-                                                        BorderThickness="0"
-                                                        Margin="8,0,0,0"
-                                                        ToolTip.Tip="重新翻译">
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <PathIcon Width="12" Height="12"
-                                                                  Data="{StaticResource translate_regular}"
-                                                                  Foreground="White" />
-                                                        <TextBlock Text="翻译"
-                                                                   FontSize="11" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </Grid>
-                                        </Border>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
             <!-- 空状态提示 -->
             <Border Grid.Row="4"
@@ -292,7 +302,7 @@
                                FontSize="12"
                                Foreground="#666"
                                VerticalAlignment="Center" />
-                    
+
                     <TextBlock Grid.Column="1"
                                Text="提示：点击翻译按钮可重新翻译"
                                FontSize="11"

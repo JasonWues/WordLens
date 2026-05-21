@@ -94,6 +94,7 @@
                     <Grid>
                         <Image Source="{Binding Screenshot}"
                                Stretch="Uniform"
+                               RenderOptions.BitmapInterpolationMode="LowQuality"
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Stretch"
                                IsVisible="{Binding HasScreenshot}" />

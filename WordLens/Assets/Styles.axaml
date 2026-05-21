@@ -231,6 +231,18 @@
     </Style>
 
     <!-- Translation history -->
+    <Style Selector="ListBox.history-list">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style Selector="ListBox.history-list ListBoxItem">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+
     <Style Selector="Border.history-card">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#E0E0E0" />

@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using WordLens.Messages;
+using WordLens.Models;
 using WordLens.Util;
 using WordLens.ViewModels;
 
@@ -50,6 +51,24 @@ public partial class MainWindowView : Window
         WeakReferenceMessenger.Default.Send(message);
         if (message.Handled)
             e.Handled = true;
+    }
+
+    private void ProviderItem_Tapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control { DataContext: ProviderConfig provider } &&
+            DataContext is MainWindowViewModel vm)
+        {
+            vm.SettingsViewModel.SelectedProvider = provider;
+        }
+    }
+
+    private void OcrProviderItem_Tapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control { DataContext: ProviderConfig provider } &&
+            DataContext is MainWindowViewModel vm)
+        {
+            vm.SettingsViewModel.SelectedOcrProvider = provider;
+        }
     }
 
     protected override void OnClosed(EventArgs e)

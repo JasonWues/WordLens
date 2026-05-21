@@ -158,21 +158,20 @@
                                   Margin="0,0,10,0"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <ListBox ItemsSource="{Binding Providers}"
-                                 SelectedItem="{Binding SelectedProvider}"
-                                 SelectionMode="Single"
-                                 sortable:Sortable.Sortable="True"
-                                 sortable:Sortable.Mode="Sort"
-                                 sortable:Sortable.UpdateCommand="{Binding ReorderProviderCommand}">
-                            <ListBox.ItemsPanel>
+                        <ItemsControl ItemsSource="{Binding Providers}"
+                                      sortable:Sortable.Sortable="True"
+                                      sortable:Sortable.Mode="Sort"
+                                      sortable:Sortable.UpdateCommand="{Binding ReorderProviderCommand}">
+                            <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Spacing="6" />
                                 </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border sortable:Sortable.IsSortable="True"
                                             Cursor="Hand"
+                                            Tapped="ProviderItem_Tapped"
                                             Padding="8"
                                             Background="#FAFAFA"
                                             BorderBrush="#DDDDDD"
@@ -184,6 +183,8 @@
                                                       Height="14"
                                                       Margin="0,0,8,0"
                                                       Foreground="#777777"
+                                                      Cursor="Hand"
+                                                      sortable:Sortable.IsDragHandle="True"
                                                       VerticalAlignment="Center"
                                                       Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
 
@@ -213,8 +214,8 @@
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </ScrollViewer>
 
                     <!-- 右侧按钮和详情 -->
@@ -366,21 +367,20 @@
                                   Margin="0,0,10,0"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <ListBox ItemsSource="{Binding OcrProviders}"
-                                 SelectedItem="{Binding SelectedOcrProvider}"
-                                 SelectionMode="Single"
-                                 sortable:Sortable.Sortable="True"
-                                 sortable:Sortable.Mode="Sort"
-                                 sortable:Sortable.UpdateCommand="{Binding ReorderOcrProviderCommand}">
-                            <ListBox.ItemsPanel>
+                        <ItemsControl ItemsSource="{Binding OcrProviders}"
+                                      sortable:Sortable.Sortable="True"
+                                      sortable:Sortable.Mode="Sort"
+                                      sortable:Sortable.UpdateCommand="{Binding ReorderOcrProviderCommand}">
+                            <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Spacing="6" />
                                 </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border sortable:Sortable.IsSortable="True"
                                             Cursor="Hand"
+                                            Tapped="OcrProviderItem_Tapped"
                                             Padding="8"
                                             Background="#FAFAFA"
                                             BorderBrush="#DDDDDD"
@@ -392,6 +392,8 @@
                                                       Height="14"
                                                       Margin="0,0,8,0"
                                                       Foreground="#777777"
+                                                      Cursor="Hand"
+                                                      sortable:Sortable.IsDragHandle="True"
                                                       VerticalAlignment="Center"
                                                       Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
 
@@ -419,8 +421,8 @@
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </ScrollViewer>
 
                     <Grid Grid.Column="1"
