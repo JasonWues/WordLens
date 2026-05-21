@@ -19,15 +19,12 @@ public class OpenAIModelProviderService
 {
     private readonly ProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ILogger<OpenAIModelProviderService> _logger;
-    private readonly ISettingsService _settingsService;
 
     public OpenAIModelProviderService(
         ProxyAwareHttpClientFactory httpClientFactory,
-        ISettingsService settingsService,
         ILogger<OpenAIModelProviderService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _settingsService = settingsService;
         _logger = logger;
     }
 
@@ -35,6 +32,7 @@ public class OpenAIModelProviderService
     public async Task<List<ModelInfo>> GetAvailableModelsAsync(
         string apiKey,
         string baseUrl,
+        ProxyConfig proxyConfig,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -53,8 +51,7 @@ public class OpenAIModelProviderService
         {
             _logger.ZLogInformation($"开始获取模型列表，BaseUrl: {baseUrl}");
 
-            var settings = await _settingsService.LoadAsync();
-            using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
+            using var httpClient = _httpClientFactory.CreateClient(proxyConfig);
 
             // 配置HTTP客户端
             httpClient.BaseAddress = new Uri(baseUrl);

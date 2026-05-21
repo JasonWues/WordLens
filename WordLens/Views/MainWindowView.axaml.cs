@@ -4,9 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using WordLens.Messages;
-using WordLens.Models;
 using WordLens.Util;
-using WordLens.ViewModels;
 
 namespace WordLens.Views;
 
@@ -15,12 +13,6 @@ public partial class MainWindowView : Window
     public MainWindowView()
     {
         InitializeComponent();
-
-        // 订阅窗口加载事件
-        Opened += async (s, e) =>
-        {
-            if (DataContext is MainWindowViewModel vm) await vm.InitializeAsync();
-        };
 
         KeyDown += OnWindowKeyDown;
         
@@ -51,24 +43,6 @@ public partial class MainWindowView : Window
         WeakReferenceMessenger.Default.Send(message);
         if (message.Handled)
             e.Handled = true;
-    }
-
-    private void ProviderItem_Tapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is Control { DataContext: ProviderConfig provider } &&
-            DataContext is MainWindowViewModel vm)
-        {
-            vm.SettingsViewModel.SelectedProvider = provider;
-        }
-    }
-
-    private void OcrProviderItem_Tapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is Control { DataContext: ProviderConfig provider } &&
-            DataContext is MainWindowViewModel vm)
-        {
-            vm.SettingsViewModel.SelectedOcrProvider = provider;
-        }
     }
 
     protected override void OnClosed(EventArgs e)

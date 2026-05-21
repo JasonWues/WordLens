@@ -387,6 +387,13 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void SelectProvider(ProviderConfig? provider)
+    {
+        if (provider != null)
+            SelectedProvider = provider;
+    }
+
+    [RelayCommand]
     private void AddProvider()
     {
         var newProvider = new ProviderConfig
@@ -425,6 +432,13 @@ public partial class SettingsViewModel : ViewModelBase
         var movedProvider = args.Item as ProviderConfig;
         if (args.ApplyUpdateMutation() && movedProvider != null)
             SelectedProvider = movedProvider;
+    }
+
+    [RelayCommand]
+    private void SelectOcrProvider(ProviderConfig? provider)
+    {
+        if (provider != null)
+            SelectedOcrProvider = provider;
     }
 
     [RelayCommand]
@@ -497,6 +511,7 @@ public partial class SettingsViewModel : ViewModelBase
             var models = await _modelProviderService.GetAvailableModelsAsync(
                 decryptedKey,
                 provider.BaseUrl,
+                BuildProxyConfigFromViewModel(),
                 CancellationToken.None);
 
             // 如果当前模型不在列表中，添加它（保持用户选择）
@@ -545,6 +560,20 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    private ProxyConfig BuildProxyConfigFromViewModel()
+    {
+        return new ProxyConfig
+        {
+            Enabled = ProxyEnabled,
+            UseSystemProxy = ProxyUseSystemProxy,
+            Address = ProxyAddress,
+            Port = ProxyPort,
+            UseAuthentication = ProxyUseAuthentication,
+            Username = ProxyUsername,
+            Password = ProxyPassword
+        };
+    }
+
     private AppSettings BuildSettingsFromViewModel()
     {
         return new AppSettings
@@ -565,16 +594,7 @@ public partial class SettingsViewModel : ViewModelBase
                 TypewriterDelayMs = TypewriterDelayMs,
                 CharsPerUpdate = CharsPerUpdate
             },
-            Proxy = new ProxyConfig
-            {
-                Enabled = ProxyEnabled,
-                UseSystemProxy = ProxyUseSystemProxy,
-                Address = ProxyAddress,
-                Port = ProxyPort,
-                UseAuthentication = ProxyUseAuthentication,
-                Username = ProxyUsername,
-                Password = ProxyPassword
-            }
+            Proxy = BuildProxyConfigFromViewModel()
         };
     }
 

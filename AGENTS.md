@@ -2,12 +2,13 @@
 
 ## Project Structure & Module Organization
 
-WordLens is a desktop translation app built with Avalonia UI and a Rust native helper library. The solution entry is `WordLens.slnx`.
+WordLens is an Avalonia desktop translation app with a Rust native helper library. The solution entry is `WordLens.slnx`.
 
-- `WordLens/` contains the .NET 10 Avalonia application; `Assets/` holds resources.
+- `WordLens/` contains the .NET 10 Avalonia app.
 - `WordLens/Views/` and `WordLens/ViewModels/` hold AXAML UI, code-behind, and MVVM state.
-- `WordLens/Models/`, `Services/`, `Messages/`, `Converter/`, `Util/`, and `Native/` hold domain models, services, messages, converters, helpers, and bindings.
-- `native/` is the Rust edition 2024 `cdylib` crate for screenshot and selection support.
+- `WordLens/Models/`, `Services/`, `Messages/`, `Converter/`, `Util/`, and `Native/` hold domain, service, messaging, conversion, helper, and binding code.
+- `WordLens/Assets/` stores shared styles, icons, and resources.
+- `native/` is the Rust 2024 `cdylib` crate for screenshot and selection support.
 - `.github/workflows/main.yml` defines formatting, linting, and platform builds.
 
 ## Build, Test, and Development Commands
@@ -22,7 +23,7 @@ WordLens is a desktop translation app built with Avalonia UI and a Rust native h
 
 ## Coding Style & Naming Conventions
 
-Use nullable-aware C# with 4-space indentation. Name Avalonia views `*View.axaml` or `*WindowView.axaml`, with matching `.axaml.cs` files. Name view models `*ViewModel` and derive them from `ViewModelBase`. Prefer `[ObservableProperty]` and `[RelayCommand]`. Use compiled bindings with `x:DataType` in AXAML.
+Use nullable-aware C# with 4-space indentation. Name Avalonia views `*View.axaml` or `*WindowView.axaml`, with matching `.axaml.cs` files. Name view models `*ViewModel` and derive from `ViewModelBase`. Prefer `[ObservableProperty]` and `[RelayCommand]`. Use compiled bindings with `x:DataType` in AXAML.
 
 Rust uses edition 2024 and `cargo fmt`. Keep FFI-facing behavior small and isolated under `native/src/`.
 
@@ -32,9 +33,9 @@ No dedicated test project or coverage threshold is currently enforced. When addi
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short action summaries, often in Chinese, with examples such as `开发TTS功能`, `优化性能`, and `Create OcrImageProcessor.cs`. Keep subjects concise and action-oriented.
+Recent commits use short, action-oriented summaries in English or Chinese, such as `Add sortable provider list; enable debug logging`, `开发TTS功能`, and `更新ci文件`. Keep subjects concise and scoped.
 
-Pull requests should include a description, affected areas, verification steps, linked issues when applicable, and screenshots or recordings for UI changes. Mention Windows, Linux, or macOS testing when relevant.
+Pull requests should include a description, affected areas, verification steps, linked issues when applicable, and screenshots or recordings for UI changes. Mention platform testing when relevant.
 
 ## Security & Configuration Tips
 
@@ -42,4 +43,4 @@ Do not commit API keys, proxy credentials, local settings, `bin/`, `obj/`, `nati
 
 ## Agent-Specific Instructions
 
-Use Context7 MCP for library, framework, SDK, API, CLI, or cloud-service documentation questions. Skip it for refactoring, business logic, and code review.
+Use Context7 MCP for library, framework, SDK, API, CLI, or cloud-service documentation questions. Skip it for refactoring, business logic debugging, and code review.

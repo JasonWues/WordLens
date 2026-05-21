@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:WordLens.ViewModels"
         xmlns:views="using:WordLens.Views"
+        xmlns:behaviors="using:WordLens.Behaviors"
         xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -171,7 +172,8 @@
                                 <DataTemplate>
                                     <Border sortable:Sortable.IsSortable="True"
                                             Cursor="Hand"
-                                            Tapped="ProviderItem_Tapped"
+                                            behaviors:TapCommand.Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SelectProviderCommand}"
+                                            behaviors:TapCommand.CommandParameter="{Binding}"
                                             Padding="8"
                                             Background="#FAFAFA"
                                             BorderBrush="#DDDDDD"
@@ -380,7 +382,8 @@
                                 <DataTemplate>
                                     <Border sortable:Sortable.IsSortable="True"
                                             Cursor="Hand"
-                                            Tapped="OcrProviderItem_Tapped"
+                                            behaviors:TapCommand.Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SelectOcrProviderCommand}"
+                                            behaviors:TapCommand.CommandParameter="{Binding}"
                                             Padding="8"
                                             Background="#FAFAFA"
                                             BorderBrush="#DDDDDD"
