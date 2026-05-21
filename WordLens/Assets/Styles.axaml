@@ -1,0 +1,281 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Common icon buttons -->
+    <Style Selector="Button.icon-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
+    <Style Selector="Button.icon-button:pointerover">
+        <Setter Property="Background" Value="#10000000" />
+    </Style>
+
+    <Style Selector="Button.icon-button:pressed">
+        <Setter Property="Background" Value="#20000000" />
+    </Style>
+
+    <Style Selector="Button.icon-button.compact">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="20" />
+        <Setter Property="MinHeight" Value="20" />
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Foreground" Value="#171717" />
+    </Style>
+
+    <Style Selector="Button.icon-button.compact:pointerover">
+        <Setter Property="Background" Value="#15000000" />
+    </Style>
+
+    <Style Selector="Button.icon-button.compact:pressed">
+        <Setter Property="Background" Value="#24000000" />
+    </Style>
+
+    <Style Selector="Button.icon-button.medium">
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="MinWidth" Value="32" />
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <Style Selector="Button.icon-button.close">
+        <Setter Property="Foreground" Value="#7A7A7A" />
+    </Style>
+
+    <Style Selector="Button.icon-button.close:pointerover">
+        <Setter Property="Background" Value="#D0D0D0" />
+        <Setter Property="Foreground" Value="#111111" />
+    </Style>
+
+    <Style Selector="Button.icon-button.danger-close:pointerover">
+        <Setter Property="Background" Value="#E5484D" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="Button.icon-button.topmost-active">
+        <Setter Property="Foreground" Value="#111111" />
+        <Setter Property="Background" Value="#18000000" />
+    </Style>
+
+    <Style Selector="Button.favorite-button.is-favorite PathIcon">
+        <Setter Property="Foreground" Value="#FFB800" />
+    </Style>
+
+    <Style Selector="Button:disabled">
+        <Setter Property="Opacity" Value="0.55" />
+        <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <!-- Popup window controls -->
+    <Style Selector="Button.topmost-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="MinWidth" Value="50" />
+        <Setter Property="Height" Value="21" />
+        <Setter Property="Foreground" Value="#333333" />
+    </Style>
+
+    <Style Selector="Button.topmost-button:pointerover">
+        <Setter Property="Background" Value="#15000000" />
+    </Style>
+
+    <Style Selector="Button.topmost-button.topmost-active">
+        <Setter Property="Background" Value="#1A2F72E5" />
+        <Setter Property="Foreground" Value="#1F5EC7" />
+    </Style>
+
+    <Style Selector="Button.translate-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Foreground" Value="#2F72E5" />
+    </Style>
+
+    <Style Selector="Button.translate-button:pointerover">
+        <Setter Property="Background" Value="#172F72E5" />
+    </Style>
+
+    <Style Selector="ComboBox.language-selector">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="9,0,7,0" />
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="#111111" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="ComboBox.provider-selector">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="9,0,7,0" />
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="#111111" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="AcceptsReturn" Value="True" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor:focus">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor /template/ Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor:pointerover /template/ Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor:focus /template/ Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="TextBox.transparent-editor /template/ ScrollViewer">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <Style Selector="TextBox.source-editor">
+        <Setter Property="Padding" Value="8,6,8,2" />
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="LineHeight" Value="18" />
+    </Style>
+
+    <Style Selector="TextBox.result-editor">
+        <Setter Property="Padding" Value="9,0,9,8" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="LineHeight" Value="17" />
+        <Setter Property="MinHeight" Value="24" />
+    </Style>
+
+    <!-- OCR result window -->
+    <Style Selector="Button.primary-action">
+        <Setter Property="Background" Value="#1F7A68" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="MinHeight" Value="36" />
+    </Style>
+
+    <Style Selector="Button.primary-action:pointerover">
+        <Setter Property="Background" Value="#238874" />
+    </Style>
+
+    <Style Selector="Button.secondary-action">
+        <Setter Property="Background" Value="#F3F6F8" />
+        <Setter Property="BorderBrush" Value="#DDE4EA" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="MinHeight" Value="36" />
+    </Style>
+
+    <Style Selector="Button.secondary-action:pointerover">
+        <Setter Property="Background" Value="#EAF0F4" />
+    </Style>
+
+    <Style Selector="Border.panel">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#E4E9EE" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+
+    <Style Selector="TextBox.ocr-editor">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+    </Style>
+
+    <Style Selector="TextBlock.status-error">
+        <Setter Property="Foreground" Value="#B42318" />
+    </Style>
+
+    <!-- Translation history -->
+    <Style Selector="Border.history-card">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="#E0E0E0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <Style Selector="Border.history-card:pointerover">
+        <Setter Property="BorderBrush" Value="#409EFF" />
+        <Setter Property="Background" Value="#F5F9FF" />
+    </Style>
+
+    <!-- Screen capture overlay -->
+    <Style Selector="Rectangle.selection-rect">
+        <Setter Property="Stroke" Value="#00BFFF" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Fill" Value="#30FFFFFF" />
+    </Style>
+
+    <Style Selector="Line.guide-line">
+        <Setter Property="Stroke" Value="#CCFFFFFF" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeDashArray" Value="6,4" />
+    </Style>
+
+    <Style Selector="Border.size-hint">
+        <Setter Property="Background" Value="#CC000000" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <Style Selector="TextBlock.hint-text">
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="Border.top-hint">
+        <Setter Property="Background" Value="#CC000000" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Margin" Value="0,20,0,0" />
+        <Setter Property="CornerRadius" Value="6" />
+    </Style>
+</Styles>

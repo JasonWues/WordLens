@@ -18,191 +18,6 @@
     <Design.DataContext>
         <vm:PopupWindowViewModel />
     </Design.DataContext>
-
-    <Window.Styles>
-        <StyleInclude Source="/Assets/Icons.axaml" />
-
-        <Style Selector="Button.icon-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="MinWidth" Value="20" />
-            <Setter Property="MinHeight" Value="20" />
-            <Setter Property="Width" Value="20" />
-            <Setter Property="Height" Value="20" />
-            <Setter Property="Foreground" Value="#171717" />
-        </Style>
-
-        <Style Selector="Button.icon-button:pointerover">
-            <Setter Property="Background" Value="#15000000" />
-        </Style>
-
-        <Style Selector="Button.icon-button:pressed">
-            <Setter Property="Background" Value="#24000000" />
-        </Style>
-
-        <Style Selector="Button.icon-button.close">
-            <Setter Property="Foreground" Value="#7A7A7A" />
-        </Style>
-
-        <Style Selector="Button.icon-button.close:pointerover">
-            <Setter Property="Background" Value="#D0D0D0" />
-            <Setter Property="Foreground" Value="#111111" />
-        </Style>
-
-        <Style Selector="Button.icon-button.topmost-active">
-            <Setter Property="Foreground" Value="#111111" />
-            <Setter Property="Background" Value="#18000000" />
-        </Style>
-
-        <Style Selector="Button.topmost-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="6,0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="CornerRadius" Value="5" />
-            <Setter Property="MinWidth" Value="50" />
-            <Setter Property="Height" Value="21" />
-            <Setter Property="Foreground" Value="#333333" />
-        </Style>
-
-        <Style Selector="Button.topmost-button:pointerover">
-            <Setter Property="Background" Value="#15000000" />
-        </Style>
-
-        <Style Selector="Button.topmost-button.topmost-active">
-            <Setter Property="Background" Value="#1A2F72E5" />
-            <Setter Property="Foreground" Value="#1F5EC7" />
-        </Style>
-
-        <Style Selector="Button.translate-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="Foreground" Value="#2F72E5" />
-        </Style>
-
-        <Style Selector="Button.translate-button:pointerover">
-            <Setter Property="Background" Value="#172F72E5" />
-        </Style>
-
-        <Style Selector="ComboBox.language-selector">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="9,0,7,0" />
-            <Setter Property="MinHeight" Value="26" />
-            <Setter Property="Height" Value="26" />
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="Foreground" Value="#111111" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-        </Style>
-
-        <Style Selector="ComboBox.provider-selector">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="9,0,7,0" />
-            <Setter Property="MinHeight" Value="26" />
-            <Setter Property="Height" Value="26" />
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="Foreground" Value="#111111" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="8,6,8,2" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="AcceptsReturn" Value="True" />
-            <Setter Property="VerticalContentAlignment" Value="Top" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="LineHeight" Value="18" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor:pointerover">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor:focus">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor /template/ Border">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor:pointerover /template/ Border">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor:focus /template/ Border">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="TextBox.source-editor /template/ ScrollViewer">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="9,0,9,8" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="AcceptsReturn" Value="True" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="LineHeight" Value="17" />
-            <Setter Property="MinHeight" Value="24" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor:pointerover">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor:focus">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor /template/ Border">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor:pointerover /template/ Border">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor:focus /template/ Border">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="TextBox.result-editor /template/ ScrollViewer">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-    </Window.Styles>
-
     <Border Background="#F7F7F7"
             CornerRadius="7"
             ClipToBounds="True">
@@ -231,7 +46,7 @@
                 </Button>
 
                 <Button Grid.Column="2"
-                        Classes="icon-button close"
+                        Classes="icon-button compact close"
                         Click="Close_Click"
                         ToolTip.Tip="关闭"
                         Margin="0,2,2,0">
@@ -249,7 +64,7 @@
                 <Grid RowDefinitions="61,28">
                     <TextBox Grid.Row="0"
                              Text="{Binding SourceText}"
-                             Classes="source-editor"
+                             Classes="transparent-editor source-editor"
                              PlaceholderText="" />
 
                     <Grid Grid.Row="1"
@@ -258,7 +73,7 @@
                           Margin="6,0"
                           VerticalAlignment="Center">
                         <Button Grid.Column="0"
-                                Classes="icon-button"
+                                Classes="icon-button compact"
                                 Command="{Binding SpeakSourceCommand}"
                                 IsEnabled="{Binding CanSpeakSource}"
                                 ToolTip.Tip="朗读原文">
@@ -268,7 +83,7 @@
                         </Button>
 
                         <Button Grid.Column="1"
-                                Classes="icon-button"
+                                Classes="icon-button compact"
                                 Command="{Binding CopySourceCommand}"
                                 ToolTip.Tip="复制原文">
                             <PathIcon Width="12"
@@ -285,7 +100,7 @@
                                   VerticalAlignment="Center" />
 
                         <Button Grid.Column="3"
-                                Classes="icon-button"
+                                Classes="icon-button compact"
                                 Command="{Binding ClearSourceCommand}"
                                 IsEnabled="{Binding CanCopySource}"
                                 ToolTip.Tip="清空">
@@ -343,7 +158,7 @@
                     </ComboBox>
 
                     <Button Grid.Column="2"
-                            Classes="icon-button"
+                            Classes="icon-button compact"
                             Command="{Binding SwapLanguagesCommand}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -438,7 +253,7 @@
                                                        TextTrimming="CharacterEllipsis" />
 
                                             <Button Grid.Column="2"
-                                                    Classes="icon-button close"
+                                                    Classes="icon-button compact close"
                                                     Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).RemoveTranslationCommand}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip.Tip="移除此翻译源"
@@ -460,7 +275,7 @@
                                                   Margin="6,0"
                                                   VerticalAlignment="Center">
                                                 <Button Grid.Column="0"
-                                                        Classes="icon-button"
+                                                        Classes="icon-button compact"
                                                         Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).SpeakTranslationCommand}"
                                                         CommandParameter="{Binding Result}"
                                                         IsVisible="{Binding IsSuccess}"
@@ -471,7 +286,7 @@
                                                 </Button>
 
                                                 <Button Grid.Column="1"
-                                                        Classes="icon-button"
+                                                        Classes="icon-button compact"
                                                         Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).CopyTranslationCommand}"
                                                         CommandParameter="{Binding Result}"
                                                         IsVisible="{Binding IsSuccess}"
@@ -504,7 +319,7 @@
 
                                             <TextBox Grid.Row="1"
                                                      Text="{Binding Result}"
-                                                     Classes="result-editor"
+                                                     Classes="transparent-editor result-editor"
                                                      IsVisible="{Binding HasVisibleResult}" />
 
                                             <TextBlock Grid.Row="1"

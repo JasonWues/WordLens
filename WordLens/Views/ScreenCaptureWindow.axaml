@@ -15,46 +15,6 @@
     <Design.DataContext>
         <vm:ScreenCaptureViewModel />
     </Design.DataContext>
-
-    <Window.Styles>
-        <!-- 选择矩形样式 -->
-        <Style Selector="Rectangle.selection-rect">
-            <Setter Property="Stroke" Value="#00BFFF" />
-            <Setter Property="StrokeThickness" Value="2" />
-            <Setter Property="Fill" Value="#30FFFFFF" />
-        </Style>
-
-        <Style Selector="Line.guide-line">
-            <Setter Property="Stroke" Value="#CCFFFFFF" />
-            <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="StrokeDashArray" Value="6,4" />
-        </Style>
-
-        <!-- 尺寸提示样式 -->
-        <Style Selector="Border.size-hint">
-            <Setter Property="Background" Value="#CC000000" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="8,4" />
-        </Style>
-
-        <!-- 提示文字样式 -->
-        <Style Selector="TextBlock.hint-text">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-        </Style>
-
-        <!-- 顶部提示栏 -->
-        <Style Selector="Border.top-hint">
-            <Setter Property="Background" Value="#CC000000" />
-            <Setter Property="Padding" Value="16,12" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Top" />
-            <Setter Property="Margin" Value="0,20,0,0" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-    </Window.Styles>
-
     <Grid>
         <!-- 全屏画布 - 用于绘制选择区域 -->
         <Canvas Name="CaptureCanvas"

@@ -3,7 +3,6 @@
              x:Class="WordLens.App"
              xmlns:local="using:WordLens"
              xmlns:semi="https://irihi.tech/semi"
-             xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
              xmlns:vm="using:WordLens.ViewModels"
              x:DataType="vm:ApplicationViewModel"
              RequestedThemeVariant="Default">
@@ -15,7 +14,9 @@
 
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
-        <u-semi:SemiTheme Locale="zh-CN"/>
+        <semi:UrsaSemiTheme Locale="zh-CN"/>
+        <StyleInclude Source="/Assets/Icons.axaml" />
+        <StyleInclude Source="/Assets/Styles.axaml" />
     </Application.Styles>
 
     <TrayIcon.Icons>

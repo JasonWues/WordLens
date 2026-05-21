@@ -18,83 +18,6 @@
     <Design.DataContext>
         <vm:OcrResultViewModel />
     </Design.DataContext>
-
-    <Window.Styles>
-        <StyleInclude Source="/Assets/Icons.axaml" />
-
-        <Style Selector="Button.icon-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="MinWidth" Value="32" />
-            <Setter Property="MinHeight" Value="32" />
-        </Style>
-
-        <Style Selector="Button.icon-button:pointerover">
-            <Setter Property="Background" Value="#12000000" />
-        </Style>
-
-        <Style Selector="Button.icon-button.close:pointerover">
-            <Setter Property="Background" Value="#E5484D" />
-            <Setter Property="Foreground" Value="White" />
-        </Style>
-
-        <Style Selector="Button.primary-action">
-            <Setter Property="Background" Value="#1F7A68" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="14,8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="MinHeight" Value="36" />
-        </Style>
-
-        <Style Selector="Button.primary-action:pointerover">
-            <Setter Property="Background" Value="#238874" />
-        </Style>
-
-        <Style Selector="Button.secondary-action">
-            <Setter Property="Background" Value="#F3F6F8" />
-            <Setter Property="BorderBrush" Value="#DDE4EA" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="MinHeight" Value="36" />
-        </Style>
-
-        <Style Selector="Button.secondary-action:pointerover">
-            <Setter Property="Background" Value="#EAF0F4" />
-        </Style>
-
-        <Style Selector="Button:disabled">
-            <Setter Property="Opacity" Value="0.55" />
-            <Setter Property="Cursor" Value="Arrow" />
-        </Style>
-
-        <Style Selector="Border.panel">
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#E4E9EE" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-        </Style>
-
-        <Style Selector="TextBox.ocr-editor">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="AcceptsReturn" Value="True" />
-            <Setter Property="VerticalContentAlignment" Value="Top" />
-        </Style>
-
-        <Style Selector="TextBlock.status-error">
-            <Setter Property="Foreground" Value="#B42318" />
-        </Style>
-    </Window.Styles>
-
     <Border Margin="10"
             Background="#F7F9FB"
             BorderBrush="#DCE3E9"
@@ -142,7 +65,7 @@
                                  IsVisible="{Binding IsBusy}" />
 
                     <Button Grid.Column="2"
-                            Classes="icon-button"
+                            Classes="icon-button medium"
                             Click="Minimize_Click"
                             ToolTip.Tip="最小化">
                         <PathIcon Width="15"
@@ -151,7 +74,7 @@
                     </Button>
 
                     <Button Grid.Column="3"
-                            Classes="icon-button close"
+                            Classes="icon-button medium danger-close"
                             Click="Close_Click"
                             ToolTip.Tip="关闭">
                         <PathIcon Width="15"
