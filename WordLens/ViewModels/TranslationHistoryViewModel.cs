@@ -58,6 +58,9 @@ public partial class TranslationHistoryViewModel : ViewModelBase
     /// </summary>
     public async Task InitializeAsync()
     {
+        if (_hasLoaded)
+            return;
+
         await LoadHistoriesAsync();
     }
 
