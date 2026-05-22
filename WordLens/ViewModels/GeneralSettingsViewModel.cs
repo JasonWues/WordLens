@@ -17,7 +17,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     private readonly AvaloniaThemeService _themeService;
     private string _currentCapturingType = string.Empty;
     private HotkeyConfig _hotkeyConfig = HotkeyConfig.Default();
-    private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.Default();
+    private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.DefaultOcr();
 
     [ObservableProperty] private int charsPerUpdate = 1;
     [ObservableProperty] private string hotkeyDisplay = "Ctrl+Shift+T";

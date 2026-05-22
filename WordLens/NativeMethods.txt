@@ -1,0 +1,16 @@
+AddClipboardFormatListener
+RemoveClipboardFormatListener
+OpenClipboard
+CloseClipboard
+IsClipboardFormatAvailable
+GetClipboardData
+GlobalLock
+GlobalSize
+GlobalUnlock
+RegisterClass
+CreateWindowEx
+DestroyWindow
+DefWindowProc
+GetModuleHandle
+CLIPBOARD_FORMAT
+WM_CLIPBOARDUPDATE

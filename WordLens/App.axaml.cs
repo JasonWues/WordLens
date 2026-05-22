@@ -48,12 +48,14 @@ public class App : Application
 
             var hotkeyManager = _services.GetRequiredService<IHotkeyManagerService>();
             _ = hotkeyManager.StartAsync();
+            var clipboardMonitor = _services.GetRequiredService<IClipboardMonitorService>();
 
             var windowManager = _services.GetRequiredService<IWindowManagerService>();
 
             desktop.ShutdownRequested += (s, e) =>
             {
                 hotkeyManager.Dispose();
+                clipboardMonitor.Dispose();
                 windowManager.CloseAllWindows();
             };
         }
@@ -83,7 +85,22 @@ public class App : Application
 
         // Services
         services.AddSingleton<IWindowManagerService, WindowManagerService>();
+        if (OperatingSystem.IsWindows())
+        {
+            services.AddSingleton<IHotkeyBackend, WindowsRegisterHotkeyBackend>();
+            if (OperatingSystem.IsWindowsVersionAtLeast(6, 0, 6000))
+                services.AddSingleton<IClipboardMonitorBackend, WindowsClipboardMonitorBackend>();
+            else
+                services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
+        }
+        else
+        {
+            services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
+            services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
+            services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
+        }
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
+        services.AddSingleton<IClipboardMonitorService, ClipboardMonitorService>();
         services.AddSingleton<EncryptionService>();
         services.AddSingleton<AvaloniaThemeService>();
         services.AddSingleton<IStartupService, StartupService>();
@@ -99,7 +116,6 @@ public class App : Application
         services.AddSingleton<TranslationService>();
         services.AddSingleton<ISelectionService, SelectionService>();
         services.AddSingleton<ITranslationHistoryService, TranslationHistoryService>();
-        services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
         services.AddHttpClient();
 
         // 截图服务 - Rust xcap 跨平台实现

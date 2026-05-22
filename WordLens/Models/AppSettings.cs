@@ -10,7 +10,7 @@ public class AppSettings
 {
     public HotkeyConfig Hotkey { get; set; } = HotkeyConfig.Default();
 
-    public HotkeyConfig OcrHotkey { get; set; } = HotkeyConfig.Default();
+    public HotkeyConfig OcrHotkey { get; set; } = HotkeyConfig.DefaultOcr();
 
     /// <summary>
     ///     应用界面语言（用于UI显示）
@@ -84,6 +84,15 @@ public class HotkeyConfig
         {
             Modifiers = EventMask.LeftCtrl | EventMask.LeftShift,
             Key = KeyCode.VcT
+        };
+    }
+
+    public static HotkeyConfig DefaultOcr()
+    {
+        return new HotkeyConfig
+        {
+            Modifiers = EventMask.LeftCtrl | EventMask.LeftShift,
+            Key = KeyCode.VcW
         };
     }
 }

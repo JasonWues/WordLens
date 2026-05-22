@@ -60,6 +60,7 @@ public class SettingsService : ISettingsService
             var needsSave = false;
             settings.Providers ??= new AppSettings().Providers;
             settings.OcrProviders ??= new List<ProviderConfig>();
+            needsSave |= NormalizeHotkeys(settings);
             needsSave |= NormalizeOcrProviders(settings);
 
             foreach (var provider in settings.Providers)
@@ -104,6 +105,7 @@ public class SettingsService : ISettingsService
         {
             settings.Providers ??= new AppSettings().Providers;
             settings.OcrProviders ??= new List<ProviderConfig>();
+            NormalizeHotkeys(settings);
             NormalizeOcrProviders(settings);
 
             _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}");
@@ -156,5 +158,36 @@ public class SettingsService : ISettingsService
         }
 
         return needsSave;
+    }
+
+    private static bool NormalizeHotkeys(AppSettings settings)
+    {
+        var needsSave = false;
+
+        if (settings.Hotkey == null)
+        {
+            settings.Hotkey = HotkeyConfig.Default();
+            needsSave = true;
+        }
+
+        if (settings.OcrHotkey == null)
+        {
+            settings.OcrHotkey = HotkeyConfig.DefaultOcr();
+            needsSave = true;
+        }
+
+        if (AreHotkeysEqual(settings.Hotkey, settings.OcrHotkey) &&
+            AreHotkeysEqual(settings.Hotkey, HotkeyConfig.Default()))
+        {
+            settings.OcrHotkey = HotkeyConfig.DefaultOcr();
+            needsSave = true;
+        }
+
+        return needsSave;
+    }
+
+    private static bool AreHotkeysEqual(HotkeyConfig left, HotkeyConfig right)
+    {
+        return left.Modifiers == right.Modifiers && left.Key == right.Key;
     }
 }

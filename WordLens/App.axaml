@@ -24,7 +24,10 @@
             <TrayIcon Icon="/Assets/avalonia-logo.ico" Command="{Binding ShowSettingCommand}">
                 <TrayIcon.Menu>
                         <NativeMenu>
-                            <NativeMenuItem Header="监听剪贴板" />
+                            <NativeMenuItem Header="{Binding ClipboardMonitorMenuHeader}"
+                                            ToggleType="CheckBox"
+                                            IsChecked="{Binding IsClipboardMonitorEnabled}"
+                                            Command="{Binding ToggleClipboardMonitorCommand}" />
                             <NativeMenuItemSeparator />
                             <NativeMenuItem Header="软件设置" Command="{Binding ShowSettingCommand}" />
                             <NativeMenuItemSeparator />

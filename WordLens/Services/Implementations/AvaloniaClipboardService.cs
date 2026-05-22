@@ -8,6 +8,13 @@ namespace WordLens.Services.Implementations;
 
 public class AvaloniaClipboardService : IClipboardService
 {
+    private readonly IClipboardMonitorService _clipboardMonitor;
+
+    public AvaloniaClipboardService(IClipboardMonitorService clipboardMonitor)
+    {
+        _clipboardMonitor = clipboardMonitor;
+    }
+
     public async Task SetTextAsync(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -15,7 +22,10 @@ public class AvaloniaClipboardService : IClipboardService
 
         var clipboard = GetClipboard();
         if (clipboard != null)
+        {
+            _clipboardMonitor.IgnoreNextTextChange(text);
             await clipboard.SetTextAsync(text);
+        }
     }
 
     private static IClipboard? GetClipboard()
