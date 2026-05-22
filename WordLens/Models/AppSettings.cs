@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SharpHook.Data;
 
 namespace WordLens.Models;
@@ -92,45 +93,104 @@ public enum ProviderType
     OpenAI
 }
 
-public class ProviderConfig
+public class ProviderConfig : ObservableObject
 {
-    public string Name { get; set; } = string.Empty;
-    public ProviderType Type { get; set; } = ProviderType.OpenAI;
-    public string BaseUrl { get; set; } = string.Empty; // e.g. https://api.openai.com or compatible
+    private string? _apiKey;
+    private bool _allowManualModelInput = true;
+    private ObservableCollection<ModelInfo>? _availableModels = new();
+    private string _baseUrl = string.Empty;
+    private bool _isEnabled = true;
+    private string _model = string.Empty;
+    private string _name = string.Empty;
+    private string _requestArguments = string.Empty;
+    private string _systemPromptTemplate = string.Empty;
+    private ProviderType _type = ProviderType.OpenAI;
+    private string _userPromptTemplate = string.Empty;
+
+    public string Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public ProviderType Type
+    {
+        get => _type;
+        set => SetProperty(ref _type, value);
+    }
+
+    public string BaseUrl
+    {
+        get => _baseUrl;
+        set => SetProperty(ref _baseUrl, value);
+    }
 
     /// <summary>
     ///     API密钥（存储时为加密格式：ENC::xxxxx）
     /// </summary>
-    public string? ApiKey { get; set; }
+    public string? ApiKey
+    {
+        get => _apiKey;
+        set => SetProperty(ref _apiKey, value);
+    }
 
-    public string Model { get; set; } = string.Empty;
-    public bool IsEnabled { get; set; } = true; // 默认启用
+    public string Model
+    {
+        get => _model;
+        set => SetProperty(ref _model, value);
+    }
+
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set => SetProperty(ref _isEnabled, value);
+    }
 
     /// <summary>
     ///     附加到 LLM 请求体的 JSON 对象参数，例如 {"temperature":0.2}
     /// </summary>
-    public string RequestArguments { get; set; } = string.Empty;
+    public string RequestArguments
+    {
+        get => _requestArguments;
+        set => SetProperty(ref _requestArguments, value);
+    }
 
     /// <summary>
     ///     系统提示词模板。留空时使用内置默认模板。
     /// </summary>
-    public string SystemPromptTemplate { get; set; } = string.Empty;
+    public string SystemPromptTemplate
+    {
+        get => _systemPromptTemplate;
+        set => SetProperty(ref _systemPromptTemplate, value);
+    }
 
     /// <summary>
     ///     用户提示词模板。翻译源可使用 {text}、{sourceLanguage}、{targetLanguage}；OCR 源可使用 {languageCode}。
     /// </summary>
-    public string UserPromptTemplate { get; set; } = string.Empty;
+    public string UserPromptTemplate
+    {
+        get => _userPromptTemplate;
+        set => SetProperty(ref _userPromptTemplate, value);
+    }
 
     /// <summary>
     ///     是否允许手动输入模型名称（兼容模式）
     /// </summary>
-    public bool AllowManualModelInput { get; set; } = true;
+    public bool AllowManualModelInput
+    {
+        get => _allowManualModelInput;
+        set => SetProperty(ref _allowManualModelInput, value);
+    }
 
     /// <summary>
     ///     可用模型列表（运行时缓存，不持久化）
     /// </summary>
     [JsonIgnore]
-    public ObservableCollection<ModelInfo>? AvailableModels { get; set; } = new ObservableCollection<ModelInfo>();
+    public ObservableCollection<ModelInfo>? AvailableModels
+    {
+        get => _availableModels;
+        set => SetProperty(ref _availableModels, value);
+    }
 }
 
 /// <summary>

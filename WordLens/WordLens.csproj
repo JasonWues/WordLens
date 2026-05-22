@@ -9,6 +9,7 @@
         <PublishAot>false</PublishAot>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Copyright>CrimsonNinja</Copyright>
+        <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Release'">
@@ -39,8 +40,11 @@
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+        <PackageReference Include="Dapper" Version="2.1.79" />
+        <PackageReference Include="Dapper.AOT" Version="1.0.52" />
         <PackageReference Include="Irihi.Ursa" Version="2.0.0" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="org.k2fsa.sherpa.onnx" Version="1.13.2" />
@@ -49,7 +53,6 @@
         <PackageReference Include="SkiaSharp" Version="3.119.4-preview.1.1" />
         <PackageReference Include="Sortable.Avalonia" Version="2.2.0" />
         <PackageReference Include="SoundFlow" Version="1.4.1" />
-        <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />
         <PackageReference Include="ZLogger" Version="2.5.10" />
     </ItemGroup>
 

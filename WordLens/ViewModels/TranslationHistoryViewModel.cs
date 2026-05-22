@@ -19,6 +19,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
 {
     private readonly ITranslationHistoryService _historyService;
     private readonly ILogger<TranslationHistoryViewModel> _logger;
+    private bool _hasLoaded;
 
     [ObservableProperty] private ObservableCollection<TranslationHistory> histories = new();
 
@@ -44,6 +45,12 @@ public partial class TranslationHistoryViewModel : ViewModelBase
     {
         _historyService = historyService;
         _logger = logger;
+
+        WeakReferenceMessenger.Default.Register<TranslationHistoryChangedMessage>(this, static (recipient, message) =>
+        {
+            if (recipient is TranslationHistoryViewModel viewModel && viewModel._hasLoaded)
+                _ = viewModel.LoadHistoriesAsync();
+        });
     }
 
     /// <summary>
@@ -91,6 +98,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
             });
 
             TotalCount = await _historyService.GetCountAsync();
+            _hasLoaded = true;
 
             _logger.ZLogInformation($"历史记录加载完成，共 {Histories.Count} 条显示，总计 {TotalCount} 条");
         }

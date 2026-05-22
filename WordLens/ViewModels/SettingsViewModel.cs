@@ -1,19 +1,37 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using WordLens.Messages;
+using Microsoft.Extensions.Logging;
 using WordLens.Models;
 using WordLens.Services;
+using ZLogger;
 
 namespace WordLens.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {
+    private const int AutoSaveDelayMilliseconds = 700;
+
+    private readonly SemaphoreSlim _autoSaveSemaphore = new(1, 1);
     private readonly IHotkeyManagerService _hotkeyManagerService;
+    private readonly ILogger<SettingsViewModel> _logger;
     private readonly ISettingsService _settingsService;
+    private readonly HashSet<ProviderConfig> _trackedOcrProviders = new();
+    private readonly HashSet<ProviderConfig> _trackedTranslationProviders = new();
+    private CancellationTokenSource? _autoSaveCts;
+    private bool _hasLoadedSettings;
+    private bool _isLoadingSettings;
     private AppSettings? _originalSettings;
+
+    [ObservableProperty] private string autoSaveStatus = "已保存";
+
+    [ObservableProperty] private bool isAutoSaving;
 
     [ObservableProperty] private int selectedSettingsSectionIndex;
 
@@ -26,10 +44,12 @@ public partial class SettingsViewModel : ViewModelBase
         TtsSettingsViewModel ttsSettings,
         NetworkSettingsViewModel networkSettings,
         TranslationHistoryViewModel history,
-        AboutViewModel aboutViewModel)
+        AboutViewModel aboutViewModel,
+        ILogger<SettingsViewModel> logger)
     {
         _settingsService = settingsService;
         _hotkeyManagerService = hotkeyManagerService;
+        _logger = logger;
         GeneralSettings = generalSettings;
         TranslationSettings = translationSettings;
         OcrSettings = ocrSettings;
@@ -37,6 +57,8 @@ public partial class SettingsViewModel : ViewModelBase
         NetworkSettings = networkSettings;
         History = history;
         About = aboutViewModel;
+
+        ObserveSettingsChanges();
     }
 
     public GeneralSettingsViewModel GeneralSettings { get; }
@@ -100,35 +122,24 @@ public partial class SettingsViewModel : ViewModelBase
             _ = History.InitializeAsync();
     }
 
-    [RelayCommand]
     private async Task LoadSettingsAsync()
     {
-        var settings = await _settingsService.LoadAsync();
-        _originalSettings = CloneSettings(settings);
-        LoadIntoSections(settings);
-    }
+        _isLoadingSettings = true;
 
-    [RelayCommand]
-    private async Task SaveSettingsAsync()
-    {
-        await SaveSettingsCoreAsync();
-        WeakReferenceMessenger.Default.Send(new CloseWindowMessage());
-    }
-
-    [RelayCommand]
-    private async Task ApplySettingsAsync()
-    {
-        await SaveSettingsCoreAsync();
-        await _hotkeyManagerService.ReloadConfigAsync();
-    }
-
-    [RelayCommand]
-    private void CancelSettings()
-    {
-        if (_originalSettings != null)
-            LoadIntoSections(_originalSettings);
-
-        WeakReferenceMessenger.Default.Send(new CloseWindowMessage());
+        try
+        {
+            var settings = await _settingsService.LoadAsync();
+            _originalSettings = CloneSettings(settings);
+            LoadIntoSections(settings);
+            SyncProviderHandlers(TranslationSettings.Providers, _trackedTranslationProviders);
+            SyncProviderHandlers(OcrSettings.OcrProviders, _trackedOcrProviders);
+            _hasLoadedSettings = true;
+            AutoSaveStatus = "已保存";
+        }
+        finally
+        {
+            _isLoadingSettings = false;
+        }
     }
 
     private void LoadIntoSections(AppSettings settings)
@@ -140,12 +151,149 @@ public partial class SettingsViewModel : ViewModelBase
         NetworkSettings.Load(settings.Proxy);
     }
 
-    private async Task SaveSettingsCoreAsync()
+    private void ObserveSettingsChanges()
+    {
+        GeneralSettings.PropertyChanged += OnSettingsPropertyChanged;
+        TranslationSettings.PropertyChanged += OnSettingsPropertyChanged;
+        OcrSettings.PropertyChanged += OnSettingsPropertyChanged;
+        TtsSettings.PropertyChanged += OnSettingsPropertyChanged;
+        NetworkSettings.PropertyChanged += OnSettingsPropertyChanged;
+
+        TranslationSettings.Providers.CollectionChanged += OnTranslationProvidersChanged;
+        OcrSettings.OcrProviders.CollectionChanged += OnOcrProvidersChanged;
+        SyncProviderHandlers(TranslationSettings.Providers, _trackedTranslationProviders);
+        SyncProviderHandlers(OcrSettings.OcrProviders, _trackedOcrProviders);
+    }
+
+    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (ShouldIgnoreAutoSaveProperty(sender, e.PropertyName))
+            return;
+
+        QueueAutoSave();
+    }
+
+    private void OnTranslationProvidersChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        SyncProviderHandlers(TranslationSettings.Providers, _trackedTranslationProviders);
+        QueueAutoSave();
+    }
+
+    private void OnOcrProvidersChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        SyncProviderHandlers(OcrSettings.OcrProviders, _trackedOcrProviders);
+        QueueAutoSave();
+    }
+
+    private void OnProviderPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProviderConfig.AvailableModels))
+            return;
+
+        QueueAutoSave();
+    }
+
+    private bool ShouldIgnoreAutoSaveProperty(object? sender, string? propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return false;
+
+        if (ReferenceEquals(sender, GeneralSettings))
+        {
+            return propertyName is
+                nameof(GeneralSettingsViewModel.IsCapturingHotkey) or
+                nameof(GeneralSettingsViewModel.IsStartupSupported);
+        }
+
+        if (ReferenceEquals(sender, TranslationSettings))
+        {
+            return propertyName is
+                nameof(TranslationSettingsViewModel.HasModelLoadError) or
+                nameof(TranslationSettingsViewModel.IsLoadingModels) or
+                nameof(TranslationSettingsViewModel.ModelLoadErrorMessage) or
+                nameof(TranslationSettingsViewModel.SelectedModelInfo);
+        }
+
+        if (ReferenceEquals(sender, TtsSettings))
+        {
+            return propertyName is
+                nameof(TtsSettingsViewModel.IsVitsTtsModel) or
+                nameof(TtsSettingsViewModel.IsKokoroTtsModel) or
+                nameof(TtsSettingsViewModel.IsMatchaTtsModel);
+        }
+
+        return false;
+    }
+
+    private void QueueAutoSave()
+    {
+        if (_isLoadingSettings || !_hasLoadedSettings)
+            return;
+
+        AutoSaveStatus = "待保存";
+        _autoSaveCts?.Cancel();
+        _autoSaveCts?.Dispose();
+
+        var cts = new CancellationTokenSource();
+        _autoSaveCts = cts;
+        _ = AutoSaveAfterDelayAsync(cts.Token);
+    }
+
+    private async Task AutoSaveAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(AutoSaveDelayMilliseconds, cancellationToken);
+            await _autoSaveSemaphore.WaitAsync(cancellationToken);
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                IsAutoSaving = true;
+                AutoSaveStatus = "保存中...";
+
+                var hotkeysChanged = await SaveSettingsCoreAsync();
+                if (hotkeysChanged)
+                    await _hotkeyManagerService.ReloadConfigAsync();
+
+                if (!cancellationToken.IsCancellationRequested)
+                    AutoSaveStatus = "已保存";
+            }
+            finally
+            {
+                if (!cancellationToken.IsCancellationRequested)
+                    IsAutoSaving = false;
+
+                _autoSaveSemaphore.Release();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            IsAutoSaving = false;
+            AutoSaveStatus = "保存失败";
+            _logger.ZLogError(ex, $"自动保存设置失败: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> SaveSettingsCoreAsync()
     {
         var settings = BuildSettingsFromViewModels();
-        GeneralSettings.ApplyStartupSetting();
+        var previousSettings = _originalSettings;
+        var hotkeysChanged = previousSettings == null ||
+                             !AreHotkeysEqual(settings.Hotkey, previousSettings.Hotkey) ||
+                             !AreHotkeysEqual(settings.OcrHotkey, previousSettings.OcrHotkey);
+        var startupChanged = previousSettings == null ||
+                             settings.StartWithSystem != previousSettings.StartWithSystem;
+
+        if (startupChanged)
+            GeneralSettings.ApplyStartupSetting();
+
         await _settingsService.SaveAsync(settings);
         _originalSettings = CloneSettings(settings);
+        return hotkeysChanged;
     }
 
     private AppSettings BuildSettingsFromViewModels()
@@ -167,6 +315,32 @@ public partial class SettingsViewModel : ViewModelBase
             Proxy = NetworkSettings.BuildProxyConfig(),
             Tts = TtsSettings.BuildTtsConfig()
         };
+    }
+
+    private void SyncProviderHandlers(
+        ObservableCollection<ProviderConfig> providers,
+        HashSet<ProviderConfig> trackedProviders)
+    {
+        var currentProviders = providers.ToHashSet();
+        foreach (var removedProvider in trackedProviders.Except(currentProviders).ToList())
+        {
+            removedProvider.PropertyChanged -= OnProviderPropertyChanged;
+            trackedProviders.Remove(removedProvider);
+        }
+
+        foreach (var provider in currentProviders)
+        {
+            if (!trackedProviders.Add(provider))
+                continue;
+
+            provider.PropertyChanged += OnProviderPropertyChanged;
+        }
+    }
+
+    private static bool AreHotkeysEqual(HotkeyConfig left, HotkeyConfig right)
+    {
+        return left.Modifiers == right.Modifiers &&
+               left.Key == right.Key;
     }
 
     private static AppSettings CloneSettings(AppSettings settings)

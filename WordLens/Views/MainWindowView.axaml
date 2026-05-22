@@ -16,7 +16,7 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="*,Auto" Margin="0">
+    <Grid Margin="0">
         <!-- 主内容区域 -->
         <DrawerPage Grid.Row="0"
                     IsOpen="True"
@@ -29,15 +29,19 @@
                         BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                         BorderThickness="0,0,1,0"
                         Padding="16"
-                        DataContext="{Binding SettingsViewModel}">
+                        x:DataType="vm:SettingsViewModel"
+                        DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}">
                     <Grid RowDefinitions="Auto,*">
-                        <StackPanel Grid.Row="0" Spacing="8" Margin="0,4,0,20">
+                        <StackPanel Grid.Row="0" Spacing="6" Margin="0,4,0,20">
                             <TextBlock Text="WordLens"
                                        FontSize="20"
                                        FontWeight="Bold" />
                             <TextBlock Text="设置"
                                        FontSize="12"
                                        Opacity="0.65" />
+                            <TextBlock Text="{Binding AutoSaveStatus}"
+                                       FontSize="11"
+                                       Opacity="0.55" />
                         </StackPanel>
 
                         <ListBox Grid.Row="1"
@@ -63,27 +67,5 @@
                                 Content="{Binding CurrentSectionViewModel}" />
             </DrawerPage.Content>
         </DrawerPage>
-
-        <!-- 底部按钮栏 -->
-        <Border Grid.Row="1"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                BorderThickness="0,1,0,0"
-                Padding="15,10">
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        Spacing="10"
-                        DataContext="{Binding SettingsViewModel}">
-                <Button Content="保存"
-                        Command="{Binding SaveSettingsCommand}"
-                        MinWidth="80" />
-                <Button Content="应用"
-                        Command="{Binding ApplySettingsCommand}"
-                        MinWidth="80" />
-                <Button Content="取消"
-                        Command="{Binding CancelSettingsCommand}"
-                        MinWidth="80" />
-            </StackPanel>
-        </Border>
     </Grid>
 </Window>

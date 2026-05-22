@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using SQLite;
 using WordLens.Models;
 using ZLogger;
 
@@ -14,7 +17,7 @@ namespace WordLens.Services.Implementations;
 /// </summary>
 public class TranslationHistoryService : ITranslationHistoryService
 {
-    private readonly SQLiteAsyncConnection _database;
+    private readonly string _connectionString;
     private readonly Task _initializeTask;
     private readonly ILogger<TranslationHistoryService> _logger;
 
@@ -22,7 +25,6 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         _logger = logger;
 
-        // 获取数据库文件路径
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var dbDir = Path.Combine(appData, "WordLens");
         Directory.CreateDirectory(dbDir);
@@ -30,10 +32,11 @@ public class TranslationHistoryService : ITranslationHistoryService
 
         _logger.ZLogInformation($"翻译历史数据库路径: {dbPath}");
 
-        // 初始化数据库连接
-        _database = new SQLiteAsyncConnection(dbPath);
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = dbPath,
+        }.ToString();
 
-        // 创建表（如果不存在）
         _initializeTask = InitializeDatabaseAsync();
     }
 
@@ -44,7 +47,35 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
-            await _database.CreateTableAsync<TranslationHistory>();
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+
+            await connection.ExecuteAsync(
+                """
+                CREATE TABLE IF NOT EXISTS TranslationHistory (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    SourceText TEXT NOT NULL,
+                    SourceLanguage TEXT NOT NULL,
+                    TargetLanguage TEXT NOT NULL,
+                    ResultsJson TEXT NULL,
+                    ProviderNames TEXT NULL,
+                    CreatedAt INTEGER NOT NULL,
+                    IsFavorite INTEGER NOT NULL DEFAULT 0
+                )
+                """);
+
+            await connection.ExecuteAsync(
+                """
+                CREATE INDEX IF NOT EXISTS IX_TranslationHistory_CreatedAt
+                ON TranslationHistory (CreatedAt)
+                """);
+
+            await connection.ExecuteAsync(
+                """
+                CREATE INDEX IF NOT EXISTS IX_TranslationHistory_IsFavorite
+                ON TranslationHistory (IsFavorite)
+                """);
+
             _logger.ZLogInformation($"翻译历史表初始化成功");
         }
         catch (Exception ex)
@@ -61,16 +92,57 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var parameters = ToSaveParameter(history);
+
             if (history.Id == 0)
             {
-                // 新记录，插入
-                await _database.InsertAsync(history);
+                await connection.ExecuteAsync(
+                    """
+                    INSERT INTO TranslationHistory (
+                        SourceText,
+                        SourceLanguage,
+                        TargetLanguage,
+                        ResultsJson,
+                        ProviderNames,
+                        CreatedAt,
+                        IsFavorite
+                    )
+                    VALUES (
+                        @SourceText,
+                        @SourceLanguage,
+                        @TargetLanguage,
+                        @ResultsJson,
+                        @ProviderNames,
+                        @CreatedAt,
+                        @IsFavorite
+                    )
+                    """,
+                    parameters);
+
+                var newId = await connection.ExecuteScalarAsync<long>(
+                    """
+                    SELECT last_insert_rowid()
+                    """);
+                history.Id = checked((int)newId);
                 _logger.ZLogInformation($"保存翻译历史记录成功，ID: {history.Id}");
             }
             else
             {
-                // 已存在的记录，更新
-                await _database.UpdateAsync(history);
+                await connection.ExecuteAsync(
+                    """
+                    UPDATE TranslationHistory
+                    SET SourceText = @SourceText,
+                        SourceLanguage = @SourceLanguage,
+                        TargetLanguage = @TargetLanguage,
+                        ResultsJson = @ResultsJson,
+                        ProviderNames = @ProviderNames,
+                        CreatedAt = @CreatedAt,
+                        IsFavorite = @IsFavorite
+                    WHERE Id = @Id
+                    """,
+                    parameters);
                 _logger.ZLogInformation($"更新翻译历史记录成功，ID: {history.Id}");
             }
         }
@@ -88,10 +160,23 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var histories = await _database.Table<TranslationHistory>()
-                .OrderByDescending(h => h.CreatedAt)
-                .ToListAsync();
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var rows = await connection.QueryAsync<TranslationHistoryRow>(
+                """
+                SELECT Id,
+                       SourceText,
+                       SourceLanguage,
+                       TargetLanguage,
+                       ResultsJson,
+                       ProviderNames,
+                       CreatedAt,
+                       IsFavorite
+                FROM TranslationHistory
+                ORDER BY CreatedAt DESC
+                """);
 
+            var histories = rows.Select(ToModel).ToList();
             _logger.ZLogInformation($"获取所有历史记录成功，共 {histories.Count} 条");
             return histories;
         }
@@ -109,13 +194,32 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var histories = await _database.Table<TranslationHistory>()
-                .OrderByDescending(h => h.CreatedAt)
-                .Skip(skip)
-                .Take(take)
-                .ToListAsync();
+            var parameters = new PageParameter
+            {
+                Skip = Math.Max(0, skip),
+                Take = Math.Max(0, take),
+            };
 
-            _logger.ZLogDebug($"分页获取历史记录成功，跳过 {skip}，获取 {take}，返回 {histories.Count} 条");
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var rows = await connection.QueryAsync<TranslationHistoryRow>(
+                """
+                SELECT Id,
+                       SourceText,
+                       SourceLanguage,
+                       TargetLanguage,
+                       ResultsJson,
+                       ProviderNames,
+                       CreatedAt,
+                       IsFavorite
+                FROM TranslationHistory
+                ORDER BY CreatedAt DESC
+                LIMIT @Take OFFSET @Skip
+                """,
+                parameters);
+
+            var histories = rows.Select(ToModel).ToList();
+            _logger.ZLogDebug($"分页获取历史记录成功，跳过 {parameters.Skip}，获取 {parameters.Take}，返回 {histories.Count} 条");
             return histories;
         }
         catch (Exception ex)
@@ -137,20 +241,32 @@ public class TranslationHistoryService : ITranslationHistoryService
                 return await GetAllAsync();
             }
 
-            var pattern = $"%{keyword.Trim()}%";
-            var histories = await _database.QueryAsync<TranslationHistory>(
+            var parameters = new SearchParameter
+            {
+                Pattern = $"%{keyword.Trim()}%",
+            };
+
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var rows = await connection.QueryAsync<TranslationHistoryRow>(
                 """
-                SELECT *
+                SELECT Id,
+                       SourceText,
+                       SourceLanguage,
+                       TargetLanguage,
+                       ResultsJson,
+                       ProviderNames,
+                       CreatedAt,
+                       IsFavorite
                 FROM TranslationHistory
-                WHERE SourceText LIKE ?
-                   OR ResultsJson LIKE ?
-                   OR ProviderNames LIKE ?
+                WHERE SourceText LIKE @Pattern
+                   OR ResultsJson LIKE @Pattern
+                   OR ProviderNames LIKE @Pattern
                 ORDER BY CreatedAt DESC
                 """,
-                pattern,
-                pattern,
-                pattern);
+                parameters);
 
+            var histories = rows.Select(ToModel).ToList();
             _logger.ZLogInformation($"搜索历史记录成功，关键词: '{keyword}'，找到 {histories.Count} 条");
             return histories;
         }
@@ -168,20 +284,31 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var history = await _database.Table<TranslationHistory>()
-                .Where(h => h.Id == id)
-                .FirstOrDefaultAsync();
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var row = await connection.QueryFirstOrDefaultAsync<TranslationHistoryRow>(
+                """
+                SELECT Id,
+                       SourceText,
+                       SourceLanguage,
+                       TargetLanguage,
+                       ResultsJson,
+                       ProviderNames,
+                       CreatedAt,
+                       IsFavorite
+                FROM TranslationHistory
+                WHERE Id = @Id
+                """,
+                new IdParameter { Id = id });
 
-            if (history != null)
+            if (row != null)
             {
                 _logger.ZLogDebug($"根据ID获取历史记录成功，ID: {id}");
-            }
-            else
-            {
-                _logger.ZLogWarning($"未找到ID为 {id} 的历史记录");
+                return ToModel(row);
             }
 
-            return history;
+            _logger.ZLogWarning($"未找到ID为 {id} 的历史记录");
+            return null;
         }
         catch (Exception ex)
         {
@@ -197,10 +324,17 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var history = await GetByIdAsync(id);
-            if (history != null)
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var affectedRows = await connection.ExecuteAsync(
+                """
+                DELETE FROM TranslationHistory
+                WHERE Id = @Id
+                """,
+                new IdParameter { Id = id });
+
+            if (affectedRows > 0)
             {
-                await _database.DeleteAsync(history);
                 _logger.ZLogInformation($"删除历史记录成功，ID: {id}");
             }
             else
@@ -222,7 +356,12 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            await _database.DeleteAllAsync<TranslationHistory>();
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            await connection.ExecuteAsync(
+                """
+                DELETE FROM TranslationHistory
+                """);
             _logger.ZLogInformation($"清空所有历史记录成功");
         }
         catch (Exception ex)
@@ -239,9 +378,15 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var count = await _database.Table<TranslationHistory>().CountAsync();
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var count = await connection.ExecuteScalarAsync<long>(
+                """
+                SELECT COUNT(1)
+                FROM TranslationHistory
+                """);
             _logger.ZLogDebug($"获取历史记录总数: {count}");
-            return count;
+            return count > int.MaxValue ? int.MaxValue : (int)count;
         }
         catch (Exception ex)
         {
@@ -257,12 +402,19 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var history = await GetByIdAsync(id);
-            if (history != null)
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var affectedRows = await connection.ExecuteAsync(
+                """
+                UPDATE TranslationHistory
+                SET IsFavorite = CASE WHEN IsFavorite = 1 THEN 0 ELSE 1 END
+                WHERE Id = @Id
+                """,
+                new IdParameter { Id = id });
+
+            if (affectedRows > 0)
             {
-                history.IsFavorite = !history.IsFavorite;
-                await _database.UpdateAsync(history);
-                _logger.ZLogInformation($"切换收藏状态成功，ID: {id}, 新状态: {history.IsFavorite}");
+                _logger.ZLogInformation($"切换收藏状态成功，ID: {id}");
             }
         }
         catch (Exception ex)
@@ -279,11 +431,24 @@ public class TranslationHistoryService : ITranslationHistoryService
         {
             await _initializeTask;
 
-            var favorites = await _database.Table<TranslationHistory>()
-                .Where(h => h.IsFavorite)
-                .OrderByDescending(h => h.CreatedAt)
-                .ToListAsync();
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var rows = await connection.QueryAsync<TranslationHistoryRow>(
+                """
+                SELECT Id,
+                       SourceText,
+                       SourceLanguage,
+                       TargetLanguage,
+                       ResultsJson,
+                       ProviderNames,
+                       CreatedAt,
+                       IsFavorite
+                FROM TranslationHistory
+                WHERE IsFavorite = 1
+                ORDER BY CreatedAt DESC
+                """);
 
+            var favorites = rows.Select(ToModel).ToList();
             _logger.ZLogInformation($"获取收藏记录成功，共 {favorites.Count} 条");
             return favorites;
         }
@@ -293,4 +458,95 @@ public class TranslationHistoryService : ITranslationHistoryService
             return new List<TranslationHistory>();
         }
     }
+
+    private DbConnection CreateConnection()
+    {
+        return new SqliteConnection(_connectionString);
+    }
+
+    private static SaveHistoryParameter ToSaveParameter(TranslationHistory history)
+    {
+        return new SaveHistoryParameter
+        {
+            Id = history.Id,
+            SourceText = history.SourceText,
+            SourceLanguage = history.SourceLanguage,
+            TargetLanguage = history.TargetLanguage,
+            ResultsJson = history.ResultsJson,
+            ProviderNames = history.ProviderNames,
+            CreatedAt = history.CreatedAt.Ticks,
+            IsFavorite = history.IsFavorite ? 1 : 0,
+        };
+    }
+
+    private static TranslationHistory ToModel(TranslationHistoryRow row)
+    {
+        return new TranslationHistory
+        {
+            Id = row.Id,
+            SourceText = row.SourceText,
+            SourceLanguage = row.SourceLanguage,
+            TargetLanguage = row.TargetLanguage,
+            ResultsJson = row.ResultsJson,
+            ProviderNames = row.ProviderNames,
+            CreatedAt = new DateTime(row.CreatedAt),
+            IsFavorite = row.IsFavorite != 0,
+        };
+    }
+
+}
+
+internal sealed class TranslationHistoryRow
+{
+    public int Id { get; set; }
+
+    public string SourceText { get; set; } = string.Empty;
+
+    public string SourceLanguage { get; set; } = string.Empty;
+
+    public string TargetLanguage { get; set; } = string.Empty;
+
+    public string? ResultsJson { get; set; }
+
+    public string? ProviderNames { get; set; }
+
+    public long CreatedAt { get; set; }
+
+    public int IsFavorite { get; set; }
+}
+
+internal sealed class SaveHistoryParameter
+{
+    public int Id { get; set; }
+
+    public string SourceText { get; set; } = string.Empty;
+
+    public string SourceLanguage { get; set; } = string.Empty;
+
+    public string TargetLanguage { get; set; } = string.Empty;
+
+    public string? ResultsJson { get; set; }
+
+    public string? ProviderNames { get; set; }
+
+    public long CreatedAt { get; set; }
+
+    public int IsFavorite { get; set; }
+}
+
+internal sealed class IdParameter
+{
+    public int Id { get; set; }
+}
+
+internal sealed class PageParameter
+{
+    public int Skip { get; set; }
+
+    public int Take { get; set; }
+}
+
+internal sealed class SearchParameter
+{
+    public string Pattern { get; set; } = string.Empty;
 }

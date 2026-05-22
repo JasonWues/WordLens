@@ -9,7 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
 using ZLogger;
@@ -520,6 +522,7 @@ public partial class PopupWindowViewModel : ViewModelBase
             };
 
             await _historyService.SaveAsync(history);
+            WeakReferenceMessenger.Default.Send(new TranslationHistoryChangedMessage());
             _logger.ZLogInformation($"翻译历史保存成功");
         }
         catch (Exception ex)

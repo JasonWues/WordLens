@@ -19,11 +19,6 @@ public partial class MainWindowView : Window
         // 拦截窗口关闭事件，改为隐藏窗口
         Closing += OnWindowClosing;
         
-        WeakReferenceMessenger.Default.Register<CloseWindowMessage>(this, (r, m) =>
-        {
-            // 通过消息关闭时也改为隐藏
-            Hide();
-        });
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
