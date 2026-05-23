@@ -1,17 +1,25 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
 using SharpHook.Data;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.UI.Input.KeyboardAndMouse;
+using Windows.Win32.UI.WindowsAndMessaging;
 using WordLens.Models;
 using ZLogger;
 
 namespace WordLens.Services.Implementations;
 
-public sealed partial class WindowsRegisterHotkeyBackend : IHotkeyBackend
+[SupportedOSPlatform("windows6.0.6000")]
+public sealed class WindowsRegisterHotkeyBackend : IHotkeyBackend
 {
     private readonly ILogger<WindowsRegisterHotkeyBackend> _logger;
     private WindowsHotkeyMessageWindow? _messageWindow;
@@ -71,30 +79,31 @@ public sealed partial class WindowsRegisterHotkeyBackend : IHotkeyBackend
         HotkeyPressed?.Invoke(this, e);
     }
 
-    private sealed partial class WindowsHotkeyMessageWindow : IDisposable
+    [SupportedOSPlatform("windows6.0.6000")]
+    private sealed class WindowsHotkeyMessageWindow : IDisposable
     {
         private const int ErrorClassAlreadyExists = 1410;
         private const int HwndMessage = -3;
-        private const uint ModAlt = 0x0001;
-        private const uint ModControl = 0x0002;
-        private const uint ModShift = 0x0004;
-        private const uint ModWin = 0x0008;
-        private const uint ModNoRepeat = 0x4000;
-        private const int WmHotkey = 0x0312;
         private const string WindowClassName = "WordLensHotkeyMessageWindow";
 
-        private readonly IntPtr _hInstance;
-        private readonly IntPtr _hwnd;
+        private static readonly ConcurrentDictionary<IntPtr, WindowsHotkeyMessageWindow> Windows = new();
+
+        private readonly HINSTANCE _hInstance;
+        private readonly HWND _hwnd;
         private readonly ILogger<WindowsRegisterHotkeyBackend> _logger;
         private readonly HashSet<int> _registeredIds = new();
-        private readonly WindowProc _wndProc;
+        private bool _disposed;
 
         public WindowsHotkeyMessageWindow(ILogger<WindowsRegisterHotkeyBackend> logger)
         {
             _logger = logger;
-            _wndProc = WndProc;
-            _hInstance = GetModuleHandle(IntPtr.Zero);
-            _hwnd = CreateMessageWindow();
+            unsafe
+            {
+                _hInstance = PInvoke.GetModuleHandle((string?)null);
+                _hwnd = CreateMessageWindow();
+            }
+
+            Windows[(IntPtr)_hwnd] = this;
         }
 
         public event EventHandler<HotkeyPressedEventArgs>? HotkeyPressed;
@@ -107,9 +116,9 @@ public sealed partial class WindowsRegisterHotkeyBackend : IHotkeyBackend
                 return false;
             }
 
-            if (!RegisterHotKey(_hwnd, id, modifiers, virtualKey))
+            if (!PInvoke.RegisterHotKey(_hwnd, id, modifiers, virtualKey))
             {
-                var error = Marshal.GetLastWin32Error();
+                var error = Marshal.GetLastPInvokeError();
                 _logger.ZLogWarning($"{name}热键注册失败: Modifiers={config.Modifiers}, Key={config.Key}, Win32Error={error}");
                 return false;
             }
@@ -122,83 +131,73 @@ public sealed partial class WindowsRegisterHotkeyBackend : IHotkeyBackend
         public void UnregisterAll()
         {
             foreach (var id in _registeredIds)
-                UnregisterHotKey(_hwnd, id);
+                PInvoke.UnregisterHotKey(_hwnd, id);
 
             _registeredIds.Clear();
         }
 
         public void Dispose()
         {
-            UnregisterAll();
+            if (_disposed)
+                return;
 
-            if (_hwnd != IntPtr.Zero)
-                DestroyWindow(_hwnd);
+            _disposed = true;
+            UnregisterAll();
+            Windows.TryRemove((IntPtr)_hwnd, out _);
+            PInvoke.DestroyWindow(_hwnd);
         }
 
-        private IntPtr CreateMessageWindow()
+        private unsafe HWND CreateMessageWindow()
         {
             RegisterWindowClass();
 
-            var hwnd = CreateWindowEx(
-                0,
+            var hwnd = PInvoke.CreateWindowEx(
+                (WINDOW_EX_STYLE)0,
                 WindowClassName,
                 string.Empty,
+                (WINDOW_STYLE)0,
                 0,
                 0,
                 0,
                 0,
-                0,
-                new IntPtr(HwndMessage),
-                IntPtr.Zero,
+                (HWND)new IntPtr(HwndMessage),
+                default,
                 _hInstance,
-                IntPtr.Zero);
+                null);
 
-            if (hwnd == IntPtr.Zero)
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "创建热键消息窗口失败");
+            if (hwnd.IsNull)
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "创建热键消息窗口失败");
 
             return hwnd;
         }
 
-        private void RegisterWindowClass()
+        private unsafe void RegisterWindowClass()
         {
-            var className = Marshal.StringToHGlobalUni(WindowClassName);
-            try
+            fixed (char* className = WindowClassName)
             {
-                var wndClass = new WndClass
+                var wndClass = new WNDCLASSW
                 {
-                    lpfnWndProc = Marshal.GetFunctionPointerForDelegate(_wndProc),
+                    lpfnWndProc = &WndProc,
                     hInstance = _hInstance,
                     lpszClassName = className
                 };
 
-                var atom = RegisterClass(ref wndClass);
+                var atom = PInvoke.RegisterClass(in wndClass);
                 if (atom != 0)
                     return;
 
-                var error = Marshal.GetLastWin32Error();
+                var error = Marshal.GetLastPInvokeError();
                 if (error != ErrorClassAlreadyExists)
                     throw new Win32Exception(error, "注册热键消息窗口类失败");
             }
-            finally
-            {
-                Marshal.FreeHGlobal(className);
-            }
         }
 
-        private IntPtr WndProc(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam)
+        private static bool TryMapHotkey(
+            HotkeyConfig config,
+            out HOT_KEY_MODIFIERS modifiers,
+            out uint virtualKey)
         {
-            if (message == WmHotkey)
-            {
-                HotkeyPressed?.Invoke(this, new HotkeyPressedEventArgs(wParam.ToInt32()));
-                return IntPtr.Zero;
-            }
-
-            return DefWindowProc(hwnd, message, wParam, lParam);
-        }
-
-        private static bool TryMapHotkey(HotkeyConfig config, out uint modifiers, out uint virtualKey)
-        {
-            modifiers = ModNoRepeat;
+            modifiers = HOT_KEY_MODIFIERS.MOD_NOREPEAT;
             virtualKey = MapVirtualKey(config.Key);
 
             if (virtualKey == 0)
@@ -206,19 +205,19 @@ public sealed partial class WindowsRegisterHotkeyBackend : IHotkeyBackend
 
             if (config.Modifiers.HasFlag(EventMask.LeftCtrl) ||
                 config.Modifiers.HasFlag(EventMask.RightCtrl))
-                modifiers |= ModControl;
+                modifiers |= HOT_KEY_MODIFIERS.MOD_CONTROL;
 
             if (config.Modifiers.HasFlag(EventMask.LeftShift) ||
                 config.Modifiers.HasFlag(EventMask.RightShift))
-                modifiers |= ModShift;
+                modifiers |= HOT_KEY_MODIFIERS.MOD_SHIFT;
 
             if (config.Modifiers.HasFlag(EventMask.LeftAlt) ||
                 config.Modifiers.HasFlag(EventMask.RightAlt))
-                modifiers |= ModAlt;
+                modifiers |= HOT_KEY_MODIFIERS.MOD_ALT;
 
             if (config.Modifiers.HasFlag(EventMask.LeftMeta) ||
                 config.Modifiers.HasFlag(EventMask.RightMeta))
-                modifiers |= ModWin;
+                modifiers |= HOT_KEY_MODIFIERS.MOD_WIN;
 
             return true;
         }
@@ -281,62 +280,24 @@ public sealed partial class WindowsRegisterHotkeyBackend : IHotkeyBackend
             };
         }
 
-        [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", SetLastError = true)]
-        private static partial IntPtr GetModuleHandle(IntPtr lpModuleName);
-
-        [LibraryImport("user32.dll", EntryPoint = "RegisterClassW", SetLastError = true)]
-        private static partial ushort RegisterClass(ref WndClass lpWndClass);
-
-        [LibraryImport(
-            "user32.dll",
-            EntryPoint = "CreateWindowExW",
-            SetLastError = true,
-            StringMarshalling = StringMarshalling.Utf16)]
-        private static partial IntPtr CreateWindowEx(
-            uint dwExStyle,
-            string lpClassName,
-            string lpWindowName,
-            uint dwStyle,
-            int x,
-            int y,
-            int nWidth,
-            int nHeight,
-            IntPtr hWndParent,
-            IntPtr hMenu,
-            IntPtr hInstance,
-            IntPtr lpParam);
-
-        [LibraryImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool DestroyWindow(IntPtr hWnd);
-
-        [LibraryImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-
-        [LibraryImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool UnregisterHotKey(IntPtr hWnd, int id);
-
-        [LibraryImport("user32.dll", EntryPoint = "DefWindowProcW")]
-        private static partial IntPtr DefWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
-        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-        private delegate IntPtr WindowProc(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam);
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct WndClass
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+        private static LRESULT WndProc(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam)
         {
-            public uint style;
-            public IntPtr lpfnWndProc;
-            public int cbClsExtra;
-            public int cbWndExtra;
-            public IntPtr hInstance;
-            public IntPtr hIcon;
-            public IntPtr hCursor;
-            public IntPtr hbrBackground;
-            public IntPtr lpszMenuName;
-            public IntPtr lpszClassName;
+            try
+            {
+                if (message == PInvoke.WM_HOTKEY &&
+                    Windows.TryGetValue((IntPtr)hwnd, out var window))
+                {
+                    window.HotkeyPressed?.Invoke(window, new HotkeyPressedEventArgs(checked((int)(nuint)wParam)));
+                    return (LRESULT)0;
+                }
+            }
+            catch
+            {
+                return (LRESULT)0;
+            }
+
+            return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
         }
     }
 }

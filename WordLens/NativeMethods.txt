@@ -1,5 +1,7 @@
 AddClipboardFormatListener
 RemoveClipboardFormatListener
+RegisterHotKey
+UnregisterHotKey
 OpenClipboard
 CloseClipboard
 IsClipboardFormatAvailable
@@ -13,4 +15,6 @@ DestroyWindow
 DefWindowProc
 GetModuleHandle
 CLIPBOARD_FORMAT
+HOT_KEY_MODIFIERS
 WM_CLIPBOARDUPDATE
+WM_HOTKEY

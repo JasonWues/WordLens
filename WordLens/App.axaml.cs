@@ -87,11 +87,17 @@ public class App : Application
         services.AddSingleton<IWindowManagerService, WindowManagerService>();
         if (OperatingSystem.IsWindows())
         {
-            services.AddSingleton<IHotkeyBackend, WindowsRegisterHotkeyBackend>();
             if (OperatingSystem.IsWindowsVersionAtLeast(6, 0, 6000))
+            {
+                services.AddSingleton<IHotkeyBackend, WindowsRegisterHotkeyBackend>();
                 services.AddSingleton<IClipboardMonitorBackend, WindowsClipboardMonitorBackend>();
+            }
             else
+            {
+                services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
+                services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
                 services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
+            }
         }
         else
         {
