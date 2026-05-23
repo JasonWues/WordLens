@@ -26,6 +26,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     [ObservableProperty] private string ocrHotkeyDisplay = "Ctrl+Shift+W";
     [ObservableProperty] private bool startWithSystem;
     [ObservableProperty] private bool streamingEnabled = true;
+    [ObservableProperty] private TranslationPopupPositionMode translationPopupPositionMode = TranslationPopupPositionMode.FollowMouse;
     [ObservableProperty] private int typewriterDelayMs;
     [ObservableProperty] private string uiLanguage = "zh-CN";
 
@@ -53,6 +54,12 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         new LanguageOption("ja", "日本語")
     };
 
+    public List<TranslationPopupPositionModeOption> AvailableTranslationPopupPositionModes { get; } = new()
+    {
+        new TranslationPopupPositionModeOption(TranslationPopupPositionMode.FollowMouse, "跟随鼠标"),
+        new TranslationPopupPositionModeOption(TranslationPopupPositionMode.RememberPosition, "记住位置")
+    };
+
     public void Load(AppSettings settings)
     {
         UiLanguage = settings.UILanguage;
@@ -63,6 +70,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         StreamingEnabled = settings.Streaming.Enabled;
         TypewriterDelayMs = settings.Streaming.TypewriterDelayMs;
         CharsPerUpdate = settings.Streaming.CharsPerUpdate;
+        TranslationPopupPositionMode = settings.TranslationPopup.PositionMode;
         UpdateHotkeyDisplay();
         UpdateOcrHotkeyDisplay();
     }
@@ -90,6 +98,16 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             Enabled = StreamingEnabled,
             TypewriterDelayMs = TypewriterDelayMs,
             CharsPerUpdate = CharsPerUpdate
+        };
+    }
+
+    public TranslationPopupConfig BuildTranslationPopupConfig(TranslationPopupConfig? current)
+    {
+        return new TranslationPopupConfig
+        {
+            PositionMode = TranslationPopupPositionMode,
+            X = current?.X,
+            Y = current?.Y
         };
     }
 
@@ -183,5 +201,17 @@ public class LanguageOption
     }
 
     public string Code { get; set; }
+    public string DisplayName { get; set; }
+}
+
+public class TranslationPopupPositionModeOption
+{
+    public TranslationPopupPositionModeOption(TranslationPopupPositionMode mode, string displayName)
+    {
+        Mode = mode;
+        DisplayName = displayName;
+    }
+
+    public TranslationPopupPositionMode Mode { get; set; }
     public string DisplayName { get; set; }
 }

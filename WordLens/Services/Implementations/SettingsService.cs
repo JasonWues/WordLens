@@ -62,6 +62,7 @@ public class SettingsService : ISettingsService
             settings.OcrProviders ??= new List<ProviderConfig>();
             needsSave |= NormalizeHotkeys(settings);
             needsSave |= NormalizeOcrProviders(settings);
+            needsSave |= NormalizeTranslationPopup(settings);
 
             foreach (var provider in settings.Providers)
                 if (!string.IsNullOrEmpty(provider.ApiKey) &&
@@ -107,6 +108,7 @@ public class SettingsService : ISettingsService
             settings.OcrProviders ??= new List<ProviderConfig>();
             NormalizeHotkeys(settings);
             NormalizeOcrProviders(settings);
+            NormalizeTranslationPopup(settings);
 
             _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}");
 
@@ -180,6 +182,25 @@ public class SettingsService : ISettingsService
             AreHotkeysEqual(settings.Hotkey, HotkeyConfig.Default()))
         {
             settings.OcrHotkey = HotkeyConfig.DefaultOcr();
+            needsSave = true;
+        }
+
+        return needsSave;
+    }
+
+    private static bool NormalizeTranslationPopup(AppSettings settings)
+    {
+        var needsSave = false;
+
+        if (settings.TranslationPopup == null)
+        {
+            settings.TranslationPopup = new TranslationPopupConfig();
+            needsSave = true;
+        }
+
+        if (!Enum.IsDefined(settings.TranslationPopup.PositionMode))
+        {
+            settings.TranslationPopup.PositionMode = TranslationPopupPositionMode.FollowMouse;
             needsSave = true;
         }
 

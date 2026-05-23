@@ -8,6 +8,8 @@ namespace WordLens.Views;
 
 public partial class PopupWindowView : Window
 {
+    public event EventHandler? Hiding;
+
     public PopupWindowView()
     {
         InitializeComponent();
@@ -22,7 +24,7 @@ public partial class PopupWindowView : Window
         e.Cancel = true;
         
         // 隐藏窗口而不是关闭
-        Hide();
+        HideWindow();
     }
 
     private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -44,6 +46,12 @@ public partial class PopupWindowView : Window
 
     private void Close_Click(object? sender, RoutedEventArgs e)
     {
+        HideWindow();
+    }
+
+    private void HideWindow()
+    {
+        Hiding?.Invoke(this, EventArgs.Empty);
         Hide();
     }
 

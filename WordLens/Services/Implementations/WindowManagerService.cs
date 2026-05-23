@@ -1,12 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using WordLens.Models;
+using WordLens.Native;
 using WordLens.ViewModels;
 using WordLens.Views;
 using ZLogger;
@@ -19,7 +25,12 @@ namespace WordLens.Services.Implementations;
 /// </summary>
 public class WindowManagerService : IWindowManagerService
 {
+    private const int TranslationWindowDefaultWidth = 265;
+    private const int TranslationWindowDefaultHeight = 315;
+    private const int TranslationWindowPointerOffset = 12;
+
     private readonly IServiceProvider _serviceProvider;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger<WindowManagerService> _logger;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
@@ -31,9 +42,11 @@ public class WindowManagerService : IWindowManagerService
 
     public WindowManagerService(
         IServiceProvider serviceProvider,
+        ISettingsService settingsService,
         ILogger<WindowManagerService> logger)
     {
         _serviceProvider = serviceProvider;
+        _settingsService = settingsService;
         _logger = logger;
         _logger.ZLogInformation($"窗口管理器服务已初始化");
     }
@@ -46,6 +59,9 @@ public class WindowManagerService : IWindowManagerService
         await _semaphore.WaitAsync();
         try
         {
+            var settings = await _settingsService.LoadAsync();
+            var popupConfig = settings.TranslationPopup;
+
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (_translationWindow == null)
@@ -57,10 +73,12 @@ public class WindowManagerService : IWindowManagerService
                     var viewModel = scope.ServiceProvider.GetRequiredService<PopupWindowViewModel>();
                     viewModel.SourceText = selectedText;
 
-                    _translationWindow = new PopupWindowView
+                    var popupWindow = new PopupWindowView
                     {
                         DataContext = viewModel
                     };
+                    popupWindow.Hiding += TranslationWindow_Hiding;
+                    _translationWindow = popupWindow;
 
                     // 订阅窗口关闭事件，清理引用
                     _translationWindow.Closed += async (s, e) =>
@@ -69,6 +87,8 @@ public class WindowManagerService : IWindowManagerService
                         try
                         {
                             _logger.ZLogInformation($"翻译窗口已关闭，清理引用");
+                            if (s is PopupWindowView closedPopupWindow)
+                                closedPopupWindow.Hiding -= TranslationWindow_Hiding;
                             _translationWindow = null;
                         }
                         finally
@@ -77,7 +97,10 @@ public class WindowManagerService : IWindowManagerService
                         }
                     };
 
+                    _translationWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                    ApplyTranslationWindowPosition(_translationWindow, popupConfig, false);
                     _translationWindow.Show();
+                    _translationWindow.Activate();
                     
                     // 执行翻译
                     _ = viewModel.TranslateAsync(CancellationToken.None);
@@ -92,6 +115,9 @@ public class WindowManagerService : IWindowManagerService
                         vm.SourceText = selectedText;
                         _ = vm.TranslateAsync(CancellationToken.None);
                     }
+
+                    var wasVisible = _translationWindow.IsVisible;
+                    ApplyTranslationWindowPosition(_translationWindow, popupConfig, wasVisible);
 
                     // 激活窗口
                     ActivateWindow(_translationWindow);
@@ -342,6 +368,228 @@ public class WindowManagerService : IWindowManagerService
                 _logger.ZLogError(ex, $"关闭窗口时发生错误");
             }
         }
+    }
+
+    private void TranslationWindow_Hiding(object? sender, EventArgs e)
+    {
+        if (sender is not Window window)
+            return;
+
+        _ = SaveTranslationWindowPositionAsync(window.Position);
+    }
+
+    private async Task SaveTranslationWindowPositionAsync(PixelPoint position)
+    {
+        try
+        {
+            var settings = await _settingsService.LoadAsync();
+            settings.TranslationPopup ??= new TranslationPopupConfig();
+            settings.TranslationPopup.X = position.X;
+            settings.TranslationPopup.Y = position.Y;
+            await _settingsService.SaveAsync(settings);
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"保存翻译窗口位置失败");
+        }
+    }
+
+    private void ApplyTranslationWindowPosition(
+        Window window,
+        TranslationPopupConfig config,
+        bool windowIsVisible)
+    {
+        if (config.PositionMode == TranslationPopupPositionMode.RememberPosition)
+        {
+            if (windowIsVisible)
+                return;
+
+            if (TryGetRememberedPosition(config, out var rememberedPosition))
+            {
+                SetClampedWindowPosition(window, rememberedPosition);
+                return;
+            }
+        }
+
+        if (TryGetCursorPosition(out var cursorPosition))
+        {
+            SetClampedWindowPosition(
+                window,
+                new PixelPoint(
+                    cursorPosition.X + TranslationWindowPointerOffset,
+                    cursorPosition.Y + TranslationWindowPointerOffset));
+            return;
+        }
+
+        if (TryGetRememberedPosition(config, out var fallbackPosition))
+        {
+            SetClampedWindowPosition(window, fallbackPosition);
+            return;
+        }
+
+        CenterWindowInPrimaryScreen(window);
+    }
+
+    private static bool TryGetRememberedPosition(
+        TranslationPopupConfig config,
+        out PixelPoint position)
+    {
+        if (config.X.HasValue && config.Y.HasValue)
+        {
+            position = new PixelPoint(config.X.Value, config.Y.Value);
+            return true;
+        }
+
+        position = default;
+        return false;
+    }
+
+    private bool TryGetCursorPosition(out PixelPoint position)
+    {
+        position = default;
+
+        if (TryGetWindowsCursorPosition(out position))
+            return true;
+
+        if (TryGetLinuxCursorPosition(out position))
+            return true;
+
+        if (TryGetMacOSCursorPosition(out position))
+            return true;
+
+        return false;
+    }
+
+    private bool TryGetWindowsCursorPosition(out PixelPoint position)
+    {
+        position = default;
+
+        if (!OperatingSystem.IsWindowsVersionAtLeast(5, 0))
+            return false;
+
+        try
+        {
+            if (!PInvoke.GetCursorPos(out var point))
+            {
+                _logger.ZLogDebug($"获取鼠标位置失败: Win32Error={Marshal.GetLastPInvokeError()}");
+                return false;
+            }
+
+            position = new PixelPoint(point.X, point.Y);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogDebug($"获取鼠标位置失败: {ex.Message}");
+            return false;
+        }
+    }
+
+    private bool TryGetLinuxCursorPosition(out PixelPoint position)
+    {
+        position = default;
+
+        if (!OperatingSystem.IsLinux())
+            return false;
+
+        try
+        {
+            if (!LinuxCursorNative.TryGetCursorPosition(out var x, out var y))
+                return false;
+
+            position = new PixelPoint(x, y);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogDebug($"获取 Linux 鼠标位置失败: {ex.Message}");
+            return false;
+        }
+    }
+
+    private bool TryGetMacOSCursorPosition(out PixelPoint position)
+    {
+        position = default;
+
+        if (!OperatingSystem.IsMacOS())
+            return false;
+
+        try
+        {
+            if (!MacOSCursorNative.TryGetCursorPosition(out var x, out var y))
+                return false;
+
+            position = new PixelPoint(x, y);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogDebug($"获取 macOS 鼠标位置失败: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static void SetClampedWindowPosition(Window window, PixelPoint target)
+    {
+        var screen = window.Screens.ScreenFromPoint(target) ?? window.Screens.Primary;
+        if (screen == null)
+        {
+            window.Position = target;
+            return;
+        }
+
+        var workingArea = screen.WorkingArea;
+        var windowSize = GetWindowPixelSize(window);
+        var maxX = workingArea.X + Math.Max(0, workingArea.Width - windowSize.Width);
+        var maxY = workingArea.Y + Math.Max(0, workingArea.Height - windowSize.Height);
+
+        window.Position = new PixelPoint(
+            Math.Clamp(target.X, workingArea.X, maxX),
+            Math.Clamp(target.Y, workingArea.Y, maxY));
+    }
+
+    private static void CenterWindowInPrimaryScreen(Window window)
+    {
+        var screen = window.Screens.Primary;
+        if (screen == null)
+            return;
+
+        var workingArea = screen.WorkingArea;
+        var windowSize = GetWindowPixelSize(window);
+
+        window.Position = new PixelPoint(
+            workingArea.X + Math.Max(0, (workingArea.Width - windowSize.Width) / 2),
+            workingArea.Y + Math.Max(0, (workingArea.Height - windowSize.Height) / 2));
+    }
+
+    private static (int Width, int Height) GetWindowPixelSize(Window window)
+    {
+        var width = GetWindowDimension(
+            window.Bounds.Width,
+            window.Width,
+            TranslationWindowDefaultWidth);
+        var height = GetWindowDimension(
+            window.Bounds.Height,
+            window.Height,
+            TranslationWindowDefaultHeight);
+        var scaling = double.IsFinite(window.RenderScaling) && window.RenderScaling > 0
+            ? window.RenderScaling
+            : 1;
+
+        return (
+            Math.Max(1, (int)Math.Ceiling(width * scaling)),
+            Math.Max(1, (int)Math.Ceiling(height * scaling)));
+    }
+
+    private static double GetWindowDimension(double actual, double configured, double fallback)
+    {
+        if (double.IsFinite(actual) && actual > 0)
+            return actual;
+
+        if (double.IsFinite(configured) && configured > 0)
+            return configured;
+
+        return fallback;
     }
 
     /// <summary>

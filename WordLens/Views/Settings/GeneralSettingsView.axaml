@@ -39,6 +39,22 @@
             <Separator />
 
             <StackPanel Spacing="8">
+                <TextBlock Text="翻译框位置" FontWeight="Bold" FontSize="14" />
+                <ComboBox ItemsSource="{Binding AvailableTranslationPopupPositionModes}"
+                          SelectedValue="{Binding TranslationPopupPositionMode}"
+                          SelectedValueBinding="{Binding Mode}"
+                          DisplayMemberBinding="{Binding DisplayName}"
+                          Width="220"
+                          HorizontalAlignment="Left" />
+                <TextBlock Text="跟随鼠标会在触发翻译时靠近当前鼠标位置；记住位置会使用上次关闭翻译框时的位置"
+                           FontSize="12"
+                           Opacity="0.6"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Separator />
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="快捷键" FontWeight="Bold" FontSize="14" />
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <TextBox Text="{Binding HotkeyDisplay}"

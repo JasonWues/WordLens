@@ -9,6 +9,7 @@ GetClipboardData
 GlobalLock
 GlobalSize
 GlobalUnlock
+GetCursorPos
 RegisterClass
 CreateWindowEx
 DestroyWindow
@@ -16,5 +17,6 @@ DefWindowProc
 GetModuleHandle
 CLIPBOARD_FORMAT
 HOT_KEY_MODIFIERS
+POINT
 WM_CLIPBOARDUPDATE
 WM_HOTKEY

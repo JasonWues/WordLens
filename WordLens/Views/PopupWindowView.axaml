@@ -9,7 +9,7 @@
         CanResize="True"
         Topmost="{Binding IsTopmost}"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
         TransparencyLevelHint="Transparent"

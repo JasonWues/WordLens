@@ -37,6 +37,8 @@ public class AppSettings
 
     public TtsConfig Tts { get; set; } = new();
 
+    public TranslationPopupConfig TranslationPopup { get; set; } = new();
+
     /// <summary>
     ///     流式输出配置
     /// </summary>
@@ -95,6 +97,21 @@ public class HotkeyConfig
             Key = KeyCode.VcW
         };
     }
+}
+
+public enum TranslationPopupPositionMode
+{
+    FollowMouse,
+    RememberPosition
+}
+
+public class TranslationPopupConfig
+{
+    public TranslationPopupPositionMode PositionMode { get; set; } = TranslationPopupPositionMode.FollowMouse;
+
+    public int? X { get; set; }
+
+    public int? Y { get; set; }
 }
 
 public enum ProviderType

@@ -280,7 +280,8 @@ public partial class SettingsViewModel : ViewModelBase
 
     private async Task<bool> SaveSettingsCoreAsync()
     {
-        var settings = BuildSettingsFromViewModels();
+        var currentSettings = await _settingsService.LoadAsync();
+        var settings = BuildSettingsFromViewModels(currentSettings.TranslationPopup);
         var previousSettings = _originalSettings;
         var hotkeysChanged = previousSettings == null ||
                              !AreHotkeysEqual(settings.Hotkey, previousSettings.Hotkey) ||
@@ -296,7 +297,7 @@ public partial class SettingsViewModel : ViewModelBase
         return hotkeysChanged;
     }
 
-    private AppSettings BuildSettingsFromViewModels()
+    private AppSettings BuildSettingsFromViewModels(TranslationPopupConfig? currentTranslationPopup)
     {
         return new AppSettings
         {
@@ -312,6 +313,7 @@ public partial class SettingsViewModel : ViewModelBase
                                   OcrSettings.OcrProviders.FirstOrDefault()?.Name,
             OcrProviders = OcrSettings.BuildProviderConfigs(),
             Streaming = GeneralSettings.BuildStreamingConfig(),
+            TranslationPopup = GeneralSettings.BuildTranslationPopupConfig(currentTranslationPopup),
             Proxy = NetworkSettings.BuildProxyConfig(),
             Tts = TtsSettings.BuildTtsConfig()
         };
@@ -362,8 +364,19 @@ public partial class SettingsViewModel : ViewModelBase
                 TypewriterDelayMs = settings.Streaming.TypewriterDelayMs,
                 CharsPerUpdate = settings.Streaming.CharsPerUpdate
             },
+            TranslationPopup = CloneTranslationPopupConfig(settings.TranslationPopup),
             Proxy = NetworkSettingsViewModel.CloneProxyConfig(settings.Proxy),
             Tts = TtsSettingsViewModel.CloneTtsConfig(settings.Tts)
+        };
+    }
+
+    private static TranslationPopupConfig CloneTranslationPopupConfig(TranslationPopupConfig config)
+    {
+        return new TranslationPopupConfig
+        {
+            PositionMode = config.PositionMode,
+            X = config.X,
+            Y = config.Y
         };
     }
 }
