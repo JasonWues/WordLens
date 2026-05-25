@@ -8,6 +8,7 @@ namespace WordLens;
 [JsonSerializable(typeof(AppSettings))]
 [JsonSerializable(typeof(ChatCompletionRequest))]
 [JsonSerializable(typeof(OcrChatCompletionRequest))]
+[JsonSerializable(typeof(TtsSpeechRequest))]
 [JsonSerializable(typeof(ModelInfo))]
 [JsonSerializable(typeof(OpenAIModelResponse))]
 [JsonSerializable(typeof(GitHubReleaseResponse))]

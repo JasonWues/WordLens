@@ -2,174 +2,151 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:behaviors="using:WordLens.Behaviors"
+             xmlns:models="using:WordLens.Models"
+             xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
              xmlns:vm="using:WordLens.ViewModels"
              mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="500"
              x:Class="WordLens.Views.Settings.TtsSettingsView"
              x:DataType="vm:TtsSettingsViewModel">
 
-    <ScrollViewer>
-        <StackPanel Spacing="16" Margin="20" MaxWidth="560">
-            <StackPanel Spacing="8">
-                <TextBlock Text="本地 TTS" FontWeight="Bold" FontSize="14" />
-                <CheckBox Content="启用 sherpa-onnx 本地朗读"
-                          IsChecked="{Binding TtsEnabled}" />
+    <Grid ColumnDefinitions="*,Auto" Margin="10">
+        <ScrollViewer Grid.Column="0"
+                      Margin="0,0,10,0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding TtsProviders}"
+                          sortable:Sortable.Sortable="True"
+                          sortable:Sortable.Mode="Sort"
+                          sortable:Sortable.UpdateCommand="{Binding ReorderTtsProviderCommand}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="6" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:TtsProviderConfig">
+                        <Border sortable:Sortable.IsSortable="True"
+                                Cursor="Hand"
+                                behaviors:TapCommand.Command="{Binding $parent[ItemsControl].((vm:TtsSettingsViewModel)DataContext).SelectTtsProviderCommand}"
+                                behaviors:TapCommand.CommandParameter="{Binding}"
+                                Padding="8"
+                                Background="#FAFAFA"
+                                BorderBrush="#DDDDDD"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <Grid ColumnDefinitions="Auto,Auto,*">
+                                <PathIcon Grid.Column="0"
+                                          Width="14"
+                                          Height="14"
+                                          Margin="0,0,8,0"
+                                          Foreground="#777777"
+                                          Cursor="Hand"
+                                          sortable:Sortable.IsDragHandle="True"
+                                          VerticalAlignment="Center"
+                                          Data="M8 4.75A1.25 1.25 0 1 1 5.5 4.75A1.25 1.25 0 0 1 8 4.75ZM8 10A1.25 1.25 0 1 1 5.5 10A1.25 1.25 0 0 1 8 10ZM8 15.25A1.25 1.25 0 1 1 5.5 15.25A1.25 1.25 0 0 1 8 15.25ZM14.5 4.75A1.25 1.25 0 1 1 12 4.75A1.25 1.25 0 0 1 14.5 4.75ZM14.5 10A1.25 1.25 0 1 1 12 10A1.25 1.25 0 0 1 14.5 10ZM14.5 15.25A1.25 1.25 0 1 1 12 15.25A1.25 1.25 0 0 1 14.5 15.25Z" />
+
+                                <CheckBox Grid.Column="1"
+                                          IsChecked="{Binding IsEnabled}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,8,0"
+                                          ToolTip.Tip="启用/禁用此 TTS 源" />
+
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                    <TextBlock Text="{Binding TypeDisplayName}" FontSize="11" Opacity="0.7" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding Summary}" FontSize="11" Opacity="0.6" />
+                                        <TextBlock Text="✓ 已启用"
+                                                   FontSize="11"
+                                                   Foreground="#4CAF50"
+                                                   IsVisible="{Binding IsEnabled}" />
+                                        <TextBlock Text="✗ 已禁用"
+                                                   FontSize="11"
+                                                   Foreground="#9E9E9E"
+                                                   IsVisible="{Binding !IsEnabled}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Grid Grid.Column="1"
+              RowDefinitions="Auto,Auto,*"
+              Width="250"
+              MinHeight="0">
+            <StackPanel Grid.Row="0" Spacing="10">
+                <Button Content="添加 TTS 源"
+                        Command="{Binding AddTtsProviderCommand}"
+                        HorizontalAlignment="Stretch" />
+                <Button Content="删除"
+                        Command="{Binding DeleteTtsProviderCommand}"
+                        IsEnabled="{Binding SelectedTtsProvider, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        HorizontalAlignment="Stretch" />
             </StackPanel>
 
-            <StackPanel Spacing="12" IsEnabled="{Binding TtsEnabled}">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="模型类型" FontWeight="Bold" />
-                    <ComboBox ItemsSource="{Binding AvailableTtsModelTypes}"
-                              SelectedValue="{Binding TtsModelType}"
+            <Separator Grid.Row="1" Margin="0,10" />
+
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="8"
+                            IsVisible="{Binding SelectedTtsProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <TextBlock Text="TTS 源详情" FontWeight="Bold" />
+
+                    <CheckBox Content="启用此 TTS 源"
+                              IsChecked="{Binding SelectedTtsProvider.IsEnabled}"
+                              FontWeight="SemiBold"
+                              Margin="0,4" />
+
+                    <Separator />
+
+                    <TextBlock Text="名称" />
+                    <TextBox Text="{Binding SelectedTtsProvider.Name}" PlaceholderText="TTS 源名称" />
+
+                    <TextBlock Text="类型" />
+                    <ComboBox ItemsSource="{Binding AvailableTtsProviderTypes}"
+                              SelectedValue="{Binding SelectedTtsProvider.Type}"
                               SelectedValueBinding="{Binding Value}"
                               DisplayMemberBinding="{Binding DisplayName}"
-                              Width="220"
-                              HorizontalAlignment="Left" />
-                </StackPanel>
+                              HorizontalAlignment="Stretch" />
 
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Model / Acoustic Model" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsModelPath}"
-                                 PlaceholderText="C:\models\tts\model.onnx" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsModelPathCommand}" />
-                    </Grid>
-                </StackPanel>
+                    <StackPanel Spacing="8" IsVisible="{Binding IsSelectedTtsProviderLlm}">
+                        <TextBlock Text="Base URL" />
+                        <TextBox Text="{Binding SelectedTtsProvider.BaseUrl}" PlaceholderText="https://api.openai.com" />
 
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Tokens" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsTokensPath}"
-                                 PlaceholderText="C:\models\tts\tokens.txt" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsTokensPathCommand}" />
-                    </Grid>
-                </StackPanel>
+                        <TextBlock Text="API Key" />
+                        <TextBox Text="{Binding SelectedTtsProvider.ApiKey}"
+                                 PlaceholderText="输入 TTS API Key"
+                                 PasswordChar="●" />
 
-                <StackPanel Spacing="8" IsVisible="{Binding IsKokoroTtsModel}">
-                    <TextBlock Text="Voices" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsVoicesPath}"
-                                 PlaceholderText="C:\models\tts\voices.bin" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsVoicesPathCommand}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Spacing="8" IsVisible="{Binding IsMatchaTtsModel}">
-                    <TextBlock Text="Vocoder" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsVocoderPath}"
-                                 PlaceholderText="C:\models\tts\vocoder.onnx" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsVocoderPathCommand}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Data Dir" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsDataDir}"
-                                 PlaceholderText="C:\models\tts\espeak-ng-data" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsDataDirCommand}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Lexicon" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsLexiconPath}"
-                                 PlaceholderText="可选，多个文件用英文逗号分隔" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsLexiconPathCommand}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Dict Dir" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsDictDir}"
-                                 PlaceholderText="可选" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsDictDirCommand}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Rule FSTs / FARs" FontWeight="Bold" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsRuleFsts}"
-                                 PlaceholderText="可选，多个 FST 文件用英文逗号分隔" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsRuleFstsCommand}" />
-                    </Grid>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding TtsRuleFars}"
-                                 PlaceholderText="可选，多个 FAR 文件用英文逗号分隔" />
-                        <Button Grid.Column="1"
-                                Content="选择"
-                                Command="{Binding PickTtsRuleFarsCommand}" />
-                    </Grid>
-                </StackPanel>
-
-                <Grid ColumnDefinitions="*,16,*">
-                    <StackPanel Grid.Column="0" Spacing="8">
-                        <TextBlock Text="Provider" FontWeight="Bold" />
-                        <TextBox Text="{Binding TtsProvider}"
-                                 PlaceholderText="cpu" />
+                        <TextBlock Text="Model" />
+                        <TextBox Text="{Binding SelectedTtsProvider.Model}" PlaceholderText="gpt-4o-mini-tts" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="2" Spacing="8">
-                        <TextBlock Text="线程数" FontWeight="Bold" />
-                        <NumericUpDown Value="{Binding TtsNumThreads}"
-                                       Minimum="1"
-                                       Maximum="16"
-                                       Increment="1" />
-                    </StackPanel>
-                </Grid>
+                    <TextBlock Text="Voice" />
+                    <TextBox Text="{Binding SelectedTtsProvider.Voice}" PlaceholderText="alloy" />
 
-                <Grid ColumnDefinitions="*,16,*">
-                    <StackPanel Grid.Column="0" Spacing="8">
-                        <TextBlock Text="Speaker ID" FontWeight="Bold" />
-                        <NumericUpDown Value="{Binding TtsSpeakerId}"
-                                       Minimum="0"
-                                       Maximum="999"
-                                       Increment="1" />
-                    </StackPanel>
+                    <TextBlock Text="语速" />
+                    <NumericUpDown Value="{Binding SelectedTtsProvider.Speed}"
+                                   Minimum="0.25"
+                                   Maximum="4"
+                                   Increment="0.1"
+                                   FormatString="F1" />
 
-                    <StackPanel Grid.Column="2" Spacing="8">
-                        <TextBlock Text="语速" FontWeight="Bold" />
-                        <NumericUpDown Value="{Binding TtsSpeed}"
-                                       Minimum="0.25"
-                                       Maximum="4"
-                                       Increment="0.1"
-                                       FormatString="F1" />
+                    <StackPanel Spacing="8" IsVisible="{Binding IsSelectedTtsProviderLlm}">
+                        <TextBlock Text="Request Arguments" />
+                        <TextBox Text="{Binding SelectedTtsProvider.RequestArguments}"
+                                 PlaceholderText="{}{&quot;instructions&quot;:&quot;Speak clearly.&quot;}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 MinHeight="80" />
                     </StackPanel>
-                </Grid>
-
-                <TextBlock Text="VITS/Piper 通常填写 model.onnx、tokens.txt、espeak-ng-data；Kokoro 还需要 voices.bin；Matcha 还需要 vocoder.onnx。"
-                           FontSize="12"
-                           Opacity="0.6"
-                           TextWrapping="Wrap" />
-            </StackPanel>
-        </StackPanel>
-    </ScrollViewer>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
 </UserControl>

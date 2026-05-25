@@ -1,6 +1,5 @@
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.Logging;
-using SherpaOnnx;
 using System;
 using System.Collections.Generic;
 using System.IO;

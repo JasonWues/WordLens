@@ -112,7 +112,7 @@ public class App : Application
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
         services.AddSingleton<IPathPickerService, AvaloniaPathPickerService>();
         services.AddSingleton<IAudioPlayerService, SoundFlowAudioPlayerService>();
-        services.AddSingleton<ITtsService, SherpaOnnxTtsService>();
+        services.AddSingleton<ITtsService, TtsService>();
         services.AddSingleton<OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ProxyAwareHttpClientFactory>();

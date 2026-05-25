@@ -24,6 +24,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly HashSet<ProviderConfig> _trackedOcrProviders = new();
     private readonly HashSet<ProviderConfig> _trackedTranslationProviders = new();
+    private readonly HashSet<TtsProviderConfig> _trackedTtsProviders = new();
     private CancellationTokenSource? _autoSaveCts;
     private bool _hasLoadedSettings;
     private bool _isLoadingSettings;
@@ -133,6 +134,7 @@ public partial class SettingsViewModel : ViewModelBase
             LoadIntoSections(settings);
             SyncProviderHandlers(TranslationSettings.Providers, _trackedTranslationProviders);
             SyncProviderHandlers(OcrSettings.OcrProviders, _trackedOcrProviders);
+            SyncProviderHandlers(TtsSettings.TtsProviders, _trackedTtsProviders);
             _hasLoadedSettings = true;
             AutoSaveStatus = "已保存";
         }
@@ -161,8 +163,10 @@ public partial class SettingsViewModel : ViewModelBase
 
         TranslationSettings.Providers.CollectionChanged += OnTranslationProvidersChanged;
         OcrSettings.OcrProviders.CollectionChanged += OnOcrProvidersChanged;
+        TtsSettings.TtsProviders.CollectionChanged += OnTtsProvidersChanged;
         SyncProviderHandlers(TranslationSettings.Providers, _trackedTranslationProviders);
         SyncProviderHandlers(OcrSettings.OcrProviders, _trackedOcrProviders);
+        SyncProviderHandlers(TtsSettings.TtsProviders, _trackedTtsProviders);
     }
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -185,9 +189,17 @@ public partial class SettingsViewModel : ViewModelBase
         QueueAutoSave();
     }
 
+    private void OnTtsProvidersChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        SyncProviderHandlers(TtsSettings.TtsProviders, _trackedTtsProviders);
+        QueueAutoSave();
+    }
+
     private void OnProviderPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ProviderConfig.AvailableModels))
+        if (e.PropertyName == nameof(ProviderConfig.AvailableModels) ||
+            e.PropertyName == nameof(TtsProviderConfig.TypeDisplayName) ||
+            e.PropertyName == nameof(TtsProviderConfig.Summary))
             return;
 
         QueueAutoSave();
@@ -217,9 +229,8 @@ public partial class SettingsViewModel : ViewModelBase
         if (ReferenceEquals(sender, TtsSettings))
         {
             return propertyName is
-                nameof(TtsSettingsViewModel.IsVitsTtsModel) or
-                nameof(TtsSettingsViewModel.IsKokoroTtsModel) or
-                nameof(TtsSettingsViewModel.IsMatchaTtsModel);
+                nameof(TtsSettingsViewModel.IsSelectedTtsProviderLocal) or
+                nameof(TtsSettingsViewModel.IsSelectedTtsProviderLlm);
         }
 
         return false;
@@ -322,6 +333,26 @@ public partial class SettingsViewModel : ViewModelBase
     private void SyncProviderHandlers(
         ObservableCollection<ProviderConfig> providers,
         HashSet<ProviderConfig> trackedProviders)
+    {
+        var currentProviders = providers.ToHashSet();
+        foreach (var removedProvider in trackedProviders.Except(currentProviders).ToList())
+        {
+            removedProvider.PropertyChanged -= OnProviderPropertyChanged;
+            trackedProviders.Remove(removedProvider);
+        }
+
+        foreach (var provider in currentProviders)
+        {
+            if (!trackedProviders.Add(provider))
+                continue;
+
+            provider.PropertyChanged += OnProviderPropertyChanged;
+        }
+    }
+
+    private void SyncProviderHandlers(
+        ObservableCollection<TtsProviderConfig> providers,
+        HashSet<TtsProviderConfig> trackedProviders)
     {
         var currentProviders = providers.ToHashSet();
         foreach (var removedProvider in trackedProviders.Except(currentProviders).ToList())

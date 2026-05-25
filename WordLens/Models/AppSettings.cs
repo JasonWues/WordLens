@@ -72,6 +72,22 @@ public class AppSettings
             UserPromptTemplate = string.Empty
         };
     }
+
+    public static TtsProviderConfig CreateDefaultTtsProvider()
+    {
+        return new TtsProviderConfig
+        {
+            Name = "OpenAI TTS",
+            Type = TtsProviderType.Llm,
+            BaseUrl = "https://api.openai.com",
+            ApiKey = null,
+            Model = "gpt-4o-mini-tts",
+            Voice = "alloy",
+            IsEnabled = false,
+            RequestArguments = string.Empty,
+            Speed = 1.0
+        };
+    }
 }
 
 public enum TranslationPopupPositionMode
@@ -228,26 +244,107 @@ public class ProxyConfig
 
 public class TtsConfig
 {
-    public bool Enabled { get; set; } = false;
-    public TtsModelType ModelType { get; set; } = TtsModelType.Vits;
-    public string ModelPath { get; set; } = string.Empty;
-    public string TokensPath { get; set; } = string.Empty;
-    public string VoicesPath { get; set; } = string.Empty;
-    public string DataDir { get; set; } = string.Empty;
-    public string LexiconPath { get; set; } = string.Empty;
-    public string DictDir { get; set; } = string.Empty;
-    public string VocoderPath { get; set; } = string.Empty;
-    public string RuleFsts { get; set; } = string.Empty;
-    public string RuleFars { get; set; } = string.Empty;
-    public string Provider { get; set; } = "cpu";
-    public int NumThreads { get; set; } = 2;
-    public int SpeakerId { get; set; } = 0;
-    public double Speed { get; set; } = 1.0;
+    public string? SelectedProvider { get; set; } = "OpenAI TTS";
+    public List<TtsProviderConfig> Providers { get; set; } = new();
 }
 
-public enum TtsModelType
+public enum TtsProviderType
 {
-    Vits,
-    Kokoro,
-    Matcha
+    Local,
+    Llm
+}
+
+public class TtsProviderConfig : ObservableObject
+{
+    private string? _apiKey;
+    private string _baseUrl = string.Empty;
+    private bool _isEnabled;
+    private string _model = string.Empty;
+    private string _name = string.Empty;
+    private string _requestArguments = string.Empty;
+    private double _speed = 1.0;
+    private TtsProviderType _type = TtsProviderType.Llm;
+    private string _voice = string.Empty;
+
+    public string Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public TtsProviderType Type
+    {
+        get => _type;
+        set
+        {
+            if (SetProperty(ref _type, value))
+            {
+                OnPropertyChanged(nameof(TypeDisplayName));
+                OnPropertyChanged(nameof(Summary));
+            }
+        }
+    }
+
+    [JsonIgnore]
+    public string TypeDisplayName => Type switch
+    {
+        TtsProviderType.Local => "本地",
+        TtsProviderType.Llm => "LLM",
+        _ => Type.ToString()
+    };
+
+    [JsonIgnore]
+    public string Summary => Type == TtsProviderType.Local
+        ? Voice
+        : Model;
+
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set => SetProperty(ref _isEnabled, value);
+    }
+
+    public string BaseUrl
+    {
+        get => _baseUrl;
+        set => SetProperty(ref _baseUrl, value);
+    }
+
+    public string? ApiKey
+    {
+        get => _apiKey;
+        set => SetProperty(ref _apiKey, value);
+    }
+
+    public string Model
+    {
+        get => _model;
+        set
+        {
+            if (SetProperty(ref _model, value))
+                OnPropertyChanged(nameof(Summary));
+        }
+    }
+
+    public string Voice
+    {
+        get => _voice;
+        set
+        {
+            if (SetProperty(ref _voice, value))
+                OnPropertyChanged(nameof(Summary));
+        }
+    }
+
+    public double Speed
+    {
+        get => _speed;
+        set => SetProperty(ref _speed, value);
+    }
+
+    public string RequestArguments
+    {
+        get => _requestArguments;
+        set => SetProperty(ref _requestArguments, value);
+    }
 }

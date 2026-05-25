@@ -60,8 +60,11 @@ public class SettingsService : ISettingsService
             var needsSave = false;
             settings.Providers ??= new AppSettings().Providers;
             settings.OcrProviders ??= new List<ProviderConfig>();
+            settings.Tts ??= new TtsConfig();
+            settings.Tts.Providers ??= new List<TtsProviderConfig>();
             needsSave |= NormalizeHotkeys(settings);
             needsSave |= NormalizeOcrProviders(settings);
+            needsSave |= NormalizeTtsProviders(settings);
             needsSave |= NormalizeTranslationPopup(settings);
 
             foreach (var provider in settings.Providers)
@@ -82,6 +85,15 @@ public class SettingsService : ISettingsService
                     needsSave = true;
                 }
 
+            foreach (var provider in settings.Tts.Providers)
+                if (!string.IsNullOrEmpty(provider.ApiKey) &&
+                    !_encryptionService.IsEncrypted(provider.ApiKey))
+                {
+                    _logger.ZLogInformation($"检测到未加密的TTS API Key，正在加密: {provider.Name}");
+                    provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
+                    needsSave = true;
+                }
+
             // 如果有未加密的配置，自动保存加密后的版本
             if (needsSave)
             {
@@ -89,7 +101,7 @@ public class SettingsService : ISettingsService
                 await SaveAsync(settings);
             }
 
-            _logger.ZLogInformation($"配置加载成功，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}");
+            _logger.ZLogInformation($"配置加载成功，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}，TTS源数量: {settings.Tts.Providers.Count}");
             return settings;
         }
         catch (Exception ex)
@@ -106,11 +118,14 @@ public class SettingsService : ISettingsService
         {
             settings.Providers ??= new AppSettings().Providers;
             settings.OcrProviders ??= new List<ProviderConfig>();
+            settings.Tts ??= new TtsConfig();
+            settings.Tts.Providers ??= new List<TtsProviderConfig>();
             NormalizeHotkeys(settings);
             NormalizeOcrProviders(settings);
+            NormalizeTtsProviders(settings);
             NormalizeTranslationPopup(settings);
 
-            _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}");
+            _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}，TTS源数量: {settings.Tts.Providers.Count}");
 
             // 确保所有API Key都已加密
             foreach (var provider in settings.Providers)
@@ -126,6 +141,14 @@ public class SettingsService : ISettingsService
                     !_encryptionService.IsEncrypted(provider.ApiKey))
                 {
                     _logger.ZLogDebug($"保存前加密OCR API Key: {provider.Name}");
+                    provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
+                }
+
+            foreach (var provider in settings.Tts.Providers)
+                if (!string.IsNullOrEmpty(provider.ApiKey) &&
+                    !_encryptionService.IsEncrypted(provider.ApiKey))
+                {
+                    _logger.ZLogDebug($"保存前加密TTS API Key: {provider.Name}");
                     provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
                 }
 
@@ -157,6 +180,64 @@ public class SettingsService : ISettingsService
                 settings.OcrProviders.FirstOrDefault(p => p.IsEnabled)?.Name ??
                 settings.OcrProviders[0].Name;
             needsSave = true;
+        }
+
+        return needsSave;
+    }
+
+    private static bool NormalizeTtsProviders(AppSettings settings)
+    {
+        var needsSave = false;
+
+        if (settings.Tts.Providers.Count == 0)
+        {
+            settings.Tts.Providers.Add(AppSettings.CreateDefaultTtsProvider());
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Tts.SelectedProvider) ||
+            settings.Tts.Providers.All(p => p.Name != settings.Tts.SelectedProvider))
+        {
+            settings.Tts.SelectedProvider =
+                settings.Tts.Providers.FirstOrDefault(p => p.IsEnabled)?.Name ??
+                settings.Tts.Providers[0].Name;
+            needsSave = true;
+        }
+
+        foreach (var provider in settings.Tts.Providers)
+        {
+            if (!Enum.IsDefined(provider.Type))
+            {
+                provider.Type = TtsProviderType.Llm;
+                needsSave = true;
+            }
+
+            if (provider.Type == TtsProviderType.Llm)
+            {
+                if (string.IsNullOrWhiteSpace(provider.BaseUrl))
+                {
+                    provider.BaseUrl = "https://api.openai.com";
+                    needsSave = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(provider.Model))
+                {
+                    provider.Model = "gpt-4o-mini-tts";
+                    needsSave = true;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(provider.Voice))
+            {
+                provider.Voice = "alloy";
+                needsSave = true;
+            }
+
+            if (provider.Speed is < 0.25 or > 4.0)
+            {
+                provider.Speed = Math.Clamp(provider.Speed, 0.25, 4.0);
+                needsSave = true;
+            }
         }
 
         return needsSave;

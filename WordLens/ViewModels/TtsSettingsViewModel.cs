@@ -1,94 +1,53 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Sortable.Avalonia;
 using WordLens.Models;
-using WordLens.Services;
+using WordLens.Services.Implementations;
 
 namespace WordLens.ViewModels;
 
 public partial class TtsSettingsViewModel : ViewModelBase
 {
-    private static readonly IReadOnlyList<string> BinFilePatterns = new[] { "*.bin" };
-    private static readonly IReadOnlyList<string> FarFilePatterns = new[] { "*.far" };
-    private static readonly IReadOnlyList<string> FstFilePatterns = new[] { "*.fst" };
-    private static readonly IReadOnlyList<string> OnnxFilePatterns = new[] { "*.onnx" };
-    private static readonly IReadOnlyList<string> TextFilePatterns = new[] { "*.txt" };
-    private readonly IPathPickerService _pathPickerService;
+    private readonly EncryptionService _encryptionService;
 
-    [ObservableProperty] private string ttsDataDir = string.Empty;
-    [ObservableProperty] private string ttsDictDir = string.Empty;
-    [ObservableProperty] private bool ttsEnabled;
-    [ObservableProperty] private string ttsLexiconPath = string.Empty;
-    [ObservableProperty] private string ttsModelPath = string.Empty;
-    [ObservableProperty] private TtsModelType ttsModelType = TtsModelType.Vits;
-    [ObservableProperty] private int ttsNumThreads = 2;
-    [ObservableProperty] private string ttsProvider = "cpu";
-    [ObservableProperty] private string ttsRuleFars = string.Empty;
-    [ObservableProperty] private string ttsRuleFsts = string.Empty;
-    [ObservableProperty] private int ttsSpeakerId;
-    [ObservableProperty] private double ttsSpeed = 1.0;
-    [ObservableProperty] private string ttsTokensPath = string.Empty;
-    [ObservableProperty] private string ttsVocoderPath = string.Empty;
-    [ObservableProperty] private string ttsVoicesPath = string.Empty;
+    [ObservableProperty] private ObservableCollection<TtsProviderConfig> ttsProviders = new();
+    [ObservableProperty] private TtsProviderConfig? selectedTtsProvider;
 
-    public TtsSettingsViewModel(IPathPickerService pathPickerService)
+    public TtsSettingsViewModel(EncryptionService encryptionService)
     {
-        _pathPickerService = pathPickerService;
+        _encryptionService = encryptionService;
     }
 
-    public List<TtsModelTypeOption> AvailableTtsModelTypes { get; } = new()
+    public List<TtsProviderTypeOption> AvailableTtsProviderTypes { get; } = new()
     {
-        new TtsModelTypeOption(TtsModelType.Vits, "VITS / Piper"),
-        new TtsModelTypeOption(TtsModelType.Kokoro, "Kokoro"),
-        new TtsModelTypeOption(TtsModelType.Matcha, "Matcha")
+        new TtsProviderTypeOption(TtsProviderType.Local, "本地"),
+        new TtsProviderTypeOption(TtsProviderType.Llm, "LLM")
     };
 
-    public bool IsVitsTtsModel => TtsModelType == TtsModelType.Vits;
+    public bool IsSelectedTtsProviderLocal => SelectedTtsProvider?.Type == TtsProviderType.Local;
 
-    public bool IsKokoroTtsModel => TtsModelType == TtsModelType.Kokoro;
-
-    public bool IsMatchaTtsModel => TtsModelType == TtsModelType.Matcha;
+    public bool IsSelectedTtsProviderLlm => SelectedTtsProvider?.Type == TtsProviderType.Llm;
 
     public void Load(TtsConfig config)
     {
-        TtsEnabled = config.Enabled;
-        TtsModelType = config.ModelType;
-        TtsModelPath = config.ModelPath;
-        TtsTokensPath = config.TokensPath;
-        TtsVoicesPath = config.VoicesPath;
-        TtsDataDir = config.DataDir;
-        TtsLexiconPath = config.LexiconPath;
-        TtsDictDir = config.DictDir;
-        TtsVocoderPath = config.VocoderPath;
-        TtsRuleFsts = config.RuleFsts;
-        TtsRuleFars = config.RuleFars;
-        TtsProvider = config.Provider;
-        TtsNumThreads = config.NumThreads;
-        TtsSpeakerId = config.SpeakerId;
-        TtsSpeed = config.Speed;
+        TtsProviders.Clear();
+        foreach (var provider in config.Providers)
+            TtsProviders.Add(CloneProviderForEditing(provider, _encryptionService));
+
+        SelectedTtsProvider = TtsProviders.FirstOrDefault(p => p.Name == config.SelectedProvider) ??
+                              TtsProviders.FirstOrDefault();
     }
 
     public TtsConfig BuildTtsConfig()
     {
         return new TtsConfig
         {
-            Enabled = TtsEnabled,
-            ModelType = TtsModelType,
-            ModelPath = TtsModelPath,
-            TokensPath = TtsTokensPath,
-            VoicesPath = TtsVoicesPath,
-            DataDir = TtsDataDir,
-            LexiconPath = TtsLexiconPath,
-            DictDir = TtsDictDir,
-            VocoderPath = TtsVocoderPath,
-            RuleFsts = TtsRuleFsts,
-            RuleFars = TtsRuleFars,
-            Provider = string.IsNullOrWhiteSpace(TtsProvider) ? "cpu" : TtsProvider,
-            NumThreads = Math.Max(1, TtsNumThreads),
-            SpeakerId = Math.Max(0, TtsSpeakerId),
-            Speed = Math.Clamp(TtsSpeed, 0.25, 4.0)
+            SelectedProvider = SelectedTtsProvider?.Name ?? TtsProviders.FirstOrDefault()?.Name,
+            Providers = TtsProviders.Select(CloneProviderForPersistence).ToList()
         };
     }
 
@@ -96,121 +55,120 @@ public partial class TtsSettingsViewModel : ViewModelBase
     {
         return new TtsConfig
         {
-            Enabled = config.Enabled,
-            ModelType = config.ModelType,
-            ModelPath = config.ModelPath,
-            TokensPath = config.TokensPath,
-            VoicesPath = config.VoicesPath,
-            DataDir = config.DataDir,
-            LexiconPath = config.LexiconPath,
-            DictDir = config.DictDir,
-            VocoderPath = config.VocoderPath,
-            RuleFsts = config.RuleFsts,
-            RuleFars = config.RuleFars,
-            Provider = config.Provider,
-            NumThreads = config.NumThreads,
-            SpeakerId = config.SpeakerId,
-            Speed = config.Speed
+            SelectedProvider = config.SelectedProvider,
+            Providers = config.Providers.Select(CloneProviderForPersistence).ToList()
         };
     }
 
-    partial void OnTtsModelTypeChanged(TtsModelType value)
+    public static TtsProviderConfig CloneProviderForPersistence(TtsProviderConfig provider)
     {
-        OnPropertyChanged(nameof(IsVitsTtsModel));
-        OnPropertyChanged(nameof(IsKokoroTtsModel));
-        OnPropertyChanged(nameof(IsMatchaTtsModel));
+        return new TtsProviderConfig
+        {
+            Name = provider.Name,
+            Type = provider.Type,
+            IsEnabled = provider.IsEnabled,
+            BaseUrl = provider.BaseUrl,
+            ApiKey = provider.ApiKey,
+            Model = provider.Model,
+            Voice = provider.Voice,
+            Speed = Math.Clamp(provider.Speed, 0.25, 4.0),
+            RequestArguments = provider.RequestArguments
+        };
     }
 
     [RelayCommand]
-    private async Task PickTtsModelPathAsync()
+    private void SelectTtsProvider(TtsProviderConfig? provider)
     {
-        await PickSingleFilePathAsync("选择 TTS ONNX 模型", OnnxFilePatterns, path => TtsModelPath = path);
+        if (provider != null)
+            SelectedTtsProvider = provider;
     }
 
     [RelayCommand]
-    private async Task PickTtsTokensPathAsync()
+    private void AddTtsProvider()
     {
-        await PickSingleFilePathAsync("选择 tokens.txt", TextFilePatterns, path => TtsTokensPath = path);
+        var newProvider = new TtsProviderConfig
+        {
+            Name = $"新TTS源 {TtsProviders.Count + 1}",
+            Type = TtsProviderType.Llm,
+            BaseUrl = "https://api.openai.com",
+            Model = "gpt-4o-mini-tts",
+            Voice = "alloy",
+            RequestArguments = string.Empty,
+            Speed = 1.0
+        };
+
+        TtsProviders.Add(newProvider);
+        SelectedTtsProvider = newProvider;
     }
 
     [RelayCommand]
-    private async Task PickTtsVoicesPathAsync()
+    private void DeleteTtsProvider()
     {
-        await PickSingleFilePathAsync("选择 voices.bin", BinFilePatterns, path => TtsVoicesPath = path);
+        if (SelectedTtsProvider == null || TtsProviders.Count <= 1)
+            return;
+
+        var index = TtsProviders.IndexOf(SelectedTtsProvider);
+        TtsProviders.Remove(SelectedTtsProvider);
+
+        if (TtsProviders.Count > 0)
+            SelectedTtsProvider = TtsProviders[Math.Min(index, TtsProviders.Count - 1)];
     }
 
     [RelayCommand]
-    private async Task PickTtsVocoderPathAsync()
+    private void ReorderTtsProvider(SortableUpdateEventArgs? args)
     {
-        await PickSingleFilePathAsync("选择 Vocoder ONNX 模型", OnnxFilePatterns, path => TtsVocoderPath = path);
+        if (args == null)
+            return;
+
+        var movedProvider = args.Item as TtsProviderConfig;
+        if (args.ApplyUpdateMutation() && movedProvider != null)
+            SelectedTtsProvider = movedProvider;
     }
 
-    [RelayCommand]
-    private async Task PickTtsDataDirAsync()
+    partial void OnSelectedTtsProviderChanged(TtsProviderConfig? value)
     {
-        await PickFolderPathAsync("选择 espeak-ng-data 目录", path => TtsDataDir = path);
+        if (value != null)
+            value.PropertyChanged += OnSelectedProviderPropertyChanged;
+
+        OnPropertyChanged(nameof(IsSelectedTtsProviderLocal));
+        OnPropertyChanged(nameof(IsSelectedTtsProviderLlm));
     }
 
-    [RelayCommand]
-    private async Task PickTtsDictDirAsync()
+    partial void OnSelectedTtsProviderChanging(TtsProviderConfig? oldValue, TtsProviderConfig? newValue)
     {
-        await PickFolderPathAsync("选择词典目录", path => TtsDictDir = path);
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnSelectedProviderPropertyChanged;
     }
 
-    [RelayCommand]
-    private async Task PickTtsLexiconPathAsync()
+    private void OnSelectedProviderPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        await PickMultipleFilePathsAsync("选择 Lexicon 文件", TextFilePatterns, paths => TtsLexiconPath = paths);
+        if (e.PropertyName != nameof(TtsProviderConfig.Type))
+            return;
+
+        OnPropertyChanged(nameof(IsSelectedTtsProviderLocal));
+        OnPropertyChanged(nameof(IsSelectedTtsProviderLlm));
     }
 
-    [RelayCommand]
-    private async Task PickTtsRuleFstsAsync()
+    private static TtsProviderConfig CloneProviderForEditing(
+        TtsProviderConfig provider,
+        EncryptionService encryptionService)
     {
-        await PickMultipleFilePathsAsync("选择 Rule FST 文件", FstFilePatterns, paths => TtsRuleFsts = paths);
-    }
-
-    [RelayCommand]
-    private async Task PickTtsRuleFarsAsync()
-    {
-        await PickMultipleFilePathsAsync("选择 Rule FAR 文件", FarFilePatterns, paths => TtsRuleFars = paths);
-    }
-
-    private async Task PickSingleFilePathAsync(
-        string title,
-        IReadOnlyList<string> patterns,
-        Action<string> apply)
-    {
-        var path = await _pathPickerService.PickFileAsync(title, patterns);
-        if (!string.IsNullOrWhiteSpace(path))
-            apply(path);
-    }
-
-    private async Task PickMultipleFilePathsAsync(
-        string title,
-        IReadOnlyList<string> patterns,
-        Action<string> apply)
-    {
-        var paths = await _pathPickerService.PickFilesAsync(title, patterns);
-        if (paths.Count > 0)
-            apply(string.Join(",", paths));
-    }
-
-    private async Task PickFolderPathAsync(string title, Action<string> apply)
-    {
-        var path = await _pathPickerService.PickFolderAsync(title);
-        if (!string.IsNullOrWhiteSpace(path))
-            apply(path);
+        var clone = CloneProviderForPersistence(provider);
+        clone.ApiKey = string.IsNullOrEmpty(provider.ApiKey)
+            ? provider.ApiKey
+            : encryptionService.Decrypt(provider.ApiKey);
+        return clone;
     }
 }
 
-public class TtsModelTypeOption
+public class TtsProviderTypeOption
 {
-    public TtsModelTypeOption(TtsModelType value, string displayName)
+    public TtsProviderTypeOption(TtsProviderType value, string displayName)
     {
         Value = value;
         DisplayName = displayName;
     }
 
-    public TtsModelType Value { get; set; }
+    public TtsProviderType Value { get; set; }
     public string DisplayName { get; set; }
 }

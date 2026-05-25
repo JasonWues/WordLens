@@ -78,3 +78,24 @@ public class OcrImageUrl
     [JsonPropertyName("detail")]
     public string Detail { get; set; } = "high";
 }
+
+public class TtsSpeechRequest
+{
+    [JsonPropertyName("model")]
+    public string Model { get; set; } = string.Empty;
+
+    [JsonPropertyName("input")]
+    public string Input { get; set; } = string.Empty;
+
+    [JsonPropertyName("voice")]
+    public string Voice { get; set; } = "alloy";
+
+    [JsonPropertyName("response_format")]
+    public string ResponseFormat { get; set; } = "wav";
+
+    [JsonPropertyName("speed")]
+    public double Speed { get; set; } = 1.0;
+
+    [JsonExtensionData]
+    public IDictionary<string, JsonElement>? ExtensionData { get; set; }
+}
