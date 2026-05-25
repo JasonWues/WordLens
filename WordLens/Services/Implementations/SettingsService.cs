@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Models;
 using WordLens.Models;
 using ZLogger;
 

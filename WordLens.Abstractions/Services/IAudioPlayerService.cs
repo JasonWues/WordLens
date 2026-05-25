@@ -1,4 +1,4 @@
-namespace WordLens.Services;
+namespace WordLens.Abstractions.Services;
 
 public interface IAudioPlayerService
 {

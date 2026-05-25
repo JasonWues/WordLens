@@ -1,5 +1,6 @@
 using System.Security;
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
 using WordLens.Services;
 
 namespace WordLens.Macos.Services.Implementations;

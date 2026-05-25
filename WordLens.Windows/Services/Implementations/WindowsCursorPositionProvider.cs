@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
 using Windows.Win32;
+using WordLens.Abstractions.Services;
 using WordLens.Services;
 using ZLogger;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Windows.Services.Implementations;
 
 public sealed class WindowsCursorPositionProvider : ICursorPositionProvider
 {

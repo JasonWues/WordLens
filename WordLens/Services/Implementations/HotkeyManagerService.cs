@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Models;
 using WordLens.Messages;
 using WordLens.Models;
 using ZLogger;

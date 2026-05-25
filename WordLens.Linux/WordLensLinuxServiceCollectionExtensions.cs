@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using WordLens.Abstractions.Services;
 using WordLens.Linux.Services.Implementations;
 using WordLens.Services;
 

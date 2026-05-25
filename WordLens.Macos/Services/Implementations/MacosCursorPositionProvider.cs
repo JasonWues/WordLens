@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
 using WordLens.Macos.Native;
 using WordLens.Services;
 

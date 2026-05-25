@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using SharpHook;
+using WordLens.Abstractions.Services;
 using WordLens.Services;
 using WordLens.Services.Implementations;
 using WordLens.Services.Implementations.Screenshot;

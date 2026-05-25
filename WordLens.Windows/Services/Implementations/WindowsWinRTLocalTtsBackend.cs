@@ -1,7 +1,10 @@
+using Windows.Foundation;
 using Windows.Media.SpeechSynthesis;
+using Windows.Storage.Streams;
+using WordLens.Abstractions.Services;
 using WordLens.Services;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Windows.Services.Implementations;
 
 public sealed class WindowsWinRTLocalTtsBackend : ILocalTtsBackend
 {

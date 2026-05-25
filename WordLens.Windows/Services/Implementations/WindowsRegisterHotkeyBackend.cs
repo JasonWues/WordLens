@@ -13,10 +13,11 @@ using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
-using WordLens.Models;
+using WordLens.Abstractions.Models;
+using WordLens.Services;
 using ZLogger;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Windows.Services.Implementations;
 
 [SupportedOSPlatform("windows6.0.6000")]
 public sealed class WindowsRegisterHotkeyBackend : IHotkeyBackend

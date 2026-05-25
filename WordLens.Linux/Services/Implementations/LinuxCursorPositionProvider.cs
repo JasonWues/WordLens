@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
 using WordLens.Linux.Native;
 using WordLens.Services;
 

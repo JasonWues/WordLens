@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using WordLens.Abstractions.Services;
 using WordLens.Services;
 using ZLogger;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Windows.Services.Implementations;
 
 public sealed class WindowsStartupService : IStartupService
 {

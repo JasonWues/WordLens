@@ -1,6 +1,6 @@
 using SharpHook.Data;
 
-namespace WordLens.Models;
+namespace WordLens.Abstractions.Models;
 
 public class HotkeyConfig
 {

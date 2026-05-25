@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using SharpHook.Data;
+using WordLens.Abstractions.Models;
+using WordLens.Abstractions.Services;
 using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;

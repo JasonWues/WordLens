@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
 using ZLogger;
 
 namespace WordLens.Services.Implementations;

@@ -1,3 +1,5 @@
+using WordLens.Abstractions.Services;
+
 namespace WordLens.Services.Implementations;
 
 public sealed class UnsupportedCursorPositionProvider : ICursorPositionProvider

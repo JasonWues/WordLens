@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace WordLens.Services;
+namespace WordLens.Abstractions.Services;
 
 public sealed class ClipboardTextChangedEventArgs(string text) : EventArgs
 {

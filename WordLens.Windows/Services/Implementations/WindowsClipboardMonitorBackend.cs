@@ -1,20 +1,19 @@
-using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading;
-using System.Threading.Tasks;
-using Avalonia.Threading;
-using Microsoft.Extensions.Logging;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.Ole;
 using Windows.Win32.UI.WindowsAndMessaging;
+using Avalonia.Threading;
+using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
+using WordLens.Services;
 using ZLogger;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Windows.Services.Implementations;
 
 [SupportedOSPlatform("windows6.0.6000")]
 public sealed class WindowsClipboardMonitorBackend : IClipboardMonitorBackend

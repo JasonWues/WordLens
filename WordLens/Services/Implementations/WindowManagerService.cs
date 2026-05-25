@@ -8,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
 using WordLens.Models;
 using WordLens.ViewModels;
 using WordLens.Views;

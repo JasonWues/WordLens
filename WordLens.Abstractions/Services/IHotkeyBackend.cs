@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WordLens.Models;
+using WordLens.Abstractions.Models;
 
 namespace WordLens.Services;
 

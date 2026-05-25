@@ -1,4 +1,4 @@
-namespace WordLens.Services;
+namespace WordLens.Abstractions.Services;
 
 public readonly record struct CursorPosition(int X, int Y);
 

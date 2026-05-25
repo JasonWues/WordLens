@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using WordLens.Abstractions.Services;
 
 namespace WordLens.Services;
 
