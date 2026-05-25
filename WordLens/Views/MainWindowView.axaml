@@ -61,10 +61,14 @@
             </DrawerPage.Drawer>
 
             <DrawerPage.Content>
-                <ContentControl Margin="10"
-                                x:DataType="vm:SettingsViewModel"
-                                DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}"
-                                Content="{Binding CurrentSectionViewModel}" />
+                <TransitioningContentControl Margin="10"
+                                             x:DataType="vm:SettingsViewModel"
+                                             DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}"
+                                             Content="{Binding CurrentSectionViewModel}">
+                    <TransitioningContentControl.PageTransition>
+                        <CrossFade Duration="0:0:0.18" />
+                    </TransitioningContentControl.PageTransition>
+                </TransitioningContentControl>
             </DrawerPage.Content>
         </DrawerPage>
     </Grid>

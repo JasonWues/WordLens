@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -9,10 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using WordLens.Models;
-using WordLens.Native;
 using WordLens.ViewModels;
 using WordLens.Views;
 using ZLogger;
@@ -25,12 +21,13 @@ namespace WordLens.Services.Implementations;
 /// </summary>
 public class WindowManagerService : IWindowManagerService
 {
-    private const int TranslationWindowDefaultWidth = 265;
-    private const int TranslationWindowDefaultHeight = 315;
+    private const int TranslationWindowDefaultWidth = 340;
+    private const int TranslationWindowDefaultHeight = 450;
     private const int TranslationWindowPointerOffset = 12;
 
     private readonly IServiceProvider _serviceProvider;
     private readonly ISettingsService _settingsService;
+    private readonly ICursorPositionProvider _cursorPositionProvider;
     private readonly ILogger<WindowManagerService> _logger;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
@@ -43,10 +40,12 @@ public class WindowManagerService : IWindowManagerService
     public WindowManagerService(
         IServiceProvider serviceProvider,
         ISettingsService settingsService,
+        ICursorPositionProvider cursorPositionProvider,
         ILogger<WindowManagerService> logger)
     {
         _serviceProvider = serviceProvider;
         _settingsService = settingsService;
+        _cursorPositionProvider = cursorPositionProvider;
         _logger = logger;
         _logger.ZLogInformation($"窗口管理器服务已初始化");
     }
@@ -448,85 +447,11 @@ public class WindowManagerService : IWindowManagerService
     {
         position = default;
 
-        if (TryGetWindowsCursorPosition(out position))
-            return true;
-
-        if (TryGetLinuxCursorPosition(out position))
-            return true;
-
-        if (TryGetMacOSCursorPosition(out position))
-            return true;
-
-        return false;
-    }
-
-    private bool TryGetWindowsCursorPosition(out PixelPoint position)
-    {
-        position = default;
-
-        if (!OperatingSystem.IsWindowsVersionAtLeast(5, 0))
+        if (!_cursorPositionProvider.TryGetCursorPosition(out var cursorPosition))
             return false;
 
-        try
-        {
-            if (!PInvoke.GetCursorPos(out var point))
-            {
-                _logger.ZLogDebug($"获取鼠标位置失败: Win32Error={Marshal.GetLastPInvokeError()}");
-                return false;
-            }
-
-            position = new PixelPoint(point.X, point.Y);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.ZLogDebug($"获取鼠标位置失败: {ex.Message}");
-            return false;
-        }
-    }
-
-    private bool TryGetLinuxCursorPosition(out PixelPoint position)
-    {
-        position = default;
-
-        if (!OperatingSystem.IsLinux())
-            return false;
-
-        try
-        {
-            if (!LinuxCursorNative.TryGetCursorPosition(out var x, out var y))
-                return false;
-
-            position = new PixelPoint(x, y);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.ZLogDebug($"获取 Linux 鼠标位置失败: {ex.Message}");
-            return false;
-        }
-    }
-
-    private bool TryGetMacOSCursorPosition(out PixelPoint position)
-    {
-        position = default;
-
-        if (!OperatingSystem.IsMacOS())
-            return false;
-
-        try
-        {
-            if (!MacOSCursorNative.TryGetCursorPosition(out var x, out var y))
-                return false;
-
-            position = new PixelPoint(x, y);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.ZLogDebug($"获取 macOS 鼠标位置失败: {ex.Message}");
-            return false;
-        }
+        position = new PixelPoint(cursorPosition.X, cursorPosition.Y);
+        return true;
     }
 
     private static void SetClampedWindowPosition(Window window, PixelPoint target)

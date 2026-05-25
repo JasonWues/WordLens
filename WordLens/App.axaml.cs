@@ -7,6 +7,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using SharpHook;
 using WordLens.Services;
@@ -14,6 +15,12 @@ using WordLens.Services.Implementations;
 using WordLens.Services.Implementations.Screenshot;
 using WordLens.ViewModels;
 using WordLens.Views;
+#if WINDOWS
+using WordLens.Windows;
+#else
+using WordLens.Linux;
+using WordLens.Macos;
+#endif
 using ZLogger;
 using ZLogger.Providers;
 
@@ -85,31 +92,23 @@ public class App : Application
 
         // Services
         services.AddSingleton<IWindowManagerService, WindowManagerService>();
-        if (OperatingSystem.IsWindows())
-        {
-            if (OperatingSystem.IsWindowsVersionAtLeast(6, 0, 6000))
-            {
-                services.AddSingleton<IHotkeyBackend, WindowsRegisterHotkeyBackend>();
-                services.AddSingleton<IClipboardMonitorBackend, WindowsClipboardMonitorBackend>();
-            }
-            else
-            {
-                services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
-                services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
-                services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
-            }
-        }
-        else
-        {
-            services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
-            services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
-            services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
-        }
+#if WINDOWS
+        services.AddWordLensWindows();
+#else
+        services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
+        services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
+        services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
+        if (OperatingSystem.IsLinux())
+            services.AddWordLensLinux();
+        else if (OperatingSystem.IsMacOS())
+            services.AddWordLensMacos();
+#endif
+        services.TryAddSingleton<ICursorPositionProvider, UnsupportedCursorPositionProvider>();
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
         services.AddSingleton<IClipboardMonitorService, ClipboardMonitorService>();
         services.AddSingleton<EncryptionService>();
         services.AddSingleton<AvaloniaThemeService>();
-        services.AddSingleton<IStartupService, StartupService>();
+        services.TryAddSingleton<IStartupService, UnsupportedStartupService>();
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
         services.AddSingleton<IPathPickerService, AvaloniaPathPickerService>();
         services.AddSingleton<IAudioPlayerService, SoundFlowAudioPlayerService>();

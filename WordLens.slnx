@@ -1,3 +1,7 @@
 <Solution>
-  <Project Path="WordLens\WordLens.csproj" Type="C#" />
+  <Project Path="WordLens.Abstractions/WordLens.Abstractions.csproj" />
+  <Project Path="WordLens.Linux/WordLens.Linux.csproj" />
+  <Project Path="WordLens.Macos/WordLens.Macos.csproj" />
+  <Project Path="WordLens.Windows/WordLens.Windows.csproj" />
+  <Project Path="WordLens\WordLens.csproj" />
 </Solution>

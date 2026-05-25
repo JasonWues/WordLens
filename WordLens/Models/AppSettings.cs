@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SharpHook.Data;
 
 namespace WordLens.Models;
 
@@ -71,30 +70,6 @@ public class AppSettings
             IsEnabled = true,
             RequestArguments = string.Empty,
             UserPromptTemplate = string.Empty
-        };
-    }
-}
-
-public class HotkeyConfig
-{
-    public EventMask Modifiers { get; set; }
-    public KeyCode Key { get; set; }
-
-    public static HotkeyConfig Default()
-    {
-        return new HotkeyConfig
-        {
-            Modifiers = EventMask.LeftCtrl | EventMask.LeftShift,
-            Key = KeyCode.VcT
-        };
-    }
-
-    public static HotkeyConfig DefaultOcr()
-    {
-        return new HotkeyConfig
-        {
-            Modifiers = EventMask.LeftCtrl | EventMask.LeftShift,
-            Key = KeyCode.VcW
         };
     }
 }

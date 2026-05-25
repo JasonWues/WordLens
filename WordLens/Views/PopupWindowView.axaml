@@ -4,8 +4,8 @@
         xmlns:models="using:WordLens.Models"
         x:Class="WordLens.Views.PopupWindowView"
         x:DataType="vm:PopupWindowViewModel"
-        Width="265" Height="315"
-        MinWidth="265" MinHeight="315"
+        Width="340" Height="450"
+        MinWidth="310" MinHeight="380"
         CanResize="True"
         Topmost="{Binding IsTopmost}"
         ShowInTaskbar="False"
@@ -22,7 +22,7 @@
             CornerRadius="7"
             ClipToBounds="True">
         <Grid>
-            <Grid RowDefinitions="26,Auto,6,28,4,28,6,*">
+            <Grid RowDefinitions="32,Auto,10,36,8,36,8,*">
                 <Grid Grid.Row="0"
                       ColumnDefinitions="Auto,*,Auto"
                       Background="#FBFBFB"
@@ -32,7 +32,7 @@
                         Classes.topmost-active="{Binding IsTopmost}"
                         Command="{Binding ToggleTopmostCommand}"
                         ToolTip.Tip="置顶窗口"
-                        Margin="3,2,0,2">
+                        Margin="6,4,0,4">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="3"
                                 VerticalAlignment="Center">
@@ -49,7 +49,7 @@
                         Classes="icon-button compact close"
                         Click="Close_Click"
                         ToolTip.Tip="关闭"
-                        Margin="0,2,2,0">
+                        Margin="0,4,6,4">
                     <PathIcon Width="11"
                               Height="11"
                               Data="{StaticResource dismiss_regular}" />
@@ -57,11 +57,11 @@
                 </Grid>
 
                 <Border Grid.Row="1"
-                    Margin="4,0"
+                    Margin="8,0"
                     Background="#E8E8E8"
                     CornerRadius="7"
                     ClipToBounds="True">
-                <Grid RowDefinitions="61,28">
+                <Grid RowDefinitions="104,36">
                     <TextBox Grid.Row="0"
                              Text="{Binding SourceText}"
                              Classes="transparent-editor source-editor"
@@ -69,8 +69,8 @@
 
                     <Grid Grid.Row="1"
                           ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto"
-                          ColumnSpacing="4"
-                          Margin="6,0"
+                          ColumnSpacing="8"
+                          Margin="10,0"
                           VerticalAlignment="Center">
                         <Button Grid.Column="0"
                                 Classes="icon-button compact"
@@ -94,7 +94,7 @@
                         <PathIcon Grid.Column="2"
                                   Width="12"
                                   Height="12"
-                                  Margin="4,0"
+                                  Margin="6,0"
                                   Foreground="#171717"
                                   Data="{StaticResource link_regular}"
                                   VerticalAlignment="Center" />
@@ -114,12 +114,12 @@
                                 BorderBrush="#9A83C8"
                                 BorderThickness="1"
                                 CornerRadius="10"
-                                Height="19"
-                                MinWidth="48"
-                                Padding="7,0"
+                                Height="24"
+                                MinWidth="56"
+                                Padding="9,0"
                                 VerticalAlignment="Center">
                             <TextBlock Text="{Binding SelectedTargetLanguage.DisplayName, FallbackValue=英语, TargetNullValue=英语}"
-                                       FontSize="10"
+                                       FontSize="11"
                                        Foreground="#1D1D1D"
                                        VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis" />
@@ -138,17 +138,18 @@
                 </Border>
 
                 <Border Grid.Row="3"
-                    Margin="4,0"
+                    Margin="8,0"
                     Background="#DCDCDC"
                     CornerRadius="5"
                     ClipToBounds="True">
-                <Grid ColumnDefinitions="Auto,*,34,*,Auto">
+                <Grid ColumnDefinitions="Auto,*,44,*,Auto"
+                      Margin="2,0">
                     <ComboBox Grid.Column="0"
                               Classes="language-selector"
                               ItemsSource="{Binding SourceLanguages}"
                               SelectedItem="{Binding SelectedSourceLanguage}"
                               SelectedValueBinding="{Binding Code}"
-                              Width="92"
+                              Width="116"
                               HorizontalAlignment="Left">
                         <ComboBox.ItemTemplate>
                             <DataTemplate DataType="models:LanguageInfo"
@@ -174,7 +175,7 @@
                               ItemsSource="{Binding TargetLanguages}"
                               SelectedItem="{Binding SelectedTargetLanguage}"
                               SelectedValueBinding="{Binding Code}"
-                              Width="92"
+                              Width="116"
                               HorizontalAlignment="Right">
                         <ComboBox.ItemTemplate>
                             <DataTemplate DataType="models:LanguageInfo"
@@ -187,13 +188,13 @@
                 </Border>
 
                 <Border Grid.Row="5"
-                    Margin="4,0"
+                    Margin="8,0"
                     Background="#DCDCDC"
                     CornerRadius="5"
                     ClipToBounds="True">
                 <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="4"
-                      Margin="6,0"
+                      ColumnSpacing="8"
+                      Margin="10,0"
                       VerticalAlignment="Center">
                     <ComboBox Grid.Column="0"
                               Classes="provider-selector"
@@ -224,34 +225,34 @@
                           IsVisible="{Binding IsBusy}"
                           IsIndeterminate="True"
                           Height="2"
-                          Margin="4,2,4,0"
+                          Margin="8,0"
                           Foreground="#288B51" />
 
                 <ScrollViewer Grid.Row="7"
-                           Margin="4,0,4,4"
+                           Margin="8,0,8,8"
                            VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding TranslationResults}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:TranslationResult"
                                       x:DataType="models:TranslationResult">
-                            <Border Margin="0,0,0,6"
+                            <Border Margin="0,0,0,10"
                                     CornerRadius="5"
                                     ClipToBounds="True">
-                                <Grid RowDefinitions="24,Auto">
+                                <Grid RowDefinitions="32,Auto">
                                     <Border Grid.Row="0"
                                             Background="#DCDCDC">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
                                             <PathIcon Grid.Column="0"
                                                       Width="14"
                                                       Height="14"
-                                                      Margin="9,0,5,0"
+                                                      Margin="12,0,7,0"
                                                       Foreground="#17A34A"
                                                       Data="{StaticResource translate_regular}"
                                                       VerticalAlignment="Center" />
 
                                             <TextBlock Grid.Column="1"
                                                        Text="{Binding ProviderName}"
-                                                       FontSize="10"
+                                                       FontSize="11"
                                                        Foreground="#111111"
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis" />
@@ -261,7 +262,7 @@
                                                     Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).RemoveTranslationCommand}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip.Tip="移除此翻译源"
-                                                    Margin="0,2,2,0">
+                                                    Margin="0,4,6,4">
                                                 <PathIcon Width="10"
                                                           Height="10"
                                                           Data="{StaticResource dismiss_regular}" />
@@ -271,12 +272,12 @@
 
                                     <Border Grid.Row="1"
                                             Background="#E8E8E8"
-                                            MinHeight="40">
-                                        <Grid RowDefinitions="28,Auto">
+                                            MinHeight="72">
+                                        <Grid RowDefinitions="36,Auto">
                                             <Grid Grid.Row="0"
                                                   ColumnDefinitions="Auto,Auto,Auto,*"
-                                                  ColumnSpacing="5"
-                                                  Margin="6,0"
+                                                  ColumnSpacing="8"
+                                                  Margin="10,0"
                                                   VerticalAlignment="Center">
                                                 <Button Grid.Column="0"
                                                         Classes="icon-button compact"
@@ -303,7 +304,7 @@
                                                 <PathIcon Grid.Column="2"
                                                           Width="12"
                                                           Height="12"
-                                                          Margin="4,0"
+                                                          Margin="6,0"
                                                           Foreground="#171717"
                                                           Data="{StaticResource sparkles_regular}"
                                                           VerticalAlignment="Center" />
@@ -314,7 +315,7 @@
                                                             HorizontalAlignment="Right"
                                                             VerticalAlignment="Center"
                                                             IsVisible="{Binding IsLoading}">
-                                                    <ProgressBar Width="34"
+                                                    <ProgressBar Width="42"
                                                                  Height="2"
                                                                  IsIndeterminate="True"
                                                                  Foreground="#288B51" />

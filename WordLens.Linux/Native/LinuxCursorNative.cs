@@ -1,7 +1,6 @@
-using System;
 using System.Runtime.InteropServices;
 
-namespace WordLens.Native;
+namespace WordLens.Linux.Native;
 
 internal static partial class LinuxCursorNative
 {
