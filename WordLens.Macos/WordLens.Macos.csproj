@@ -11,8 +11,4 @@
         <ProjectReference Include="..\WordLens.Abstractions\WordLens.Abstractions.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Microsoft.Windows.CsWinRT" Version="3.0.0-preview.260319.2" />
-    </ItemGroup>
-
 </Project>

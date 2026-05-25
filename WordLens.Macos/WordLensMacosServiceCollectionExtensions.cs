@@ -9,6 +9,7 @@ public static class WordLensMacosServiceCollectionExtensions
     public static IServiceCollection AddWordLensMacos(this IServiceCollection services)
     {
         services.AddSingleton<ICursorPositionProvider, MacosCursorPositionProvider>();
+        services.AddSingleton<ILocalTtsBackend, MacosSayLocalTtsBackend>();
         services.AddSingleton<IStartupService, MacosStartupService>();
         return services;
     }

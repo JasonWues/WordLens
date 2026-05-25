@@ -17,6 +17,7 @@ public sealed class TtsService : ITtsService, IDisposable
     private readonly IAudioPlayerService _audioPlayer;
     private readonly EncryptionService _encryptionService;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly ILocalTtsBackend _localTtsBackend;
     private readonly ProxyAwareHttpClientFactory _httpClientFactory;
     private readonly ILogger<TtsService> _logger;
     private readonly ISettingsService _settingsService;
@@ -26,12 +27,14 @@ public sealed class TtsService : ITtsService, IDisposable
         ProxyAwareHttpClientFactory httpClientFactory,
         EncryptionService encryptionService,
         IAudioPlayerService audioPlayer,
+        ILocalTtsBackend localTtsBackend,
         ILogger<TtsService> logger)
     {
         _settingsService = settingsService;
         _httpClientFactory = httpClientFactory;
         _encryptionService = encryptionService;
         _audioPlayer = audioPlayer;
+        _localTtsBackend = localTtsBackend;
         _logger = logger;
     }
 
@@ -62,7 +65,11 @@ public sealed class TtsService : ITtsService, IDisposable
                     break;
 
                 case TtsProviderType.Local:
-                    _logger.ZLogWarning($"本地 TTS 源尚未接入平台朗读后端: {provider.Name}");
+                    await _localTtsBackend.SpeakAsync(
+                        text.Trim(),
+                        provider.Voice,
+                        provider.Speed,
+                        cancellationToken);
                     break;
 
                 default:
@@ -87,6 +94,7 @@ public sealed class TtsService : ITtsService, IDisposable
     public void Stop()
     {
         _audioPlayer.Stop();
+        _localTtsBackend.Stop();
     }
 
     public void Dispose()
