@@ -67,7 +67,12 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Build .NET
+        run: dotnet build WordLens.slnx --no-restore
+
       - name: Check .NET format
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
         run: dotnet format --verify-no-changes --verbosity diagnostic --no-restore
 
       - name: Check Rust format

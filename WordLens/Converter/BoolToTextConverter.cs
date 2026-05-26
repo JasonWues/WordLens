@@ -8,7 +8,7 @@ public static class BoolToTextConverter
         new((arg, para) =>
         {
             var paraList = para.Split('|');
-            
+
             if (arg) return paraList[0];
             return paraList[1];
         });

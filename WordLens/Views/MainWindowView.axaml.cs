@@ -15,17 +15,17 @@ public partial class MainWindowView : Window
         InitializeComponent();
 
         KeyDown += OnWindowKeyDown;
-        
+
         // 拦截窗口关闭事件，改为隐藏窗口
         Closing += OnWindowClosing;
-        
+
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         // 取消关闭操作
         e.Cancel = true;
-        
+
         // 隐藏窗口而不是关闭
         Hide();
     }

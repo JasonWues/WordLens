@@ -67,7 +67,7 @@ public class WindowManagerService : IWindowManagerService
                 if (_translationWindow == null)
                 {
                     _logger.ZLogInformation($"创建新的翻译窗口");
-                    
+
                     // 使用作用域创建 ViewModel（因为它是 Transient）
                     using var scope = _serviceProvider.CreateScope();
                     var viewModel = scope.ServiceProvider.GetRequiredService<PopupWindowViewModel>();
@@ -101,14 +101,14 @@ public class WindowManagerService : IWindowManagerService
                     ApplyTranslationWindowPosition(_translationWindow, popupConfig, false);
                     _translationWindow.Show();
                     _translationWindow.Activate();
-                    
+
                     // 执行翻译
                     _ = viewModel.TranslateAsync(CancellationToken.None);
                 }
                 else
                 {
                     _logger.ZLogInformation($"翻译窗口已存在，更新内容并激活");
-                    
+
                     // 更新翻译内容
                     if (_translationWindow.DataContext is PopupWindowViewModel vm)
                     {
@@ -144,7 +144,7 @@ public class WindowManagerService : IWindowManagerService
                 if (_settingsWindow == null)
                 {
                     _logger.ZLogInformation($"创建新的设置窗口");
-                    
+
                     var view = _serviceProvider.GetRequiredService<MainWindowView>();
                     var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
                     view.DataContext = viewModel;
@@ -167,14 +167,14 @@ public class WindowManagerService : IWindowManagerService
                     };
 
                     _settingsWindow.Show();
-                    
+
                     // 初始化设置
                     await viewModel.InitializeAsync();
                 }
                 else
                 {
                     _logger.ZLogInformation($"设置窗口已存在，激活");
-                    
+
                     // 激活窗口
                     ActivateWindow(_settingsWindow);
                 }
@@ -533,7 +533,7 @@ public class WindowManagerService : IWindowManagerService
 
             // 激活窗口到前台
             window.Activate();
-            
+
             // 确保窗口不是最小化状态
             if (window.WindowState == WindowState.Minimized)
             {

@@ -13,7 +13,7 @@ public partial class PopupWindowView : Window
     public PopupWindowView()
     {
         InitializeComponent();
-        
+
         // 拦截窗口关闭事件，改为隐藏窗口
         Closing += OnWindowClosing;
     }
@@ -22,7 +22,7 @@ public partial class PopupWindowView : Window
     {
         // 取消关闭操作
         e.Cancel = true;
-        
+
         // 隐藏窗口而不是关闭
         HideWindow();
     }
