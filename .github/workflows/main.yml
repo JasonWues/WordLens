@@ -105,15 +105,19 @@ jobs:
           - artifact: wordlens-windows-x64
             os: windows-2025
             rid: win-x64
+            framework: net11.0-windows10.0.19041.0
           - artifact: wordlens-linux-x64
             os: ubuntu-24.04
             rid: linux-x64
+            framework: net11.0
           - artifact: wordlens-macos-x64
             os: macos-15-intel
             rid: osx-x64
+            framework: net11.0
           - artifact: wordlens-macos-arm64
             os: macos-15
             rid: osx-arm64
+            framework: net11.0
 
     steps:
       - name: Checkout
@@ -172,7 +176,7 @@ jobs:
         run: dotnet restore WordLens/WordLens.csproj -r ${{ matrix.rid }}
 
       - name: Publish
-        run: dotnet publish WordLens/WordLens.csproj -c Release -r ${{ matrix.rid }} -o ./publish/${{ matrix.rid }} --no-restore
+        run: dotnet publish WordLens/WordLens.csproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} -o ./publish/${{ matrix.rid }} --no-restore
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

@@ -148,7 +148,7 @@ cargo build
 发布 Windows 版本示例：
 
 ```bash
-dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64
+dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.0 -r win-x64 -o ./publish/win-x64
 ```
 
 ### 使用步骤
@@ -394,7 +394,7 @@ cargo build
 Publish example for Windows:
 
 ```bash
-dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64
+dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.0 -r win-x64 -o ./publish/win-x64
 ```
 
 ### Usage
