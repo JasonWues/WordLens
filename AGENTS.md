@@ -2,36 +2,39 @@
 
 ## Project Structure & Module Organization
 
-WordLens is a .NET/Avalonia desktop application with shared UI code and platform-specific services. `WordLens/` contains startup code, AXAML views, view models, models, services, messages, converters, and assets. `WordLens.Abstractions/` contains shared contracts. `WordLens.Windows/`, `WordLens.Linux/`, and `WordLens.Macos/` contain platform adapters. `native/` is a Rust 2024 `cdylib` for screenshot and selection support.
+WordLens is a cross-platform desktop translation app built with Avalonia and a Rust native helper. The solution is `WordLens.slnx`.
 
-There is currently no dedicated test project. Add tests in a sibling project such as `WordLens.Tests/` and include it in `WordLens.slnx`.
+- `WordLens/`: main Avalonia app. UI files live in `Views/`, view models in `ViewModels/`, services in `Services/`, models in `Models/`, assets in `Assets/`, and provider code in `Providers/`.
+- `WordLens.Abstractions/`: shared service contracts and platform-neutral models.
+- `WordLens.Windows/`, `WordLens.Linux/`, `WordLens.Macos/`: platform-specific service implementations and native interop.
+- `WordLens.Test/`: xUnit v3 unit tests for platform-neutral logic.
+- `native/`: Rust `cdylib` crate used for screenshot and selected-text helpers.
+- `artifacts/`: generated build output; do not treat it as source.
 
 ## Build, Test, and Development Commands
 
-- `dotnet restore WordLens.slnx`: restores .NET dependencies.
-- `dotnet build WordLens.slnx -c Debug`: builds all projects; `WordLens.csproj` also runs `cargo build` for `native/`, so Rust and Cargo must be installed.
-- `dotnet run --project WordLens/WordLens.csproj -f net11.0-windows10.0.19041.0`: runs the Windows target locally; use `net11.0` for non-Windows targets.
-- `dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.0`: creates a release build with the configured AOT settings.
-- `dotnet format --verify-no-changes`: checks C# formatting.
-- `cargo fmt --manifest-path native/Cargo.toml --all -- --check` and `cargo clippy --manifest-path native/Cargo.toml -- -D warnings`: check Rust formatting and lints.
-- `cargo test --manifest-path native/Cargo.toml`: runs Rust tests.
+- `dotnet build`: builds the .NET solution and runs the MSBuild Rust build target.
+- `dotnet test WordLens.Test/WordLens.Test.csproj`: runs the .NET unit tests.
+- `dotnet run --project WordLens`: starts the desktop app locally.
+- `dotnet publish WordLens/WordLens.csproj -c Release -r win-x64 -o ./publish/win-x64`: creates Windows release output.
+- `cargo build` from `native/`: builds only the Rust helper library.
+- `dotnet format --verify-no-changes --verbosity diagnostic`: verifies C# formatting.
+- `cargo fmt --all -- --check` and `cargo clippy -- -D warnings`: verify Rust style and lints.
 
 ## Coding Style & Naming Conventions
 
-Use 4-space indentation for C# and Rust. Keep nullable annotations enabled and address warnings instead of suppressing them. C# types, view models, services, and AXAML views use `PascalCase`; interfaces use the existing `IServiceName` pattern. Match paired Avalonia files, for example `MainWindowView.axaml` and `MainWindowView.axaml.cs`. Prefer constructor injection through service abstractions instead of platform checks in UI code. Use compiled bindings with `x:DataType` where practical.
+Use 4-space indentation for C# and keep nullable annotations enabled. Follow existing Avalonia MVVM naming: `*View.axaml`, matching `*View.axaml.cs`, and `*ViewModel.cs`. Name service contracts as `I...Service` or platform backend interfaces, with implementations under `Services/Implementations/` or the matching platform project.
 
 ## Testing Guidelines
 
-When adding .NET tests, use xUnit or NUnit and name files after the unit under test, for example `SettingsServiceTests.cs`. Use descriptive test names like `SaveAsync_ValidSettings_PersistsFile`. Cover service behavior, serialization, hotkey configuration, and native interop boundaries before UI-only details.
+Unit tests live in `WordLens.Test/` and use xUnit v3. Name files after the unit under test, for example `OpenAIRequestArgumentsTests.cs`, and prefer behavior-focused test names. For UI or integration changes, also manually exercise the affected workflow: selected-text translation, OCR capture, settings persistence, popup placement, or TTS as applicable.
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short imperative summaries in either Chinese or English, such as `完善本地TTS` and `Add clipboard monitor and hotkey backends`. Keep the first line concise and focused on one change. Pull requests should describe behavior changes, list manual verification commands, link related issues, and include screenshots or screen recordings for visible UI changes.
+Recent history uses short imperative summaries in Chinese or English, for example `调整项目架构`, `Add clipboard monitor and hotkey backends`, and `Refactor Windows hotkey backend to Win32 API`.
+
+Pull requests should include a concise description, affected platforms, verification commands, and screenshots or recordings for visible UI changes. Link related issues when available and call out any configuration or migration steps.
 
 ## Security & Configuration Tips
 
-Do not commit API keys, local proxy values, generated user settings, or translation history databases. Keep platform-specific native calls inside the platform projects or `native/`, and expose them to the app through `WordLens.Abstractions/` contracts.
-
-## Agent-Specific Instructions
-
-Use Context7 MCP for library, framework, SDK, API, CLI, or cloud-service documentation questions. Skip it for refactoring, business logic debugging, and code review.
+Do not commit API keys, local model endpoints, user settings, database files, or generated native binaries. Keep OpenAI-compatible provider configuration local to the running app environment.
