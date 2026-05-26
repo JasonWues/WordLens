@@ -21,10 +21,12 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     private readonly IScreenshotService _screenshotService;
     private readonly IWindowManagerService _windowManager;
 
+#if DEBUG
     /// <summary>
-    ///     用于保存截图的临时目录
+    ///     Debug 构建用于保存 OCR 截图的临时目录
     /// </summary>
     private readonly string _tempScreenshotDir;
+#endif
 
     private WriteableBitmap? _screenBackground;
 
@@ -46,7 +48,9 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         _screenshotService = null!;
         _windowManager = null!;
         _logger = null!;
+#if DEBUG
         _tempScreenshotDir = string.Empty;
+#endif
     }
 
     public ScreenCaptureViewModel(
@@ -58,13 +62,15 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         _windowManager = windowManager;
         _logger = logger;
 
-        // 创建临时截图目录
+#if DEBUG
+        // Debug 构建保留 OCR 截图，便于排查识别效果；Release 不落盘。
         _tempScreenshotDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "WordLens",
             "Screenshots"
         );
         Directory.CreateDirectory(_tempScreenshotDir);
+#endif
 
         _logger.ZLogInformation($"屏幕捕获ViewModel初始化完成");
     }
@@ -193,19 +199,20 @@ public partial class ScreenCaptureViewModel : ViewModelBase
 
             _logger.ZLogInformation($"截图成功: {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
 
-            // 保存截图到临时文件
+#if DEBUG
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var filename = $"screenshot_{timestamp}.png";
             var filepath = Path.Combine(_tempScreenshotDir, filename);
 
             SaveBitmap(bitmap, filepath);
             _logger.ZLogInformation($"截图已保存: {filepath}");
+#endif
 
             _windowManager.ShowOcrResultWindow(bitmap);
         }
         catch (Exception ex)
         {
-            _logger.ZLogError(ex, $"截图或保存过程中发生错误");
+            _logger.ZLogError(ex, $"截图处理过程中发生错误");
         }
         finally
         {
@@ -303,6 +310,7 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         ScreenBackgroundBounds = new Rect();
     }
 
+#if DEBUG
     /// <summary>
     ///     保存位图到文件
     /// </summary>
@@ -320,6 +328,7 @@ public partial class ScreenCaptureViewModel : ViewModelBase
             throw;
         }
     }
+#endif
 
     /// <summary>
     ///     获取虚拟屏幕边界（用于多显示器）

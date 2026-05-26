@@ -42,7 +42,18 @@ jobs:
       - name: Install Linux native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxrandr-dev libxi-dev
+          sudo apt-get install -y \
+            pkg-config \
+            libclang-dev \
+            libdbus-1-dev \
+            libegl-dev \
+            libgbm-dev \
+            libpipewire-0.3-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcb1-dev \
+            libxi-dev \
+            libxrandr-dev
 
       - name: Cache NuGet
         uses: actions/cache@v5
@@ -123,7 +134,18 @@ jobs:
         if: matrix.rid == 'linux-x64'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxrandr-dev libxi-dev
+          sudo apt-get install -y \
+            pkg-config \
+            libclang-dev \
+            libdbus-1-dev \
+            libegl-dev \
+            libgbm-dev \
+            libpipewire-0.3-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcb1-dev \
+            libxi-dev \
+            libxrandr-dev
 
       - name: Cache NuGet
         uses: actions/cache@v5

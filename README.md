@@ -107,11 +107,29 @@ TTS 模型文件需要自行准备，应用不会内置模型。
 
 ### 构建要求
 
-- .NET 10 SDK
+- .NET 11 SDK
 - Rust toolchain
 - Windows / macOS / Linux
 
 项目构建时会通过 MSBuild 自动执行 `cargo build`，并把 native 动态库复制到输出目录。
+
+Linux 上构建 Rust native 模块需要安装截图和桌面集成相关的系统开发包。Debian / Ubuntu 示例：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  pkg-config \
+  libclang-dev \
+  libdbus-1-dev \
+  libegl-dev \
+  libgbm-dev \
+  libpipewire-0.3-dev \
+  libwayland-dev \
+  libx11-dev \
+  libxcb1-dev \
+  libxi-dev \
+  libxrandr-dev
+```
 
 ### 构建和运行
 
@@ -211,7 +229,7 @@ Rust crate 位于 `native/`，当前拆分为：
 - OCR 和翻译依赖 OpenAI 兼容接口，需要自行配置可用服务。
 - 本地 TTS 依赖 sherpa-onnx 兼容模型文件，需要自行下载和配置。
 - API Key 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
-- 项目目前没有独立测试项目。
+- 单元测试位于 `WordLens.Test/`。
 - Rust 格式化和 clippy 需要本机安装 `rustfmt` 和 `clippy` 组件。
 
 ### 开发建议
@@ -220,6 +238,7 @@ Rust crate 位于 `native/`，当前拆分为：
 
 ```bash
 dotnet build
+dotnet test WordLens.Test/WordLens.Test.csproj
 dotnet format --verify-no-changes --verbosity diagnostic
 cd native
 cargo build
@@ -334,11 +353,29 @@ TTS model files are not bundled and must be prepared locally.
 
 ### Requirements
 
-- .NET 10 SDK
+- .NET 11 SDK
 - Rust toolchain
 - Windows / macOS / Linux
 
 The C# project automatically runs `cargo build` through MSBuild and copies the native dynamic library to the output directory.
+
+Linux builds need native development packages for screenshot capture and desktop integration. Debian / Ubuntu example:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  pkg-config \
+  libclang-dev \
+  libdbus-1-dev \
+  libegl-dev \
+  libgbm-dev \
+  libpipewire-0.3-dev \
+  libwayland-dev \
+  libx11-dev \
+  libxcb1-dev \
+  libxi-dev \
+  libxrandr-dev
+```
 
 ### Build and Run
 
@@ -438,7 +475,7 @@ The Rust crate lives in `native/` and is split into:
 - OCR and translation depend on OpenAI-compatible APIs. You need to configure your own available services.
 - Local TTS depends on sherpa-onnx compatible model files. You need to download and configure them yourself.
 - API keys are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
-- There is no dedicated test project yet.
+- Unit tests live in `WordLens.Test/`.
 - Rust formatting and clippy checks require the `rustfmt` and `clippy` components.
 
 ### Development Checks
@@ -447,6 +484,7 @@ Recommended checks before submitting changes:
 
 ```bash
 dotnet build
+dotnet test WordLens.Test/WordLens.Test.csproj
 dotnet format --verify-no-changes --verbosity diagnostic
 cd native
 cargo build
