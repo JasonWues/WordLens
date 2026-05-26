@@ -43,11 +43,36 @@ public partial class ScreenCaptureWindow : Window
         Closing += OnWindowClosing;
 
         // 窗口加载完成后设置焦点
-        Opened += (s, e) =>
+        Opened += (_, _) => _captureCanvas?.Focus();
+    }
+
+    public (Rect Bounds, double Scale) GetCaptureOverlayGeometry()
+    {
+        var screens = Screens.All;
+        if (screens.Count == 0)
+            return (new Rect(0, 0, 1920, 1080), 1.0);
+
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
+
+        foreach (var screen in screens)
         {
-            if (DataContext is ScreenCaptureViewModel vm)
-                PrepareForCapture(vm.ScreenBackgroundBounds == default ? vm.GetVirtualScreenBounds() : vm.ScreenBackgroundBounds);
-        };
+            var bounds = screen.Bounds;
+            minX = Math.Min(minX, bounds.X);
+            minY = Math.Min(minY, bounds.Y);
+            maxX = Math.Max(maxX, bounds.X + bounds.Width);
+            maxY = Math.Max(maxY, bounds.Y + bounds.Height);
+        }
+
+        var anchorPoint = new PixelPoint(minX + 1, minY + 1);
+        var anchorScreen = Screens.ScreenFromPoint(anchorPoint) ?? Screens.Primary ?? screens[0];
+        var scale = double.IsFinite(anchorScreen.Scaling) && anchorScreen.Scaling > 0
+            ? anchorScreen.Scaling
+            : 1.0;
+
+        return (new Rect(minX, minY, (maxX - minX) / scale, (maxY - minY) / scale), scale);
     }
 
     public void PrepareForCapture(Rect bounds)
@@ -146,6 +171,7 @@ public partial class ScreenCaptureWindow : Window
             // 先隐藏遮罩，避免 OCR 截图包含半透明遮罩和选区边框。
             HideGuideLines();
             Hide();
+            await Task.Delay(75);
             await vm.CaptureSelectionAsync();
         }
         else

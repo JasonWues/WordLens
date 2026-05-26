@@ -3,9 +3,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
+using WordLens.Abstractions.Services;
 using WordLens.Services;
 using ZLogger;
 
@@ -20,6 +20,7 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     private readonly ILogger<ScreenCaptureViewModel> _logger;
     private readonly IScreenshotService _screenshotService;
     private readonly IWindowManagerService _windowManager;
+    private readonly ICursorPositionProvider _cursorPositionProvider;
 
 #if DEBUG
     /// <summary>
@@ -28,7 +29,10 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     private readonly string _tempScreenshotDir;
 #endif
 
-    private WriteableBitmap? _screenBackground;
+    private Point? _captureStartPoint;
+    private Point? _captureEndPoint;
+    private Point _captureOrigin;
+    private double _captureScale = 1.0;
 
     [ObservableProperty] private Point endPoint;
 
@@ -40,13 +44,12 @@ public partial class ScreenCaptureViewModel : ViewModelBase
 
     [ObservableProperty] private Point startPoint;
 
-    public Rect ScreenBackgroundBounds { get; private set; }
-
     public ScreenCaptureViewModel()
     {
         // 设计时构造函数
         _screenshotService = null!;
         _windowManager = null!;
+        _cursorPositionProvider = null!;
         _logger = null!;
 #if DEBUG
         _tempScreenshotDir = string.Empty;
@@ -56,10 +59,12 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     public ScreenCaptureViewModel(
         IScreenshotService screenshotService,
         IWindowManagerService windowManager,
+        ICursorPositionProvider cursorPositionProvider,
         ILogger<ScreenCaptureViewModel> logger)
     {
         _screenshotService = screenshotService;
         _windowManager = windowManager;
+        _cursorPositionProvider = cursorPositionProvider;
         _logger = logger;
 
 #if DEBUG
@@ -82,6 +87,8 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     {
         StartPoint = point;
         EndPoint = point;
+        _captureStartPoint = ToCapturePoint(point);
+        _captureEndPoint = _captureStartPoint;
         IsSelecting = true;
         UpdateSelectionRect();
         _logger.ZLogDebug($"开始选择区域: {point}");
@@ -95,6 +102,7 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         if (!IsSelecting) return;
 
         EndPoint = point;
+        _captureEndPoint = ToCapturePoint(point);
         UpdateSelectionRect();
     }
 
@@ -106,6 +114,7 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         if (!IsSelecting) return false;
 
         EndPoint = point;
+        _captureEndPoint = ToCapturePoint(point);
         IsSelecting = false;
         UpdateSelectionRect();
 
@@ -128,24 +137,14 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         await CaptureAndProcessAsync();
     }
 
-    public async Task<bool> PrepareCaptureAsync()
+    public Task<bool> PrepareCaptureAsync(Rect overlayBounds, double overlayScale)
     {
         ResetSelection();
-        ClearCapturedBackground();
+        _captureOrigin = new Point(overlayBounds.X, overlayBounds.Y);
+        _captureScale = double.IsFinite(overlayScale) && overlayScale > 0 ? overlayScale : 1.0;
 
-        ScreenBackgroundBounds = _screenshotService.GetVirtualScreenBounds();
-        _logger.ZLogInformation($"开始预捕获屏幕背景: {ScreenBackgroundBounds}");
-
-        var bitmap = await _screenshotService.CaptureAreaAsync(ScreenBackgroundBounds);
-        if (bitmap == null)
-        {
-            _logger.ZLogError($"预捕获屏幕背景失败");
-            return false;
-        }
-
-        _screenBackground = bitmap;
-        _logger.ZLogInformation($"预捕获屏幕背景成功: {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
-        return true;
+        _logger.ZLogInformation($"截图遮罩准备完成: Bounds={overlayBounds}, Scale={_captureScale}");
+        return Task.FromResult(true);
     }
 
     /// <summary>
@@ -160,7 +159,6 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     public void CancelCaptureSession()
     {
         ResetSelection();
-        ClearCapturedBackground();
         _logger.ZLogInformation($"取消截图会话");
     }
 
@@ -183,18 +181,25 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     /// <summary>
     ///     执行截图并处理
     /// </summary>
-    private Task CaptureAndProcessAsync()
+    private async Task CaptureAndProcessAsync()
     {
         try
         {
-            _logger.ZLogInformation($"开始截图: {SelectionRect}");
+            var captureRect = BuildCaptureRect();
+            if (captureRect.Width <= 0 || captureRect.Height <= 0)
+            {
+                _logger.ZLogError($"截图区域无效: {captureRect}");
+                return;
+            }
 
-            var bitmap = CropSelectionFromCapturedBackground();
+            _logger.ZLogInformation($"开始截图: Visual={SelectionRect}, Capture={captureRect}");
+
+            var bitmap = await _screenshotService.CaptureAreaAsync(captureRect);
 
             if (bitmap == null)
             {
-                _logger.ZLogError($"从预捕获背景裁剪截图失败");
-                return Task.CompletedTask;
+                _logger.ZLogError($"截图失败: {captureRect}");
+                return;
             }
 
             _logger.ZLogInformation($"截图成功: {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
@@ -214,84 +219,31 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         {
             _logger.ZLogError(ex, $"截图处理过程中发生错误");
         }
-        finally
-        {
-            ClearCapturedBackground();
-        }
-
-        return Task.CompletedTask;
     }
 
-    private WriteableBitmap? CropSelectionFromCapturedBackground()
+    private Rect BuildCaptureRect()
     {
-        if (_screenBackground == null)
-        {
-            _logger.ZLogError($"缺少预捕获屏幕背景，无法裁剪选区");
-            return null;
-        }
+        var start = _captureStartPoint ?? ToCapturePoint(StartPoint);
+        var end = _captureEndPoint ?? ToCapturePoint(EndPoint);
+        var left = Math.Min(start.X, end.X);
+        var top = Math.Min(start.Y, end.Y);
+        var right = Math.Max(start.X, end.X);
+        var bottom = Math.Max(start.Y, end.Y);
 
-        if (ScreenBackgroundBounds.Width <= 0 || ScreenBackgroundBounds.Height <= 0)
-        {
-            _logger.ZLogError($"预捕获屏幕边界无效: {ScreenBackgroundBounds}");
-            return null;
-        }
-
-        var left = Math.Clamp(SelectionRect.X, 0, ScreenBackgroundBounds.Width);
-        var top = Math.Clamp(SelectionRect.Y, 0, ScreenBackgroundBounds.Height);
-        var right = Math.Clamp(SelectionRect.Right, 0, ScreenBackgroundBounds.Width);
-        var bottom = Math.Clamp(SelectionRect.Bottom, 0, ScreenBackgroundBounds.Height);
-
-        if (right <= left || bottom <= top)
-        {
-            _logger.ZLogError($"选区不在预捕获屏幕范围内: {SelectionRect}");
-            return null;
-        }
-
-        return CropBitmap(_screenBackground, new Rect(left, top, right - left, bottom - top), ScreenBackgroundBounds);
+        return new Rect(left, top, right - left, bottom - top);
     }
 
-    private static unsafe WriteableBitmap? CropBitmap(
-        WriteableBitmap source,
-        Rect cropRect,
-        Rect sourceBounds)
+    private Point ToCapturePoint(Point point)
     {
-        var sourceWidth = source.PixelSize.Width;
-        var sourceHeight = source.PixelSize.Height;
-        if (sourceWidth <= 0 || sourceHeight <= 0)
-            return null;
-
-        var scaleX = sourceWidth / sourceBounds.Width;
-        var scaleY = sourceHeight / sourceBounds.Height;
-
-        var sourceLeft = Math.Clamp((int)Math.Floor(cropRect.X * scaleX), 0, sourceWidth - 1);
-        var sourceTop = Math.Clamp((int)Math.Floor(cropRect.Y * scaleY), 0, sourceHeight - 1);
-        var sourceRight = Math.Clamp((int)Math.Ceiling(cropRect.Right * scaleX), sourceLeft + 1, sourceWidth);
-        var sourceBottom = Math.Clamp((int)Math.Ceiling(cropRect.Bottom * scaleY), sourceTop + 1, sourceHeight);
-        var targetWidth = sourceRight - sourceLeft;
-        var targetHeight = sourceBottom - sourceTop;
-
-        var target = new WriteableBitmap(
-            new PixelSize(targetWidth, targetHeight),
-            new Vector(96, 96),
-            PixelFormat.Bgra8888,
-            AlphaFormat.Premul);
-
-        using var sourceBuffer = source.Lock();
-        using var targetBuffer = target.Lock();
-
-        const int bytesPerPixel = 4;
-        var bytesPerRow = targetWidth * bytesPerPixel;
-        var sourceBase = (byte*)sourceBuffer.Address.ToPointer();
-        var targetBase = (byte*)targetBuffer.Address.ToPointer();
-
-        for (var row = 0; row < targetHeight; row++)
+        if (OperatingSystem.IsWindows() &&
+            _cursorPositionProvider.TryGetCursorPosition(out var cursorPosition))
         {
-            var sourceRow = sourceBase + (sourceTop + row) * sourceBuffer.RowBytes + sourceLeft * bytesPerPixel;
-            var targetRow = targetBase + row * targetBuffer.RowBytes;
-            Buffer.MemoryCopy(sourceRow, targetRow, targetBuffer.RowBytes, bytesPerRow);
+            return new Point(cursorPosition.X, cursorPosition.Y);
         }
 
-        return target;
+        return new Point(
+            _captureOrigin.X + point.X * _captureScale,
+            _captureOrigin.Y + point.Y * _captureScale);
     }
 
     private void ResetSelection()
@@ -299,15 +251,10 @@ public partial class ScreenCaptureViewModel : ViewModelBase
         IsSelecting = false;
         StartPoint = new Point();
         EndPoint = new Point();
+        _captureStartPoint = null;
+        _captureEndPoint = null;
         SelectionRect = new Rect();
         SizeHint = string.Empty;
-    }
-
-    private void ClearCapturedBackground()
-    {
-        _screenBackground?.Dispose();
-        _screenBackground = null;
-        ScreenBackgroundBounds = new Rect();
     }
 
 #if DEBUG
@@ -330,11 +277,4 @@ public partial class ScreenCaptureViewModel : ViewModelBase
     }
 #endif
 
-    /// <summary>
-    ///     获取虚拟屏幕边界（用于多显示器）
-    /// </summary>
-    public Rect GetVirtualScreenBounds()
-    {
-        return _screenshotService.GetVirtualScreenBounds();
-    }
 }

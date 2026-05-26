@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -13,7 +12,7 @@ namespace WordLens.Infrastructure.Screenshot;
 /// <summary>
 ///     基于 Rust xcap 的跨平台截图服务实现
 /// </summary>
-public partial class XcapScreenshotService : IScreenshotService
+public class XcapScreenshotService : IScreenshotService
 {
     private readonly ILogger<XcapScreenshotService> _logger;
 
@@ -28,11 +27,12 @@ public partial class XcapScreenshotService : IScreenshotService
         {
             return await Task.Run(() =>
             {
-                var scale = GetCaptureScale();
-                var x = (int)Math.Round(area.X * scale);
-                var y = (int)Math.Round(area.Y * scale);
-                var width = (int)Math.Round(area.Width * scale);
-                var height = (int)Math.Round(area.Height * scale);
+                var x = (int)Math.Floor(area.X);
+                var y = (int)Math.Floor(area.Y);
+                var right = (int)Math.Ceiling(area.Right);
+                var bottom = (int)Math.Ceiling(area.Bottom);
+                var width = right - x;
+                var height = bottom - y;
 
                 if (width <= 0 || height <= 0)
                 {
@@ -62,12 +62,11 @@ public partial class XcapScreenshotService : IScreenshotService
         try
         {
             var bounds = ScreenshotNative.GetVirtualScreenBounds();
-            var scale = GetCaptureScale();
             return new Rect(
-                bounds.X / scale,
-                bounds.Y / scale,
-                bounds.Width / scale,
-                bounds.Height / scale);
+                bounds.X,
+                bounds.Y,
+                bounds.Width,
+                bounds.Height);
         }
         catch (Exception ex)
         {
@@ -114,35 +113,4 @@ public partial class XcapScreenshotService : IScreenshotService
             return null;
         }
     }
-
-    private static double GetCaptureScale()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return 1.0;
-        }
-
-        try
-        {
-            var hdc = GetDC(IntPtr.Zero);
-            var dpi = GetDeviceCaps(hdc, LOGPIXELSX);
-            ReleaseDC(IntPtr.Zero, hdc);
-            return dpi / 96.0;
-        }
-        catch
-        {
-            return 1.0;
-        }
-    }
-
-    private const int LOGPIXELSX = 88;
-
-    [LibraryImport("user32.dll")]
-    private static partial IntPtr GetDC(IntPtr hWnd);
-
-    [LibraryImport("user32.dll")]
-    private static partial int ReleaseDC(IntPtr hWnd, IntPtr hDC);
-
-    [LibraryImport("gdi32.dll")]
-    private static partial int GetDeviceCaps(IntPtr hdc, int nIndex);
 }

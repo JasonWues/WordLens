@@ -242,14 +242,15 @@ public class WindowManagerService : IWindowManagerService
                 return;
             }
 
-            var prepared = await viewModel.PrepareCaptureAsync();
+            var (overlayBounds, overlayScale) = captureWindow.GetCaptureOverlayGeometry();
+            var prepared = await viewModel.PrepareCaptureAsync(overlayBounds, overlayScale);
             if (!prepared)
             {
-                _logger.ZLogError($"截图窗口启动前预捕获屏幕背景失败");
+                _logger.ZLogError($"截图窗口启动前准备遮罩失败");
                 return;
             }
 
-            captureWindow.PrepareForCapture(viewModel.ScreenBackgroundBounds);
+            captureWindow.PrepareForCapture(overlayBounds);
             captureWindow.Show();
             captureWindow.Activate();
         }
