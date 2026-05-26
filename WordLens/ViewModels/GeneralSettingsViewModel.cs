@@ -5,10 +5,10 @@ using CommunityToolkit.Mvvm.Messaging;
 using SharpHook.Data;
 using WordLens.Abstractions.Models;
 using WordLens.Abstractions.Services;
+using WordLens.Infrastructure.Avalonia;
 using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
-using WordLens.Services.Implementations;
 using WordLens.Util;
 
 namespace WordLens.ViewModels;

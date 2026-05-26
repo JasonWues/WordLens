@@ -2,7 +2,6 @@ using Windows.Foundation;
 using Windows.Media.SpeechSynthesis;
 using Windows.Storage.Streams;
 using WordLens.Abstractions.Services;
-using WordLens.Services;
 
 namespace WordLens.Windows.Services.Implementations;
 

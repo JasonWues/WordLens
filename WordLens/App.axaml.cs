@@ -11,9 +11,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using SharpHook;
 using WordLens.Abstractions.Services;
+using WordLens.Infrastructure.Avalonia;
+using WordLens.Infrastructure.Http;
+using WordLens.Infrastructure.Screenshot;
+using WordLens.Infrastructure.Security;
+using WordLens.Providers.OpenAI;
 using WordLens.Services;
 using WordLens.Services.Implementations;
-using WordLens.Services.Implementations.Screenshot;
 using WordLens.ViewModels;
 using WordLens.Views;
 #if WINDOWS

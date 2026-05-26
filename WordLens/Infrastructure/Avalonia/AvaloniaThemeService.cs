@@ -2,7 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Semi.Avalonia;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Infrastructure.Avalonia;
 
 public sealed class AvaloniaThemeService
 {

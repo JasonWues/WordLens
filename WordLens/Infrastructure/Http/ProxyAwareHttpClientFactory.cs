@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using WordLens.Models;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Infrastructure.Http;
 
 public sealed class ProxyAwareHttpClientFactory : IDisposable
 {

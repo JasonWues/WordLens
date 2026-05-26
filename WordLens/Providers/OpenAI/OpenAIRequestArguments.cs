@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Providers.OpenAI;
 
 public static class OpenAIRequestArguments
 {

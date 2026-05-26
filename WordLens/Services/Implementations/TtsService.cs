@@ -8,7 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Services;
+using WordLens.Infrastructure.Http;
+using WordLens.Infrastructure.Security;
 using WordLens.Models;
+using WordLens.Providers.OpenAI;
 using ZLogger;
 
 namespace WordLens.Services.Implementations;

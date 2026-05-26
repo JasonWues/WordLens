@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
+using WordLens.Services;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Infrastructure.Avalonia;
 
 public class AvaloniaClipboardService : IClipboardService
 {

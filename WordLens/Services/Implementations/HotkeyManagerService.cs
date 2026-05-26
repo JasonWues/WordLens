@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Models;
+using WordLens.Abstractions.Services;
 using WordLens.Messages;
 using WordLens.Models;
 using ZLogger;

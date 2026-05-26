@@ -9,8 +9,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Sortable.Avalonia;
+using WordLens.Infrastructure.Security;
 using WordLens.Models;
-using WordLens.Services.Implementations;
+using WordLens.Providers.OpenAI;
 using ZLogger;
 
 namespace WordLens.ViewModels;

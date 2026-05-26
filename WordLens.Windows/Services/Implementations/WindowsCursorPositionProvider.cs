@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
 using Windows.Win32;
 using WordLens.Abstractions.Services;
-using WordLens.Services;
 using ZLogger;
 
 namespace WordLens.Windows.Services.Implementations;

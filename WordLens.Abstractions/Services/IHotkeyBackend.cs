@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using WordLens.Abstractions.Models;
 
-namespace WordLens.Services;
+namespace WordLens.Abstractions.Services;
 
 public sealed record HotkeyRegistration(int Id, string Name, HotkeyConfig Config);
 

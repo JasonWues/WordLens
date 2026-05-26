@@ -6,8 +6,9 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Microsoft.Extensions.Logging;
 using WordLens.Native;
+using WordLens.Services;
 
-namespace WordLens.Services.Implementations.Screenshot;
+namespace WordLens.Infrastructure.Screenshot;
 
 /// <summary>
 ///     基于 Rust xcap 的跨平台截图服务实现

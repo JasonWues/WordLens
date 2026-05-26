@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using WordLens.Abstractions.Services;
-using WordLens.Services;
 
 namespace WordLens.Macos.Services.Implementations;
 

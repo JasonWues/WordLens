@@ -9,7 +9,12 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using WordLens.Features.Ocr;
+using WordLens.Features.Prompts;
+using WordLens.Infrastructure.Http;
+using WordLens.Infrastructure.Security;
 using WordLens.Models;
+using WordLens.Providers.OpenAI;
 using ZLogger;
 
 namespace WordLens.Services.Implementations;

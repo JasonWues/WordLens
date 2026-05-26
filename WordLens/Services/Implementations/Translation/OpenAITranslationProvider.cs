@@ -8,8 +8,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using WordLens.Features.Prompts;
 using WordLens.Models;
-using WordLens.Services.Implementations;
+using WordLens.Providers.OpenAI;
 
 namespace WordLens.Services.Implementations.Translation;
 

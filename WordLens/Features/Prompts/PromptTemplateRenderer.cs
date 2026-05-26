@@ -1,4 +1,4 @@
-namespace WordLens.Services.Implementations;
+namespace WordLens.Features.Prompts;
 
 internal static class PromptTemplateRenderer
 {

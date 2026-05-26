@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using WordLens.Infrastructure.Http;
 using WordLens.Models;
 
 namespace WordLens.Services.Implementations;

@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Infrastructure.Security;
 
 /// <summary>
 /// 加密服务实现

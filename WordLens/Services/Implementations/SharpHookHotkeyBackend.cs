@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SharpHook;
 using WordLens.Abstractions.Models;
+using WordLens.Abstractions.Services;
 using WordLens.Models;
 using ZLogger;
 

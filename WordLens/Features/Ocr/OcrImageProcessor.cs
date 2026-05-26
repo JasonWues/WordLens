@@ -2,7 +2,7 @@ using System;
 using System.Buffers;
 using SkiaSharp;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Features.Ocr;
 
 internal static class OcrImageProcessor
 {

@@ -5,8 +5,8 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sortable.Avalonia;
+using WordLens.Infrastructure.Security;
 using WordLens.Models;
-using WordLens.Services.Implementations;
 
 namespace WordLens.ViewModels;
 

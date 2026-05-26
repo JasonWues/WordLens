@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using WordLens.Abstractions.Services;
-using WordLens.Services;
 using WordLens.Windows.Services.Implementations;
 
 namespace WordLens.Windows;

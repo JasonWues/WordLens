@@ -7,10 +7,11 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using WordLens.Infrastructure.Http;
 using WordLens.Models;
 using ZLogger;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Providers.OpenAI;
 
 /// <summary>
 ///     OpenAI模型提供服务实现

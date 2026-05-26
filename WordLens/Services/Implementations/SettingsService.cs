@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Models;
+using WordLens.Infrastructure.Security;
 using WordLens.Models;
 using ZLogger;
 

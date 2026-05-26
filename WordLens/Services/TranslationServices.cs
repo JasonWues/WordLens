@@ -8,8 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
+using WordLens.Infrastructure.Http;
+using WordLens.Infrastructure.Security;
 using WordLens.Models;
-using WordLens.Services.Implementations;
 using WordLens.Services.Implementations.Translation;
 using ZLogger;
 

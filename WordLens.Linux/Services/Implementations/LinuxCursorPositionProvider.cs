@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Services;
 using WordLens.Linux.Native;
-using WordLens.Services;
 
 namespace WordLens.Linux.Services.Implementations;
 

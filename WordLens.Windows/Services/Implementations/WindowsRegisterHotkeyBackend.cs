@@ -14,7 +14,7 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using WordLens.Abstractions.Models;
-using WordLens.Services;
+using WordLens.Abstractions.Services;
 using ZLogger;
 
 namespace WordLens.Windows.Services.Implementations;

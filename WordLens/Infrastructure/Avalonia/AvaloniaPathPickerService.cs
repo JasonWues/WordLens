@@ -8,7 +8,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using WordLens.Services;
 
-namespace WordLens.Services.Implementations;
+namespace WordLens.Infrastructure.Avalonia;
 
 public sealed class AvaloniaPathPickerService : IPathPickerService
 {

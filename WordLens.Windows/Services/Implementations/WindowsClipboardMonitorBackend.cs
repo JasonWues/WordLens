@@ -10,7 +10,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Services;
-using WordLens.Services;
 using ZLogger;
 
 namespace WordLens.Windows.Services.Implementations;
