@@ -175,6 +175,43 @@ public class SettingsService : ISettingsService
             needsSave = true;
         }
 
+        if (OperatingSystem.IsWindows() &&
+            settings.OcrProviders.All(p => p.Type != ProviderType.Local))
+        {
+            settings.OcrProviders.Add(AppSettings.CreateDefaultLocalOcrProvider());
+            needsSave = true;
+        }
+
+        foreach (var provider in settings.OcrProviders)
+        {
+            if (!Enum.IsDefined(provider.Type))
+            {
+                provider.Type = ProviderType.OpenAI;
+                needsSave = true;
+            }
+
+            if (provider.Type != ProviderType.Local)
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(provider.BaseUrl))
+            {
+                provider.BaseUrl = string.Empty;
+                needsSave = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(provider.Model))
+            {
+                provider.Model = string.Empty;
+                needsSave = true;
+            }
+
+            if (provider.AllowManualModelInput)
+            {
+                provider.AllowManualModelInput = false;
+                needsSave = true;
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(settings.SelectedOcrProvider) ||
             settings.OcrProviders.All(p => p.Name != settings.SelectedOcrProvider))
         {

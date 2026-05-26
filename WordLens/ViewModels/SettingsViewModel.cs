@@ -199,6 +199,8 @@ public partial class SettingsViewModel : ViewModelBase
     private void OnProviderPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ProviderConfig.AvailableModels) ||
+            e.PropertyName == nameof(ProviderConfig.TypeDisplayName) ||
+            e.PropertyName == nameof(ProviderConfig.Summary) ||
             e.PropertyName == nameof(TtsProviderConfig.TypeDisplayName) ||
             e.PropertyName == nameof(TtsProviderConfig.Summary))
             return;
@@ -234,6 +236,13 @@ public partial class SettingsViewModel : ViewModelBase
             return propertyName is
                 nameof(TtsSettingsViewModel.IsSelectedTtsProviderLocal) or
                 nameof(TtsSettingsViewModel.IsSelectedTtsProviderLlm);
+        }
+
+        if (ReferenceEquals(sender, OcrSettings))
+        {
+            return propertyName is
+                nameof(OcrSettingsViewModel.IsSelectedOcrProviderOpenAI) or
+                nameof(OcrSettingsViewModel.IsSelectedOcrProviderLocal);
         }
 
         return false;

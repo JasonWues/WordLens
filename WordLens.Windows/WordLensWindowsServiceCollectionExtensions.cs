@@ -12,6 +12,7 @@ public static class WordLensWindowsServiceCollectionExtensions
         services.AddSingleton<IClipboardMonitorBackend, WindowsClipboardMonitorBackend>();
         services.AddSingleton<ICursorPositionProvider, WindowsCursorPositionProvider>();
         services.AddSingleton<ILocalTtsBackend, WindowsWinRTLocalTtsBackend>();
+        services.AddSingleton<ILocalOcrBackend, WindowsOcrBackend>();
         services.AddSingleton<IStartupService, WindowsStartupService>();
         return services;
     }

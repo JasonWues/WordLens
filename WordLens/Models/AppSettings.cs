@@ -74,6 +74,22 @@ public class AppSettings
         };
     }
 
+    public static ProviderConfig CreateDefaultLocalOcrProvider()
+    {
+        return new ProviderConfig
+        {
+            Name = "Windows OCR",
+            Type = ProviderType.Local,
+            IsEnabled = true,
+            AllowManualModelInput = false,
+            BaseUrl = string.Empty,
+            ApiKey = null,
+            Model = string.Empty,
+            RequestArguments = string.Empty,
+            UserPromptTemplate = string.Empty
+        };
+    }
+
     public static TtsProviderConfig CreateDefaultTtsProvider()
     {
         return new TtsProviderConfig
@@ -109,7 +125,8 @@ public class TranslationPopupConfig
 public enum ProviderType
 {
     OpenAI,
-    DeepL
+    DeepL,
+    Local
 }
 
 public class ProviderConfig : ObservableObject
@@ -135,13 +152,41 @@ public class ProviderConfig : ObservableObject
     public ProviderType Type
     {
         get => _type;
-        set => SetProperty(ref _type, value);
+        set
+        {
+            if (SetProperty(ref _type, value))
+            {
+                OnPropertyChanged(nameof(TypeDisplayName));
+                OnPropertyChanged(nameof(Summary));
+            }
+        }
     }
+
+    [JsonIgnore]
+    public string TypeDisplayName => Type switch
+    {
+        ProviderType.OpenAI => "OpenAI 兼容",
+        ProviderType.DeepL => "DeepL",
+        ProviderType.Local => "本地",
+        _ => Type.ToString()
+    };
+
+    [JsonIgnore]
+    public string Summary => Type switch
+    {
+        ProviderType.Local => "Windows 系统 OCR",
+        ProviderType.DeepL => BaseUrl,
+        _ => Model
+    };
 
     public string BaseUrl
     {
         get => _baseUrl;
-        set => SetProperty(ref _baseUrl, value);
+        set
+        {
+            if (SetProperty(ref _baseUrl, value))
+                OnPropertyChanged(nameof(Summary));
+        }
     }
 
     /// <summary>
@@ -156,7 +201,11 @@ public class ProviderConfig : ObservableObject
     public string Model
     {
         get => _model;
-        set => SetProperty(ref _model, value);
+        set
+        {
+            if (SetProperty(ref _model, value))
+                OnPropertyChanged(nameof(Summary));
+        }
     }
 
     public bool IsEnabled

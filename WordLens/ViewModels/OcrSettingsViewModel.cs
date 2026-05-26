@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +13,8 @@ namespace WordLens.ViewModels;
 
 public partial class OcrSettingsViewModel : ViewModelBase
 {
+    private const string OpenAIDefaultBaseUrl = "https://api.openai.com";
+
     private readonly EncryptionService _encryptionService;
 
     [ObservableProperty] private ObservableCollection<ProviderConfig> ocrProviders = new();
@@ -21,6 +24,16 @@ public partial class OcrSettingsViewModel : ViewModelBase
     {
         _encryptionService = encryptionService;
     }
+
+    public List<ProviderTypeOption> AvailableOcrProviderTypes { get; } = new()
+    {
+        new ProviderTypeOption(ProviderType.OpenAI, "OpenAI 兼容"),
+        new ProviderTypeOption(ProviderType.Local, "本地")
+    };
+
+    public bool IsSelectedOcrProviderOpenAI => SelectedOcrProvider?.Type == ProviderType.OpenAI;
+
+    public bool IsSelectedOcrProviderLocal => SelectedOcrProvider?.Type == ProviderType.Local;
 
     public void Load(AppSettings settings)
     {
@@ -51,7 +64,7 @@ public partial class OcrSettingsViewModel : ViewModelBase
         {
             Name = $"新OCR源 {OcrProviders.Count + 1}",
             Type = ProviderType.OpenAI,
-            BaseUrl = "https://api.openai.com",
+            BaseUrl = OpenAIDefaultBaseUrl,
             Model = "gpt-4o-mini",
             RequestArguments = string.Empty,
             UserPromptTemplate = string.Empty
@@ -99,6 +112,57 @@ public partial class OcrSettingsViewModel : ViewModelBase
             UserPromptTemplate = provider.UserPromptTemplate,
             AllowManualModelInput = provider.AllowManualModelInput
         };
+    }
+
+    partial void OnSelectedOcrProviderChanged(ProviderConfig? value)
+    {
+        if (value != null)
+            value.PropertyChanged += OnSelectedOcrProviderPropertyChanged;
+
+        NotifySelectedOcrProviderTypeProperties();
+    }
+
+    partial void OnSelectedOcrProviderChanging(ProviderConfig? oldValue, ProviderConfig? newValue)
+    {
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnSelectedOcrProviderPropertyChanged;
+    }
+
+    private void OnSelectedOcrProviderPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(ProviderConfig.Type))
+            return;
+
+        if (sender is ProviderConfig provider)
+            ApplyProviderTypeDefaults(provider);
+
+        NotifySelectedOcrProviderTypeProperties();
+    }
+
+    private void NotifySelectedOcrProviderTypeProperties()
+    {
+        OnPropertyChanged(nameof(IsSelectedOcrProviderOpenAI));
+        OnPropertyChanged(nameof(IsSelectedOcrProviderLocal));
+    }
+
+    private static void ApplyProviderTypeDefaults(ProviderConfig provider)
+    {
+        switch (provider.Type)
+        {
+            case ProviderType.OpenAI:
+                if (string.IsNullOrWhiteSpace(provider.BaseUrl))
+                    provider.BaseUrl = OpenAIDefaultBaseUrl;
+                if (string.IsNullOrWhiteSpace(provider.Model))
+                    provider.Model = "gpt-4o-mini";
+                provider.AllowManualModelInput = true;
+                break;
+
+            case ProviderType.Local:
+                provider.BaseUrl = string.Empty;
+                provider.Model = string.Empty;
+                provider.AllowManualModelInput = false;
+                break;
+        }
     }
 
     private static ProviderConfig CloneProviderForEditing(

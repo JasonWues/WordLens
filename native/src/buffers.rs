@@ -53,11 +53,17 @@ impl VirtualScreenBounds {
     }
 }
 
-pub(crate) fn free_byte_allocation(data: *mut u8, len: usize, capacity: usize) {
+/// # Safety
+///
+/// `data`, `len`, and `capacity` must come from a `Vec<u8>` allocation that
+/// was transferred out of this module by `ScreenshotBuffer::from_vec`, and the
+/// allocation must not have been freed already.
+pub(crate) unsafe fn free_byte_allocation(data: *mut u8, len: usize, capacity: usize) {
     if data.is_null() {
         return;
     }
 
+    // SAFETY: The caller guarantees that the raw parts belong to the original Vec allocation.
     unsafe {
         let _ = Vec::from_raw_parts(data, len, capacity);
     }
@@ -78,7 +84,9 @@ mod tests {
         assert_eq!(buffer.height, 2);
         assert_eq!(buffer.stride, 4);
 
-        free_byte_allocation(buffer.data, buffer.len, buffer.capacity);
+        unsafe {
+            free_byte_allocation(buffer.data, buffer.len, buffer.capacity);
+        }
     }
 
     #[test]
@@ -93,6 +101,8 @@ mod tests {
 
     #[test]
     fn free_byte_allocation_accepts_null() {
-        free_byte_allocation(std::ptr::null_mut(), 0, 0);
+        unsafe {
+            free_byte_allocation(std::ptr::null_mut(), 0, 0);
+        }
     }
 }

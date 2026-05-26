@@ -118,6 +118,7 @@ public class App : Application
         services.AddSingleton<IPathPickerService, AvaloniaPathPickerService>();
         services.AddSingleton<IAudioPlayerService, SoundFlowAudioPlayerService>();
         services.TryAddSingleton<ILocalTtsBackend, UnsupportedLocalTtsBackend>();
+        services.TryAddSingleton<ILocalOcrBackend, UnsupportedLocalOcrBackend>();
         services.AddSingleton<ITtsService, TtsService>();
         services.AddSingleton<OpenAIModelProviderService>();
         services.AddSingleton<ISettingsService, SettingsService>();

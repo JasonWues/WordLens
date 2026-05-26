@@ -12,8 +12,16 @@ pub extern "C" fn get_selection_text() -> *mut std::ffi::c_char {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn free_c_string(ptr: *mut std::ffi::c_char) {
-    error::free_c_string(ptr);
+/// # Safety
+///
+/// `ptr` must be null or a pointer previously returned by this library from
+/// `get_selection_text` or `get_last_native_error`. It must not be freed more
+/// than once.
+pub unsafe extern "C" fn free_c_string(ptr: *mut std::ffi::c_char) {
+    // SAFETY: The caller upholds the ownership contract documented above.
+    unsafe {
+        error::free_c_string(ptr);
+    }
 }
 
 #[unsafe(no_mangle)]
@@ -22,7 +30,11 @@ pub extern "C" fn get_last_native_error() -> *mut std::ffi::c_char {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn capture_screen_region(
+/// # Safety
+///
+/// `out_buffer` must be a valid, writable pointer to a `ScreenshotBuffer` for
+/// the duration of this call.
+pub unsafe extern "C" fn capture_screen_region(
     x: i32,
     y: i32,
     width: u32,
@@ -34,12 +46,14 @@ pub extern "C" fn capture_screen_region(
         return -1;
     }
 
+    // SAFETY: `out_buffer` was checked for null and the caller guarantees it is writable.
     unsafe {
         *out_buffer = ScreenshotBuffer::empty();
     }
 
     match std::panic::catch_unwind(|| screenshot::capture_region(x, y, width, height)) {
         Ok(Ok(buffer)) => {
+            // SAFETY: `out_buffer` was checked for null and the caller guarantees it is writable.
             unsafe {
                 *out_buffer = buffer;
             }
@@ -58,12 +72,24 @@ pub extern "C" fn capture_screen_region(
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn free_screenshot_buffer(data: *mut u8, len: usize, capacity: usize) {
-    buffers::free_byte_allocation(data, len, capacity);
+/// # Safety
+///
+/// `data`, `len`, and `capacity` must match a buffer previously returned by
+/// this library in `ScreenshotBuffer`. The buffer must not be freed more than
+/// once.
+pub unsafe extern "C" fn free_screenshot_buffer(data: *mut u8, len: usize, capacity: usize) {
+    // SAFETY: The caller upholds the allocation ownership contract documented above.
+    unsafe {
+        buffers::free_byte_allocation(data, len, capacity);
+    }
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn get_virtual_screen_bounds(out_bounds: *mut VirtualScreenBounds) -> i32 {
+/// # Safety
+///
+/// `out_bounds` must be a valid, writable pointer to a `VirtualScreenBounds`
+/// for the duration of this call.
+pub unsafe extern "C" fn get_virtual_screen_bounds(out_bounds: *mut VirtualScreenBounds) -> i32 {
     if out_bounds.is_null() {
         set_last_error("Output bounds pointer is null");
         return -1;
@@ -71,6 +97,7 @@ pub extern "C" fn get_virtual_screen_bounds(out_bounds: *mut VirtualScreenBounds
 
     match std::panic::catch_unwind(screenshot::virtual_screen_bounds) {
         Ok(Ok(bounds)) => {
+            // SAFETY: `out_bounds` was checked for null and the caller guarantees it is writable.
             unsafe {
                 *out_bounds = bounds;
             }

@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using WordLens.Abstractions.Services;
 using WordLens.Features.Ocr;
 using WordLens.Features.Prompts;
 using WordLens.Infrastructure.Http;
@@ -24,17 +25,20 @@ public class OpenAIOcrService : IOcrService
     private readonly EncryptionService _encryptionService;
     private readonly ILogger<OpenAIOcrService> _logger;
     private readonly ProxyAwareHttpClientFactory _httpClientFactory;
+    private readonly ILocalOcrBackend _localOcrBackend;
     private readonly ISettingsService _settingsService;
 
     public OpenAIOcrService(
         ISettingsService settingsService,
         ProxyAwareHttpClientFactory httpClientFactory,
         EncryptionService encryptionService,
+        ILocalOcrBackend localOcrBackend,
         ILogger<OpenAIOcrService> logger)
     {
         _settingsService = settingsService;
         _httpClientFactory = httpClientFactory;
         _encryptionService = encryptionService;
+        _localOcrBackend = localOcrBackend;
         _logger = logger;
     }
 
@@ -54,6 +58,9 @@ public class OpenAIOcrService : IOcrService
             _logger.ZLogWarning($"OCR源未启用: {provider.Name}");
             return null;
         }
+
+        if (provider.Type == ProviderType.Local)
+            return await RecognizeWithLocalBackendAsync(bitmap, languageCode, provider);
 
         if (string.IsNullOrWhiteSpace(provider.BaseUrl))
             throw new InvalidOperationException("OCR API URL不能为空");
@@ -136,15 +143,44 @@ public class OpenAIOcrService : IOcrService
     {
         var settings = await _settingsService.LoadAsync();
         var provider = SelectOcrProvider(settings);
+        if (provider?.Type == ProviderType.Local)
+            return provider.IsEnabled && _localOcrBackend.IsSupported;
+
         return provider != null &&
                provider.IsEnabled &&
                !string.IsNullOrWhiteSpace(provider.BaseUrl) &&
                !string.IsNullOrWhiteSpace(provider.Model);
     }
 
-    public Task<string[]> GetSupportedLanguagesAsync()
+    public async Task<string[]> GetSupportedLanguagesAsync()
     {
-        return Task.FromResult(new[] { "auto", "zh-CN", "en-US", "ja-JP", "ko-KR" });
+        var settings = await _settingsService.LoadAsync();
+        var provider = SelectOcrProvider(settings);
+        if (provider?.Type == ProviderType.Local && _localOcrBackend.IsSupported)
+            return await _localOcrBackend.GetSupportedLanguagesAsync();
+
+        return new[] { "auto", "zh-CN", "en-US", "ja-JP", "ko-KR" };
+    }
+
+    private async Task<string?> RecognizeWithLocalBackendAsync(
+        WriteableBitmap bitmap,
+        string languageCode,
+        ProviderConfig provider)
+    {
+        if (!_localOcrBackend.IsSupported)
+            throw new PlatformNotSupportedException("当前平台不可用本地 OCR。");
+
+        var pngBytes = CreatePngBytes(bitmap);
+        _logger.ZLogDebug($"开始本地 OCR 识别，源: {provider.Name}，PNG大小: {pngBytes.Length} bytes");
+        var text = await _localOcrBackend.RecognizePngAsync(pngBytes, languageCode);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _logger.ZLogWarning($"本地 OCR 返回空文本");
+            return null;
+        }
+
+        _logger.ZLogInformation($"本地 OCR 识别成功，文本长度: {text.Length}");
+        return text.Trim();
     }
 
     private string CreateOcrPngDataUrl(WriteableBitmap bitmap)
@@ -170,10 +206,15 @@ public class OpenAIOcrService : IOcrService
 
     private static string CreatePngDataUrl(WriteableBitmap bitmap)
     {
+        var base64 = Convert.ToBase64String(CreatePngBytes(bitmap));
+        return $"data:image/png;base64,{base64}";
+    }
+
+    private static byte[] CreatePngBytes(WriteableBitmap bitmap)
+    {
         using var stream = new MemoryStream();
         bitmap.Save(stream);
-        var base64 = Convert.ToBase64String(stream.ToArray());
-        return $"data:image/png;base64,{base64}";
+        return stream.ToArray();
     }
 
     private static Uri BuildChatCompletionsUri(string configuredUrl)

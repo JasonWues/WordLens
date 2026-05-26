@@ -35,6 +35,21 @@ public class AppSettingsTests
     }
 
     [Fact]
+    public void CreateDefaultLocalOcrProvider_ReturnsWindowsLocalProvider()
+    {
+        var provider = AppSettings.CreateDefaultLocalOcrProvider();
+
+        Assert.Equal("Windows OCR", provider.Name);
+        Assert.Equal(ProviderType.Local, provider.Type);
+        Assert.True(provider.IsEnabled);
+        Assert.False(provider.AllowManualModelInput);
+        Assert.Equal(string.Empty, provider.BaseUrl);
+        Assert.Equal(string.Empty, provider.Model);
+        Assert.Equal("本地", provider.TypeDisplayName);
+        Assert.Equal("Windows 系统 OCR", provider.Summary);
+    }
+
+    [Fact]
     public void TtsProviderConfig_Summary_UsesModelForLlmAndVoiceForLocal()
     {
         var provider = new TtsProviderConfig

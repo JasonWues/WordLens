@@ -25,11 +25,16 @@ pub(crate) fn string_to_c_ptr(text: String) -> *mut c_char {
     }
 }
 
-pub(crate) fn free_c_string(ptr: *mut c_char) {
+/// # Safety
+///
+/// `ptr` must be null or a pointer returned by `CString::into_raw` from this
+/// module, and it must not have been freed already.
+pub(crate) unsafe fn free_c_string(ptr: *mut c_char) {
     if ptr.is_null() {
         return;
     }
 
+    // SAFETY: The caller guarantees that `ptr` came from `CString::into_raw`.
     unsafe {
         let _ = CString::from_raw(ptr);
     }
@@ -53,7 +58,9 @@ mod tests {
         let text = unsafe { CStr::from_ptr(ptr) }
             .to_string_lossy()
             .into_owned();
-        free_c_string(ptr);
+        unsafe {
+            free_c_string(ptr);
+        }
         text
     }
 
@@ -78,6 +85,8 @@ mod tests {
 
     #[test]
     fn free_c_string_accepts_null() {
-        free_c_string(std::ptr::null_mut());
+        unsafe {
+            free_c_string(std::ptr::null_mut());
+        }
     }
 }
