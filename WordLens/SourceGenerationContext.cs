@@ -11,6 +11,8 @@ namespace WordLens;
 [JsonSerializable(typeof(TtsSpeechRequest))]
 [JsonSerializable(typeof(ModelInfo))]
 [JsonSerializable(typeof(OpenAIModelResponse))]
+[JsonSerializable(typeof(DeepLTranslationRequest))]
+[JsonSerializable(typeof(DeepLTranslationResponse))]
 [JsonSerializable(typeof(GitHubReleaseResponse))]
 [JsonSerializable(typeof(StreamChunk))]
 [JsonSerializable(typeof(List<TranslationHistoryResult>))]

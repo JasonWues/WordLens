@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -18,6 +19,9 @@ namespace WordLens.ViewModels;
 
 public partial class TranslationSettingsViewModel : ViewModelBase
 {
+    private const string DeepLDefaultBaseUrl = "https://api-free.deepl.com";
+    private const string OpenAIDefaultBaseUrl = "https://api.openai.com";
+
     private readonly EncryptionService _encryptionService;
     private readonly ILogger<TranslationSettingsViewModel> _logger;
     private readonly OpenAIModelProviderService _modelProviderService;
@@ -30,6 +34,16 @@ public partial class TranslationSettingsViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<ProviderConfig> providers = new();
     [ObservableProperty] private ModelInfo? selectedModelInfo;
     [ObservableProperty] private ProviderConfig? selectedProvider;
+
+    public List<ProviderTypeOption> AvailableProviderTypes { get; } = new()
+    {
+        new ProviderTypeOption(ProviderType.OpenAI, "OpenAI 兼容"),
+        new ProviderTypeOption(ProviderType.DeepL, "DeepL")
+    };
+
+    public bool IsSelectedProviderOpenAI => SelectedProvider?.Type == ProviderType.OpenAI;
+
+    public bool IsSelectedProviderDeepL => SelectedProvider?.Type == ProviderType.DeepL;
 
     public TranslationSettingsViewModel(
         OpenAIModelProviderService modelProviderService,
@@ -94,7 +108,7 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         {
             Name = $"新翻译源 {Providers.Count + 1}",
             Type = ProviderType.OpenAI,
-            BaseUrl = "https://api.openai.com",
+            BaseUrl = OpenAIDefaultBaseUrl,
             Model = "gpt-4o-mini",
             RequestArguments = string.Empty,
             SystemPromptTemplate = string.Empty,
@@ -134,6 +148,12 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         if (provider == null || string.IsNullOrEmpty(provider.ApiKey))
         {
             _logger.ZLogWarning($"无法刷新模型：Provider或API Key为空");
+            return;
+        }
+
+        if (provider.Type != ProviderType.OpenAI)
+        {
+            _logger.ZLogInformation($"跳过模型刷新：{provider.Name} 不是 OpenAI 兼容翻译源");
             return;
         }
 
@@ -207,17 +227,39 @@ public partial class TranslationSettingsViewModel : ViewModelBase
 
     partial void OnSelectedModelInfoChanged(ModelInfo? value)
     {
-        if (value != null && SelectedProvider != null)
+        if (value != null && SelectedProvider?.Type == ProviderType.OpenAI)
         {
             SelectedProvider.Model = value.Id;
             _logger.ZLogInformation($"模型已更新为: {value.Id}");
         }
     }
 
+    partial void OnSelectedProviderChanged(ProviderConfig? value)
+    {
+        if (value != null)
+        {
+            value.PropertyChanged += OnSelectedProviderPropertyChanged;
+            if (value.Type != ProviderType.OpenAI)
+            {
+                SelectedModelInfo = null;
+                HasModelLoadError = false;
+                ModelLoadErrorMessage = string.Empty;
+            }
+        }
+
+        NotifySelectedProviderTypeProperties();
+    }
+
+    partial void OnSelectedProviderChanging(ProviderConfig? oldValue, ProviderConfig? newValue)
+    {
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnSelectedProviderPropertyChanged;
+    }
+
     private async Task LoadModelsForAllProvidersAsync()
     {
         var providersToLoad = Providers
-            .Where(p => p.IsEnabled && !string.IsNullOrEmpty(p.ApiKey))
+            .Where(p => p.Type == ProviderType.OpenAI && p.IsEnabled && !string.IsNullOrEmpty(p.ApiKey))
             .ToList();
 
         foreach (var provider in providersToLoad)
@@ -248,4 +290,65 @@ public partial class TranslationSettingsViewModel : ViewModelBase
             : encryptionService.Decrypt(provider.ApiKey);
         return clone;
     }
+
+    private void OnSelectedProviderPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(ProviderConfig.Type))
+            return;
+
+        if (sender is ProviderConfig provider)
+        {
+            ApplyProviderTypeDefaults(provider);
+            if (provider.Type != ProviderType.OpenAI)
+            {
+                SelectedModelInfo = null;
+                HasModelLoadError = false;
+                ModelLoadErrorMessage = string.Empty;
+            }
+        }
+
+        NotifySelectedProviderTypeProperties();
+    }
+
+    private void NotifySelectedProviderTypeProperties()
+    {
+        OnPropertyChanged(nameof(IsSelectedProviderOpenAI));
+        OnPropertyChanged(nameof(IsSelectedProviderDeepL));
+    }
+
+    private static void ApplyProviderTypeDefaults(ProviderConfig provider)
+    {
+        switch (provider.Type)
+        {
+            case ProviderType.OpenAI:
+                if (string.IsNullOrWhiteSpace(provider.BaseUrl) ||
+                    provider.BaseUrl == DeepLDefaultBaseUrl)
+                    provider.BaseUrl = OpenAIDefaultBaseUrl;
+                if (string.IsNullOrWhiteSpace(provider.Model))
+                    provider.Model = "gpt-4o-mini";
+                provider.AllowManualModelInput = true;
+                break;
+
+            case ProviderType.DeepL:
+                if (string.IsNullOrWhiteSpace(provider.BaseUrl) ||
+                    provider.BaseUrl == OpenAIDefaultBaseUrl)
+                    provider.BaseUrl = DeepLDefaultBaseUrl;
+                provider.Model = string.Empty;
+                provider.AllowManualModelInput = false;
+                break;
+        }
+    }
+}
+
+public class ProviderTypeOption
+{
+    public ProviderTypeOption(ProviderType value, string displayName)
+    {
+        Value = value;
+        DisplayName = displayName;
+    }
+
+    public ProviderType Value { get; set; }
+
+    public string DisplayName { get; set; }
 }

@@ -222,6 +222,8 @@ public partial class SettingsViewModel : ViewModelBase
         {
             return propertyName is
                 nameof(TranslationSettingsViewModel.HasModelLoadError) or
+                nameof(TranslationSettingsViewModel.IsSelectedProviderDeepL) or
+                nameof(TranslationSettingsViewModel.IsSelectedProviderOpenAI) or
                 nameof(TranslationSettingsViewModel.IsLoadingModels) or
                 nameof(TranslationSettingsViewModel.ModelLoadErrorMessage) or
                 nameof(TranslationSettingsViewModel.SelectedModelInfo);

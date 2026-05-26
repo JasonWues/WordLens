@@ -108,7 +108,8 @@ public class TranslationPopupConfig
 
 public enum ProviderType
 {
-    OpenAI
+    OpenAI,
+    DeepL
 }
 
 public class ProviderConfig : ObservableObject

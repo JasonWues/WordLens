@@ -250,11 +250,7 @@ public class TranslationService
                 ? string.Empty
                 : _encryptionService.Decrypt(providerCfg.ApiKey);
 
-            ITranslationProvider provider = providerCfg.Type switch
-            {
-                ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg, decryptedApiKey),
-                _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
-            };
+            var provider = CreateProvider(providerCfg, decryptedApiKey);
 
             using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
 
@@ -399,11 +395,7 @@ public class TranslationService
 
             _logger.ZLogDebug($"API Key已解密，长度: {decryptedApiKey.Length}");
 
-            ITranslationProvider provider = providerCfg.Type switch
-            {
-                ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg, decryptedApiKey),
-                _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
-            };
+            var provider = CreateProvider(providerCfg, decryptedApiKey);
 
             using var httpClient = _httpClientFactory.CreateClient(settings.Proxy);
             result.Result = await provider.TranslateAsync(
@@ -430,5 +422,15 @@ public class TranslationService
         }
 
         return result;
+    }
+
+    private static ITranslationProvider CreateProvider(ProviderConfig providerCfg, string decryptedApiKey)
+    {
+        return providerCfg.Type switch
+        {
+            ProviderType.OpenAI => new OpenAITranslationProvider(providerCfg, decryptedApiKey),
+            ProviderType.DeepL => new DeepLTranslationProvider(providerCfg, decryptedApiKey),
+            _ => throw new NotSupportedException($"不支持的翻译源类型: {providerCfg.Type}")
+        };
     }
 }
