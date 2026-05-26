@@ -173,7 +173,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.rid }}-rust-
 
       - name: Restore dependencies
-        run: dotnet restore WordLens/WordLens.csproj -r ${{ matrix.rid }}
+        run: dotnet restore WordLens/WordLens.csproj -r ${{ matrix.rid }} -p:Configuration=Release -p:PublishAot=true
 
       - name: Publish
         run: dotnet publish WordLens/WordLens.csproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} -o ./publish/${{ matrix.rid }} --no-restore

@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 selection = "1.2.0"
-xcap = "=0.9.4"
+xcap = "=0.9.6"
 
 [lib]
 crate-type = ["cdylib"]
