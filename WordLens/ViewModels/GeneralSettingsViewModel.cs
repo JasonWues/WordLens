@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -25,6 +26,9 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     [ObservableProperty] private string hotkeyDisplay = "Ctrl+Shift+T";
     [ObservableProperty] private bool isCapturingHotkey;
     [ObservableProperty] private bool isStartupSupported = true;
+    [ObservableProperty] private bool localApiEnabled;
+    [ObservableProperty] private int localApiPort = 49631;
+    [ObservableProperty] private string localApiToken = string.Empty;
     [ObservableProperty] private string ocrHotkeyDisplay = "Ctrl+Shift+W";
     [ObservableProperty] private bool startWithSystem;
     [ObservableProperty] private bool streamingEnabled = true;
@@ -73,6 +77,9 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         TypewriterDelayMs = settings.Streaming.TypewriterDelayMs;
         CharsPerUpdate = settings.Streaming.CharsPerUpdate;
         TranslationPopupPositionMode = settings.TranslationPopup.PositionMode;
+        LocalApiEnabled = settings.LocalApi.Enabled;
+        LocalApiPort = settings.LocalApi.Port;
+        LocalApiToken = settings.LocalApi.Token;
         UpdateHotkeyDisplay();
         UpdateOcrHotkeyDisplay();
     }
@@ -113,6 +120,16 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         };
     }
 
+    public LocalApiConfig BuildLocalApiConfig()
+    {
+        return new LocalApiConfig
+        {
+            Enabled = LocalApiEnabled,
+            Port = LocalApiPort,
+            Token = string.IsNullOrWhiteSpace(LocalApiToken) ? GenerateLocalApiToken() : LocalApiToken
+        };
+    }
+
     public static HotkeyConfig CloneHotkeyConfig(HotkeyConfig config)
     {
         return new HotkeyConfig
@@ -126,6 +143,12 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     {
         if (!string.IsNullOrEmpty(value))
             _themeService.ApplyLocale(value);
+    }
+
+    [RelayCommand]
+    private void RegenerateLocalApiToken()
+    {
+        LocalApiToken = GenerateLocalApiToken();
     }
 
     [RelayCommand]
@@ -191,6 +214,14 @@ public partial class GeneralSettingsViewModel : ViewModelBase
 
         parts.Add(KeyCodeUtil.GetKeyName(config.Key));
         return string.Join("+", parts);
+    }
+
+    private static string GenerateLocalApiToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 }
 

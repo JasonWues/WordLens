@@ -39,6 +39,43 @@
             <Separator />
 
             <StackPanel Spacing="8">
+                <TextBlock Text="本地 API" FontWeight="Bold" FontSize="14" />
+                <CheckBox Content="启用本地自动化 API"
+                          IsChecked="{Binding LocalApiEnabled}" />
+                <StackPanel Spacing="8"
+                            IsEnabled="{Binding LocalApiEnabled}"
+                            Margin="24,4,0,0"
+                            Opacity="{Binding LocalApiEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="监听端口" FontSize="13" />
+                        <NumericUpDown Value="{Binding LocalApiPort}"
+                                       Minimum="1024"
+                                       Maximum="65535"
+                                       Increment="1"
+                                       Width="160"
+                                       HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="访问 Token" FontSize="13" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBox Text="{Binding LocalApiToken}"
+                                     Width="260"
+                                     IsReadOnly="True"
+                                     VerticalContentAlignment="Center" />
+                            <Button Content="重置"
+                                    Command="{Binding RegenerateLocalApiTokenCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="仅监听 127.0.0.1。外部调用需携带 Authorization: Bearer Token。"
+                           FontSize="12"
+                           Opacity="0.6"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Separator />
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="翻译框位置" FontWeight="Bold" FontSize="14" />
                 <ComboBox ItemsSource="{Binding AvailableTranslationPopupPositionModes}"
                           SelectedValue="{Binding TranslationPopupPositionMode}"

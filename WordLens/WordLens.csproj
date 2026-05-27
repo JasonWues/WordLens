@@ -43,6 +43,7 @@
 
 
     <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="Avalonia" Version="12.0.3" />
         <PackageReference Include="Avalonia.Desktop" Version="12.0.3" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.3" />
@@ -55,8 +56,6 @@
         <PackageReference Include="Irihi.Ursa" Version="2.0.0" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
         <PackageReference Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.4.26230.115" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.4.26230.115" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="Semi.Avalonia" Version="12.0.3" />
         <PackageReference Include="SharpHook" Version="7.1.2" />
         <PackageReference Include="SkiaSharp" Version="3.119.4-preview.1.1" />
@@ -81,6 +80,14 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'net11.0-macos'">
         <ProjectReference Include="..\WordLens.Macos\WordLens.Macos.csproj" />
     </ItemGroup>
+
+    <Target Name="RemoveUnusedAspNetCoreHostingAssets" BeforeTargets="ComputeFilesToPublish">
+        <ItemGroup>
+            <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                                   Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' ==
+  'aspnetcorev2_inprocess.dll'" />
+        </ItemGroup>
+    </Target>
 
     <Target Name="BuildRust" BeforeTargets="Build" Condition="'$(TargetFramework)' != ''">
         <!-- 打印一条消息，方便在构建日志中看到这个过程 -->

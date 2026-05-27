@@ -114,6 +114,27 @@ public class TranslationService
         }
     }
 
+    public async Task<List<TranslationResult>> TranslateNonStreamingAsync(
+        string text,
+        string targetLanguage,
+        string sourceLanguage = "auto",
+        CancellationToken ct = default)
+    {
+        var settings = await _settings.LoadAsync();
+        var enabledProviders = settings.Providers.Where(p => p.IsEnabled).ToList();
+
+        _logger.ZLogInformation(
+            $"开始本地 API 非流式翻译，文本长度: {text.Length}，源语言: {sourceLanguage}，目标语言: {targetLanguage}，启用的翻译源数量: {enabledProviders.Count}");
+
+        if (enabledProviders.Count == 0)
+            return new List<TranslationResult>();
+
+        var tasks = enabledProviders.Select(provider =>
+            TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, settings, ct));
+
+        return (await Task.WhenAll(tasks)).ToList();
+    }
+
     /// <summary>
     ///     使用指定翻译源重新翻译文本。
     /// </summary>
@@ -144,6 +165,31 @@ public class TranslationService
 
         if (settings.Streaming.Enabled)
             return StartSingleProviderStream(provider, text, targetLanguage, sourceLanguage, settings, ct);
+
+        return await TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, settings, ct);
+    }
+
+    public async Task<TranslationResult> TranslateWithProviderNonStreamingAsync(
+        string providerName,
+        string text,
+        string targetLanguage,
+        string sourceLanguage = "auto",
+        CancellationToken ct = default)
+    {
+        var settings = await _settings.LoadAsync();
+        var provider = settings.Providers.FirstOrDefault(p => p.IsEnabled && p.Name == providerName);
+
+        if (provider == null)
+        {
+            _logger.ZLogWarning($"未找到启用的翻译源: {providerName}");
+            return new TranslationResult
+            {
+                ProviderName = providerName,
+                IsSuccess = false,
+                IsLoading = false,
+                ErrorMessage = "翻译源不存在或未启用"
+            };
+        }
 
         return await TranslateSingleProviderAsync(provider, text, targetLanguage, sourceLanguage, settings, ct);
     }

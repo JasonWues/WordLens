@@ -38,6 +38,8 @@ public class AppSettings
 
     public TtsConfig Tts { get; set; } = new();
 
+    public LocalApiConfig LocalApi { get; set; } = new();
+
     public TranslationPopupConfig TranslationPopup { get; set; } = new();
 
     /// <summary>
@@ -142,6 +144,15 @@ public enum ProviderType
     OpenAI,
     DeepL,
     Local
+}
+
+public class LocalApiConfig
+{
+    public bool Enabled { get; set; }
+
+    public int Port { get; set; } = 49631;
+
+    public string Token { get; set; } = string.Empty;
 }
 
 public class ProviderConfig : ObservableObject

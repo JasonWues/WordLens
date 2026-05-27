@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Models;
 using WordLens.Models;
 using WordLens.Services;
+using WordLens.Services.LocalApi;
 using ZLogger;
 
 namespace WordLens.ViewModels;
@@ -21,6 +22,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     private readonly SemaphoreSlim _autoSaveSemaphore = new(1, 1);
     private readonly IHotkeyManagerService _hotkeyManagerService;
+    private readonly ILocalApiService _localApiService;
     private readonly ILogger<SettingsViewModel> _logger;
     private readonly ISettingsService _settingsService;
     private readonly HashSet<ProviderConfig> _trackedOcrProviders = new();
@@ -40,6 +42,7 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         ISettingsService settingsService,
         IHotkeyManagerService hotkeyManagerService,
+        ILocalApiService localApiService,
         GeneralSettingsViewModel generalSettings,
         TranslationSettingsViewModel translationSettings,
         OcrSettingsViewModel ocrSettings,
@@ -51,6 +54,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _settingsService = settingsService;
         _hotkeyManagerService = hotkeyManagerService;
+        _localApiService = localApiService;
         _logger = logger;
         GeneralSettings = generalSettings;
         TranslationSettings = translationSettings;
@@ -316,6 +320,7 @@ public partial class SettingsViewModel : ViewModelBase
             GeneralSettings.ApplyStartupSetting();
 
         await _settingsService.SaveAsync(settings);
+        await _localApiService.ApplyConfigAsync(settings.LocalApi);
         _originalSettings = CloneSettings(settings);
         return hotkeysChanged;
     }
@@ -337,6 +342,7 @@ public partial class SettingsViewModel : ViewModelBase
             OcrProviders = OcrSettings.BuildProviderConfigs(),
             Streaming = GeneralSettings.BuildStreamingConfig(),
             TranslationPopup = GeneralSettings.BuildTranslationPopupConfig(currentTranslationPopup),
+            LocalApi = GeneralSettings.BuildLocalApiConfig(),
             Proxy = NetworkSettings.BuildProxyConfig(),
             Tts = TtsSettings.BuildTtsConfig()
         };
@@ -408,6 +414,7 @@ public partial class SettingsViewModel : ViewModelBase
                 CharsPerUpdate = settings.Streaming.CharsPerUpdate
             },
             TranslationPopup = CloneTranslationPopupConfig(settings.TranslationPopup),
+            LocalApi = CloneLocalApiConfig(settings.LocalApi),
             Proxy = NetworkSettingsViewModel.CloneProxyConfig(settings.Proxy),
             Tts = TtsSettingsViewModel.CloneTtsConfig(settings.Tts)
         };
@@ -420,6 +427,16 @@ public partial class SettingsViewModel : ViewModelBase
             PositionMode = config.PositionMode,
             X = config.X,
             Y = config.Y
+        };
+    }
+
+    private static LocalApiConfig CloneLocalApiConfig(LocalApiConfig config)
+    {
+        return new LocalApiConfig
+        {
+            Enabled = config.Enabled,
+            Port = config.Port,
+            Token = config.Token
         };
     }
 }

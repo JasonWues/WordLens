@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -18,6 +19,7 @@ using WordLens.Infrastructure.Security;
 using WordLens.Providers.OpenAI;
 using WordLens.Services;
 using WordLens.Services.Implementations;
+using WordLens.Services.LocalApi;
 using WordLens.ViewModels;
 using WordLens.Views;
 #if WINDOWS
@@ -63,6 +65,9 @@ public class App : Application
             var hotkeyManager = _services.GetRequiredService<IHotkeyManagerService>();
             _ = hotkeyManager.StartAsync();
             var clipboardMonitor = _services.GetRequiredService<IClipboardMonitorService>();
+            var settingsService = _services.GetRequiredService<ISettingsService>();
+            var localApiService = _services.GetRequiredService<ILocalApiService>();
+            _ = StartLocalApiAsync(settingsService, localApiService);
 
             var windowManager = _services.GetRequiredService<IWindowManagerService>();
 
@@ -70,6 +75,7 @@ public class App : Application
             {
                 hotkeyManager.Dispose();
                 clipboardMonitor.Dispose();
+                _ = localApiService.StopAsync();
                 windowManager.CloseAllWindows();
             };
         }
@@ -132,6 +138,8 @@ public class App : Application
         services.AddSingleton<UpdateService>();
         services.AddSingleton<IOcrService, OpenAIOcrService>();
         services.AddSingleton<TranslationService>();
+        services.AddSingleton<LocalApiBridge>();
+        services.AddSingleton<ILocalApiService, LocalApiService>();
         services.AddSingleton<ISelectionService, SelectionService>();
         services.AddSingleton<ITranslationHistoryService, TranslationHistoryService>();
         services.AddHttpClient();
@@ -166,5 +174,13 @@ public class App : Application
                 opt.RollingSizeKB = 10240; // 10MB per file
             });
         });
+    }
+
+    private static async Task StartLocalApiAsync(
+        ISettingsService settingsService,
+        ILocalApiService localApiService)
+    {
+        var settings = await settingsService.LoadAsync();
+        await localApiService.ApplyConfigAsync(settings.LocalApi);
     }
 }

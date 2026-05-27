@@ -64,10 +64,12 @@ public class SettingsService : ISettingsService
             settings.OcrProviders ??= new List<ProviderConfig>();
             settings.Tts ??= new TtsConfig();
             settings.Tts.Providers ??= new List<TtsProviderConfig>();
+            settings.LocalApi ??= new LocalApiConfig();
             needsSave |= NormalizeHotkeys(settings);
             needsSave |= NormalizeOcrProviders(settings);
             needsSave |= NormalizeTtsProviders(settings);
             needsSave |= NormalizeTranslationPopup(settings);
+            needsSave |= NormalizeLocalApi(settings);
 
             foreach (var provider in settings.Providers)
                 if (!string.IsNullOrEmpty(provider.ApiKey) &&
@@ -122,10 +124,12 @@ public class SettingsService : ISettingsService
             settings.OcrProviders ??= new List<ProviderConfig>();
             settings.Tts ??= new TtsConfig();
             settings.Tts.Providers ??= new List<TtsProviderConfig>();
+            settings.LocalApi ??= new LocalApiConfig();
             NormalizeHotkeys(settings);
             NormalizeOcrProviders(settings);
             NormalizeTtsProviders(settings);
             NormalizeTranslationPopup(settings);
+            NormalizeLocalApi(settings);
 
             _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}，TTS源数量: {settings.Tts.Providers.Count}");
 
@@ -325,6 +329,39 @@ public class SettingsService : ISettingsService
         }
 
         return needsSave;
+    }
+
+    private static bool NormalizeLocalApi(AppSettings settings)
+    {
+        var needsSave = false;
+
+        if (settings.LocalApi == null)
+        {
+            settings.LocalApi = new LocalApiConfig();
+            needsSave = true;
+        }
+
+        if (settings.LocalApi.Port is < 1024 or > 65535)
+        {
+            settings.LocalApi.Port = 49631;
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.LocalApi.Token))
+        {
+            settings.LocalApi.Token = GenerateLocalApiToken();
+            needsSave = true;
+        }
+
+        return needsSave;
+    }
+
+    private static string GenerateLocalApiToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 
     private static bool AreHotkeysEqual(HotkeyConfig left, HotkeyConfig right)

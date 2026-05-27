@@ -20,6 +20,7 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 流式翻译输出
 - TTS 朗读（OpenAI 兼容语音接口 / 系统 TTS）
 - 翻译历史记录
+- 本地自动化 API（Local API）
 - 开机自启
 - HTTP 代理配置（系统代理 / 手动代理 / 认证代理）
 - Rust 原生截图和选中文本获取
@@ -105,6 +106,28 @@ WordLens 支持在设置页的 `TTS` 标签中配置朗读源：
 
 Linux 当前没有内置本地 TTS 后端，可使用 OpenAI 兼容语音接口。
 
+#### 本地自动化 API
+
+WordLens 可以在设置页“常规”中启用本地 API，用于脚本、快捷工具或其他本机程序调用翻译能力。API 仅监听 `127.0.0.1`，默认关闭，所有请求必须携带 Bearer Token。
+
+当前接口：
+
+- `GET /api/v1/health`
+- `GET /api/v1/settings/status`
+- `POST /api/v1/translate`
+- `POST /api/v1/window/translate`
+
+调用示例：
+
+```powershell
+Invoke-RestMethod `
+  -Uri http://127.0.0.1:49631/api/v1/translate `
+  -Method Post `
+  -Headers @{ Authorization = "Bearer <Token>" } `
+  -ContentType "application/json" `
+  -Body '{"text":"hello world","sourceLanguage":"auto","targetLanguage":"zh-CN"}'
+```
+
 ### 构建要求
 
 - .NET 11 SDK
@@ -167,7 +190,7 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 
 1. 启动应用后，在系统托盘中找到 WordLens。
 2. 右键托盘图标，打开“设置”。
-3. 在“常规”页配置界面语言、开机自启、翻译快捷键和 OCR 快捷键。
+3. 在“常规”页配置界面语言、开机自启、翻译快捷键、OCR 快捷键和本地 API。
 4. 在“翻译源”页配置至少一个启用的翻译源。
 5. 在“OCR”页配置 OCR 源。
 6. 如需朗读，在“TTS”页启用并配置 LLM TTS 或系统 TTS。
@@ -237,6 +260,7 @@ Rust crate 位于 `native/`，当前拆分为：
 - SoundFlow / MiniAudio
 - OpenAI 兼容 Chat Completions、Vision 和 Speech 接口
 - DeepL 翻译接口
+- ASP.NET Core Minimal APIs / Kestrel（本地自动化 API）
 - Microsoft.Windows.CsWin32 / Windows Runtime OCR 与 TTS
 - Linux Tesseract OCR CLI
 - Rust `xcap`
@@ -246,6 +270,7 @@ Rust crate 位于 `native/`，当前拆分为：
 
 - 远程 OCR、翻译和 LLM TTS 依赖 OpenAI 兼容接口或 DeepL 等外部服务，需要自行配置可用服务。
 - 本地 OCR 当前支持 Windows 系统 OCR 和 Linux Tesseract OCR；Linux 需要系统中可执行 `tesseract`，并安装所需语言包。macOS 本地 OCR 尚未接入。
+- 本地 API 仅设计为本机自动化接口，应只监听 `127.0.0.1` 并使用 Token；不建议暴露到局域网或公网。
 - Linux 暂未提供内置本地 TTS 后端，可使用 OpenAI 兼容语音接口。
 - API Key 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
 - 单元测试位于 `WordLens.Test/`。
@@ -287,6 +312,7 @@ Current features include:
 - Streaming translation output
 - TTS playback with OpenAI-compatible speech APIs or system TTS
 - Translation history
+- Local automation API
 - Auto-start on login
 - HTTP proxy support, including system proxy, manual proxy, and authenticated proxy
 - Rust native screenshot and selected-text extraction
@@ -370,6 +396,28 @@ WordLens supports speech providers in the `TTS` settings tab:
 
 Linux currently has no built-in local TTS backend; use an OpenAI-compatible speech provider instead.
 
+### Local Automation API
+
+WordLens can enable a local API from the General settings tab for scripts, launcher tools, and other local programs. The API listens only on `127.0.0.1`, is disabled by default, and requires a Bearer token on every request.
+
+Current endpoints:
+
+- `GET /api/v1/health`
+- `GET /api/v1/settings/status`
+- `POST /api/v1/translate`
+- `POST /api/v1/window/translate`
+
+Example:
+
+```powershell
+Invoke-RestMethod `
+  -Uri http://127.0.0.1:49631/api/v1/translate `
+  -Method Post `
+  -Headers @{ Authorization = "Bearer <Token>" } `
+  -ContentType "application/json" `
+  -Body '{"text":"hello world","sourceLanguage":"auto","targetLanguage":"zh-CN"}'
+```
+
 ### Requirements
 
 - .NET 11 SDK
@@ -432,7 +480,7 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 
 1. Start WordLens and find it in the system tray.
 2. Right-click the tray icon and open Settings.
-3. Configure UI language, auto-start, translation hotkey, and OCR hotkey in the General tab.
+3. Configure UI language, auto-start, translation hotkey, OCR hotkey, and the local API in the General tab.
 4. Configure at least one enabled translation provider in the Providers tab.
 5. Configure the OCR provider in the OCR tab.
 6. Enable and configure an LLM speech provider or system TTS provider in the TTS tab if speech playback is needed.
@@ -502,6 +550,7 @@ The Rust crate lives in `native/` and is split into:
 - SoundFlow / MiniAudio
 - OpenAI-compatible Chat Completions, Vision, and Speech APIs
 - DeepL translation API
+- ASP.NET Core Minimal APIs / Kestrel for the local automation API
 - Microsoft.Windows.CsWin32 / Windows Runtime OCR and TTS
 - Linux Tesseract OCR CLI
 - Rust `xcap`
@@ -511,6 +560,7 @@ The Rust crate lives in `native/` and is split into:
 
 - Remote OCR, translation, and LLM TTS depend on OpenAI-compatible APIs or external services such as DeepL. You need to configure your own available services.
 - Local OCR currently supports Windows system OCR and Linux Tesseract OCR. Linux requires a runnable `tesseract` command and installed language packages. macOS local OCR is not connected yet.
+- The local API is intended for local automation only. Keep it bound to `127.0.0.1` with token authentication; don't expose it to a LAN or the public internet.
 - Linux currently has no built-in local TTS backend; use an OpenAI-compatible speech API instead.
 - API keys are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
 - Unit tests live in `WordLens.Test/`.

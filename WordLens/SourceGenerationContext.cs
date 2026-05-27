@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Collections.Generic;
 using WordLens.Models;
+using WordLens.Services.LocalApi;
 
 namespace WordLens;
 
@@ -16,6 +17,13 @@ namespace WordLens;
 [JsonSerializable(typeof(GitHubReleaseResponse))]
 [JsonSerializable(typeof(StreamChunk))]
 [JsonSerializable(typeof(List<TranslationHistoryResult>))]
+[JsonSerializable(typeof(LocalApiHealthResponse))]
+[JsonSerializable(typeof(LocalApiStatusResponse))]
+[JsonSerializable(typeof(TranslateApiRequest))]
+[JsonSerializable(typeof(TranslateApiResponse))]
+[JsonSerializable(typeof(TranslateApiResult))]
+[JsonSerializable(typeof(OpenTranslationWindowApiRequest))]
+[JsonSerializable(typeof(ApiErrorResponse))]
 public partial class SourceGenerationContext : JsonSerializerContext
 {
 }
