@@ -9,6 +9,7 @@ public static class WordLensLinuxServiceCollectionExtensions
     public static IServiceCollection AddWordLensLinux(this IServiceCollection services)
     {
         services.AddSingleton<ICursorPositionProvider, LinuxCursorPositionProvider>();
+        services.AddSingleton<ILocalOcrBackend, LinuxTesseractOcrBackend>();
         services.AddSingleton<IStartupService, LinuxStartupService>();
         return services;
     }

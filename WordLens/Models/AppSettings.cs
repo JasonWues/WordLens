@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
@@ -78,7 +79,7 @@ public class AppSettings
     {
         return new ProviderConfig
         {
-            Name = "Windows OCR",
+            Name = GetDefaultLocalOcrProviderName(),
             Type = ProviderType.Local,
             IsEnabled = true,
             AllowManualModelInput = false,
@@ -88,6 +89,20 @@ public class AppSettings
             RequestArguments = string.Empty,
             UserPromptTemplate = string.Empty
         };
+    }
+
+    private static string GetDefaultLocalOcrProviderName()
+    {
+        if (OperatingSystem.IsWindows())
+            return "Windows OCR";
+
+        if (OperatingSystem.IsMacOS())
+            return "macOS Vision OCR";
+
+        if (OperatingSystem.IsLinux())
+            return "Tesseract OCR";
+
+        return "Local OCR";
     }
 
     public static TtsProviderConfig CreateDefaultTtsProvider()
@@ -174,10 +189,24 @@ public class ProviderConfig : ObservableObject
     [JsonIgnore]
     public string Summary => Type switch
     {
-        ProviderType.Local => "Windows 系统 OCR",
+        ProviderType.Local => GetLocalOcrSummary(),
         ProviderType.DeepL => BaseUrl,
         _ => Model
     };
+
+    private static string GetLocalOcrSummary()
+    {
+        if (OperatingSystem.IsWindows())
+            return "Windows 系统 OCR";
+
+        if (OperatingSystem.IsMacOS())
+            return "macOS Vision OCR";
+
+        if (OperatingSystem.IsLinux())
+            return "Tesseract OCR";
+
+        return "本地 OCR";
+    }
 
     public string BaseUrl
     {

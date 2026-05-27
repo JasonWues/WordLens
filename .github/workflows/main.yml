@@ -113,11 +113,11 @@ jobs:
           - artifact: wordlens-macos-x64
             os: macos-15-intel
             rid: osx-x64
-            framework: net11.0
+            framework: net11.0-macos
           - artifact: wordlens-macos-arm64
             os: macos-15
             rid: osx-arm64
-            framework: net11.0
+            framework: net11.0-macos
 
     steps:
       - name: Checkout
@@ -171,6 +171,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.rid }}-rust-${{ env.RUST_VERSION }}-
             ${{ runner.os }}-${{ matrix.rid }}-rust-
+
+      - name: Restore .NET workloads
+        if: startsWith(matrix.rid, 'osx-')
+        run: dotnet workload restore WordLens/WordLens.csproj
 
       - name: Restore dependencies
         run: dotnet restore WordLens/WordLens.csproj -r ${{ matrix.rid }} -p:Configuration=Release -p:PublishAot=true

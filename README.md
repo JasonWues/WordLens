@@ -54,7 +54,7 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 可重新识别
 - 可将识别文本发送到翻译窗口
 
-OCR 使用单独的 OpenAI 兼容接口配置，不占用翻译源列表。
+OCR 使用单独的 OCR 源配置，不占用翻译源列表。OCR 源可以是 OpenAI 兼容视觉模型，也可以是平台本地 OCR 后端：Windows 使用系统 OCR，Linux 使用 `tesseract` 命令行后端。
 
 #### SkiaSharp OCR 预处理
 
@@ -129,6 +129,18 @@ sudo apt-get install -y \
   libxcb1-dev \
   libxi-dev \
   libxrandr-dev
+```
+
+如需在 Linux 上使用本地 OCR，还需要安装 Tesseract OCR 和对应语言包：
+
+```bash
+sudo apt-get install -y \
+  tesseract-ocr \
+  tesseract-ocr-eng \
+  tesseract-ocr-chi-sim \
+  tesseract-ocr-chi-tra \
+  tesseract-ocr-jpn \
+  tesseract-ocr-kor
 ```
 
 ### 构建和运行
@@ -226,13 +238,14 @@ Rust crate 位于 `native/`，当前拆分为：
 - OpenAI 兼容 Chat Completions、Vision 和 Speech 接口
 - DeepL 翻译接口
 - Microsoft.Windows.CsWin32 / Windows Runtime OCR 与 TTS
+- Linux Tesseract OCR CLI
 - Rust `xcap`
 - Rust `selection`
 
 ### 当前限制
 
-- OCR、翻译和 LLM TTS 依赖 OpenAI 兼容接口或 DeepL 等外部服务，需要自行配置可用服务。
-- 本地 OCR 目前主要通过 Windows 系统 OCR 提供；macOS / Linux 建议使用远程 OCR。
+- 远程 OCR、翻译和 LLM TTS 依赖 OpenAI 兼容接口或 DeepL 等外部服务，需要自行配置可用服务。
+- 本地 OCR 当前支持 Windows 系统 OCR 和 Linux Tesseract OCR；Linux 需要系统中可执行 `tesseract`，并安装所需语言包。macOS 本地 OCR 尚未接入。
 - Linux 暂未提供内置本地 TTS 后端，可使用 OpenAI 兼容语音接口。
 - API Key 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
 - 单元测试位于 `WordLens.Test/`。
@@ -306,7 +319,7 @@ Press the OCR hotkey to open the screen capture overlay. After selecting a regio
 - OCR can be run again on the same image
 - The recognized text can be sent to the translation window
 
-OCR uses a separate OpenAI-compatible provider configuration and does not consume entries from the translation provider list.
+OCR uses separate OCR provider settings and does not consume entries from the translation provider list. OCR providers can use OpenAI-compatible vision models or platform-local OCR backends: Windows uses system OCR, and Linux uses the `tesseract` command-line backend.
 
 ### SkiaSharp OCR Preprocessing
 
@@ -381,6 +394,18 @@ sudo apt-get install -y \
   libxcb1-dev \
   libxi-dev \
   libxrandr-dev
+```
+
+Linux local OCR also requires Tesseract OCR and the language packages you want to recognize:
+
+```bash
+sudo apt-get install -y \
+  tesseract-ocr \
+  tesseract-ocr-eng \
+  tesseract-ocr-chi-sim \
+  tesseract-ocr-chi-tra \
+  tesseract-ocr-jpn \
+  tesseract-ocr-kor
 ```
 
 ### Build and Run
@@ -478,13 +503,14 @@ The Rust crate lives in `native/` and is split into:
 - OpenAI-compatible Chat Completions, Vision, and Speech APIs
 - DeepL translation API
 - Microsoft.Windows.CsWin32 / Windows Runtime OCR and TTS
+- Linux Tesseract OCR CLI
 - Rust `xcap`
 - Rust `selection`
 
 ### Current Limitations
 
-- OCR, translation, and LLM TTS depend on OpenAI-compatible APIs or external services such as DeepL. You need to configure your own available services.
-- Local OCR is currently mainly provided by Windows system OCR; macOS / Linux should use remote OCR.
+- Remote OCR, translation, and LLM TTS depend on OpenAI-compatible APIs or external services such as DeepL. You need to configure your own available services.
+- Local OCR currently supports Windows system OCR and Linux Tesseract OCR. Linux requires a runnable `tesseract` command and installed language packages. macOS local OCR is not connected yet.
 - Linux currently has no built-in local TTS backend; use an OpenAI-compatible speech API instead.
 - API keys are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
 - Unit tests live in `WordLens.Test/`.
