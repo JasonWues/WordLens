@@ -18,7 +18,7 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 多翻译源并行请求
 - OpenAI 兼容模型列表获取
 - 流式翻译输出
-- 本地 TTS 朗读
+- TTS 朗读（OpenAI 兼容语音接口 / 系统 TTS）
 - 翻译历史记录
 - 开机自启
 - HTTP 代理配置（系统代理 / 手动代理 / 认证代理）
@@ -39,7 +39,7 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 流式输出
 - 原文复制
 - 单条译文复制
-- 原文和译文朗读（启用本地 TTS 后）
+- 原文和译文朗读（启用 TTS 后）
 - 窗口置顶
 - 将译文作为新的原文继续翻译
 - 交换源语言和目标语言
@@ -94,16 +94,16 @@ WordLens 支持配置多个 OpenAI 兼容翻译源。触发翻译时，所有已
 - 收藏记录
 - 从历史记录重新翻译
 
-#### 本地 TTS
+#### TTS 朗读
 
-WordLens 可以通过 sherpa-onnx 离线朗读原文或译文。设置页的 `TTS` 标签支持：
+WordLens 支持在设置页的 `TTS` 标签中配置朗读源：
 
-- VITS / Piper、Kokoro、Matcha 模型类型
-- 模型、tokens、voices、vocoder、espeak-ng-data、lexicon、dict、rule FST/FAR 路径配置
-- 文件和目录选择器
-- provider、线程数、Speaker ID、语速配置
+- OpenAI 兼容语音接口：调用 `/v1/audio/speech`，支持 Base URL、API Key、模型、音色、语速和 Request Arguments JSON。
+- Windows 本地 TTS：使用系统 WinRT `SpeechSynthesizer`。
+- macOS 本地 TTS：调用系统 `/usr/bin/say`。
+- 音频播放：LLM TTS 返回的 WAV 音频通过 SoundFlow / MiniAudio 播放。
 
-TTS 模型文件需要自行准备，应用不会内置模型。
+Linux 当前没有内置本地 TTS 后端，可使用 OpenAI 兼容语音接口。
 
 ### 构建要求
 
@@ -158,7 +158,7 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 3. 在“常规”页配置界面语言、开机自启、翻译快捷键和 OCR 快捷键。
 4. 在“翻译源”页配置至少一个启用的翻译源。
 5. 在“OCR”页配置 OCR 源。
-6. 如需朗读，在“TTS”页启用并配置本地模型。
+6. 如需朗读，在“TTS”页启用并配置 LLM TTS 或系统 TTS。
 7. 在任意应用中选中文本并按翻译快捷键，或按 OCR 快捷键框选屏幕区域。
 
 ### 配置和数据位置
@@ -210,24 +210,30 @@ Rust crate 位于 `native/`，当前拆分为：
 
 ### 技术栈
 
+- .NET 11 / C#
 - Avalonia 12
+- Semi.Avalonia / Irihi.Ursa
 - CommunityToolkit.Mvvm
 - Microsoft.Extensions.DependencyInjection
 - Microsoft.Extensions.Http
+- System.Text.Json source generation
 - SharpHook
-- SQLite
+- SQLite / Microsoft.Data.Sqlite
+- Dapper / Dapper.AOT
 - ZLogger
 - SkiaSharp
-- sherpa-onnx
-- SoundFlow
+- SoundFlow / MiniAudio
+- OpenAI 兼容 Chat Completions、Vision 和 Speech 接口
+- DeepL 翻译接口
+- Microsoft.Windows.CsWin32 / Windows Runtime OCR 与 TTS
 - Rust `xcap`
 - Rust `selection`
-- Rust `image`
 
 ### 当前限制
 
-- OCR 和翻译依赖 OpenAI 兼容接口，需要自行配置可用服务。
-- 本地 TTS 依赖 sherpa-onnx 兼容模型文件，需要自行下载和配置。
+- OCR、翻译和 LLM TTS 依赖 OpenAI 兼容接口或 DeepL 等外部服务，需要自行配置可用服务。
+- 本地 OCR 目前主要通过 Windows 系统 OCR 提供；macOS / Linux 建议使用远程 OCR。
+- Linux 暂未提供内置本地 TTS 后端，可使用 OpenAI 兼容语音接口。
 - API Key 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
 - 单元测试位于 `WordLens.Test/`。
 - Rust 格式化和 clippy 需要本机安装 `rustfmt` 和 `clippy` 组件。
@@ -266,7 +272,7 @@ Current features include:
 - Parallel translation with multiple providers
 - OpenAI-compatible model list loading
 - Streaming translation output
-- Local TTS playback
+- TTS playback with OpenAI-compatible speech APIs or system TTS
 - Translation history
 - Auto-start on login
 - HTTP proxy support, including system proxy, manual proxy, and authenticated proxy
@@ -285,7 +291,7 @@ The translation window supports:
 - Streaming output
 - Copy source text
 - Copy individual translations
-- Speak source text and translations when local TTS is enabled
+- Speak source text and translations when TTS is enabled
 - Always-on-top mode
 - Use a translation as the new source text
 - Swap source and target languages
@@ -340,16 +346,16 @@ Successful translations are saved locally. The history window supports:
 - Favorites
 - Translating again from history
 
-### Local TTS
+### TTS Playback
 
-WordLens can use sherpa-onnx to speak source text or translations offline. The `TTS` settings tab supports:
+WordLens supports speech providers in the `TTS` settings tab:
 
-- VITS / Piper, Kokoro, and Matcha model types
-- Paths for model, tokens, voices, vocoder, espeak-ng-data, lexicon, dictionary, and rule FST/FAR files
-- File and folder pickers
-- Provider, thread count, speaker ID, and speed settings
+- OpenAI-compatible speech APIs: calls `/v1/audio/speech` and supports Base URL, API key, model, voice, speed, and Request Arguments JSON.
+- Windows local TTS: uses the system WinRT `SpeechSynthesizer`.
+- macOS local TTS: uses the system `/usr/bin/say` command.
+- Audio playback: WAV audio returned by LLM TTS is played through SoundFlow / MiniAudio.
 
-TTS model files are not bundled and must be prepared locally.
+Linux currently has no built-in local TTS backend; use an OpenAI-compatible speech provider instead.
 
 ### Requirements
 
@@ -404,7 +410,7 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 3. Configure UI language, auto-start, translation hotkey, and OCR hotkey in the General tab.
 4. Configure at least one enabled translation provider in the Providers tab.
 5. Configure the OCR provider in the OCR tab.
-6. Enable and configure a local model in the TTS tab if speech playback is needed.
+6. Enable and configure an LLM speech provider or system TTS provider in the TTS tab if speech playback is needed.
 7. Select text in any app and press the translation hotkey, or press the OCR hotkey and select a screen region.
 
 ### Config and Data Locations
@@ -456,24 +462,30 @@ The Rust crate lives in `native/` and is split into:
 
 ### Tech Stack
 
+- .NET 11 / C#
 - Avalonia 12
+- Semi.Avalonia / Irihi.Ursa
 - CommunityToolkit.Mvvm
 - Microsoft.Extensions.DependencyInjection
 - Microsoft.Extensions.Http
+- System.Text.Json source generation
 - SharpHook
-- SQLite
+- SQLite / Microsoft.Data.Sqlite
+- Dapper / Dapper.AOT
 - ZLogger
 - SkiaSharp
-- sherpa-onnx
-- SoundFlow
+- SoundFlow / MiniAudio
+- OpenAI-compatible Chat Completions, Vision, and Speech APIs
+- DeepL translation API
+- Microsoft.Windows.CsWin32 / Windows Runtime OCR and TTS
 - Rust `xcap`
 - Rust `selection`
-- Rust `image`
 
 ### Current Limitations
 
-- OCR and translation depend on OpenAI-compatible APIs. You need to configure your own available services.
-- Local TTS depends on sherpa-onnx compatible model files. You need to download and configure them yourself.
+- OCR, translation, and LLM TTS depend on OpenAI-compatible APIs or external services such as DeepL. You need to configure your own available services.
+- Local OCR is currently mainly provided by Windows system OCR; macOS / Linux should use remote OCR.
+- Linux currently has no built-in local TTS backend; use an OpenAI-compatible speech API instead.
 - API keys are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
 - Unit tests live in `WordLens.Test/`.
 - Rust formatting and clippy checks require the `rustfmt` and `clippy` components.

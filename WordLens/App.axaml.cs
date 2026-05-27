@@ -22,6 +22,8 @@ using WordLens.ViewModels;
 using WordLens.Views;
 #if WINDOWS
 using WordLens.Windows;
+#elif MACOS
+using WordLens.Macos;
 #else
 using WordLens.Linux;
 using WordLens.Macos;
@@ -50,7 +52,7 @@ public class App : Application
         {
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
+            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             var collection = new ServiceCollection();
             ConfigureServices(collection);
@@ -103,10 +105,14 @@ public class App : Application
         services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
         services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
         services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
+#if MACOS
+        services.AddWordLensMacos();
+#else
         if (OperatingSystem.IsLinux())
             services.AddWordLensLinux();
         else if (OperatingSystem.IsMacOS())
             services.AddWordLensMacos();
+#endif
 #endif
         services.TryAddSingleton<ICursorPositionProvider, UnsupportedCursorPositionProvider>();
         services.AddSingleton<IHotkeyManagerService, HotkeyManagerService>();
