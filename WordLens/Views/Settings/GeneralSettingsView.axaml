@@ -61,6 +61,30 @@
             <Separator />
 
             <StackPanel Spacing="8">
+                <TextBlock Text="数据备份" FontWeight="Bold" FontSize="14" />
+                <Grid ColumnDefinitions="Auto,*">
+                    <Button Content="备份数据"
+                            Command="{Binding CreateBackupCommand}"
+                            IsEnabled="{Binding !IsBackupRunning}"
+                            MinWidth="100" />
+                    <TextBlock Text="{Binding BackupStatus}"
+                               Grid.Column="1"
+                               IsVisible="{Binding HasBackupStatus}"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Margin="8,0,0,0"
+                               Opacity="0.7"
+                               TextWrapping="Wrap" />
+                </Grid>
+                <TextBlock Text="备份包含设置、翻译历史数据库和截图缓存，API Key 会按本地加密后的形式写入备份文件。"
+                           FontSize="12"
+                           Opacity="0.6"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Separator />
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="本地 API" FontWeight="Bold" FontSize="14" />
                 <CheckBox Content="启用本地自动化 API"
                           IsChecked="{Binding LocalApiEnabled}" />

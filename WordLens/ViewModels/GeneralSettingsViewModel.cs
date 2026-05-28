@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
 using SharpHook.Data;
 using WordLens.Abstractions.Models;
 using WordLens.Abstractions.Services;
@@ -13,18 +15,23 @@ using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
 using WordLens.Util;
+using ZLogger;
 
 namespace WordLens.ViewModels;
 
 public partial class GeneralSettingsViewModel : ViewModelBase
 {
     private readonly IStartupService _startupService;
+    private readonly IBackupService _backupService;
+    private readonly IPathPickerService _pathPickerService;
     private readonly AvaloniaThemeService _themeService;
     private readonly EncryptionService _encryptionService;
+    private readonly ILogger<GeneralSettingsViewModel> _logger;
     private string _currentCapturingType = string.Empty;
     private HotkeyConfig _hotkeyConfig = HotkeyConfig.Default();
     private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.DefaultOcr();
 
+    [ObservableProperty] private string backupStatus = string.Empty;
     [ObservableProperty] private int charsPerUpdate = 1;
     [ObservableProperty] private string eudicCategoryId = "0";
     [ObservableProperty] private bool eudicEnabled;
@@ -34,6 +41,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     [ObservableProperty] private string fontFamily = string.Empty;
     [ObservableProperty] private string hotkeyDisplay = "Ctrl+Shift+T";
     [ObservableProperty] private bool isCapturingHotkey;
+    [ObservableProperty] private bool isBackupRunning;
     [ObservableProperty] private bool isStartupSupported = true;
     [ObservableProperty] private bool localApiEnabled;
     [ObservableProperty] private int localApiPort = 49631;
@@ -48,11 +56,17 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     public GeneralSettingsViewModel(
         AvaloniaThemeService themeService,
         IStartupService startupService,
-        EncryptionService encryptionService)
+        EncryptionService encryptionService,
+        IBackupService backupService,
+        IPathPickerService pathPickerService,
+        ILogger<GeneralSettingsViewModel> logger)
     {
         _themeService = themeService;
         _startupService = startupService;
         _encryptionService = encryptionService;
+        _backupService = backupService;
+        _pathPickerService = pathPickerService;
+        _logger = logger;
 
         WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
         {
@@ -65,6 +79,8 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     }
 
     public List<FontFamilyOption> AvailableFontFamilies { get; } = CreateFontFamilyOptions();
+
+    public bool HasBackupStatus => !string.IsNullOrWhiteSpace(BackupStatus);
 
     public List<LanguageOption> AvailableUILanguages { get; } = new()
     {
@@ -179,6 +195,44 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         FontFamily = string.Empty;
     }
 
+    [RelayCommand]
+    private async Task CreateBackupAsync()
+    {
+        if (IsBackupRunning)
+            return;
+
+        var suggestedFileName = $"WordLens-backup-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
+        BackupStatus = "请选择备份保存位置...";
+
+        var destinationPath = await _pathPickerService.PickSaveFileAsync(
+            "保存 WordLens 备份",
+            suggestedFileName,
+            new[] { "*.zip" });
+
+        if (string.IsNullOrWhiteSpace(destinationPath))
+        {
+            BackupStatus = "已取消备份。";
+            return;
+        }
+
+        try
+        {
+            IsBackupRunning = true;
+            BackupStatus = "正在创建备份...";
+            var result = await _backupService.CreateBackupAsync(destinationPath);
+            BackupStatus = $"备份完成：{result.FileCount} 个文件，{FormatFileSize(result.SizeBytes)}。";
+        }
+        catch (Exception ex)
+        {
+            BackupStatus = $"备份失败：{ex.Message}";
+            _logger.ZLogError(ex, $"创建备份失败: {ex.Message}");
+        }
+        finally
+        {
+            IsBackupRunning = false;
+        }
+    }
+
     public static HotkeyConfig CloneHotkeyConfig(HotkeyConfig config)
     {
         return new HotkeyConfig
@@ -197,6 +251,11 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     partial void OnFontFamilyChanged(string value)
     {
         _themeService.ApplyFontFamily(value);
+    }
+
+    partial void OnBackupStatusChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasBackupStatus));
     }
 
     [RelayCommand]
@@ -276,6 +335,19 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024)
+            return $"{bytes} B";
+
+        var kilobytes = bytes / 1024d;
+        if (kilobytes < 1024)
+            return $"{kilobytes:F1} KB";
+
+        var megabytes = kilobytes / 1024d;
+        return $"{megabytes:F1} MB";
     }
 
     private static List<FontFamilyOption> CreateFontFamilyOptions()

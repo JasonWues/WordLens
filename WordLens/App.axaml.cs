@@ -17,6 +17,7 @@ using WordLens.Infrastructure.Avalonia;
 using WordLens.Infrastructure.Http;
 using WordLens.Infrastructure.Screenshot;
 using WordLens.Infrastructure.Security;
+using WordLens.Models;
 using WordLens.Providers.OpenAI;
 using WordLens.Services;
 using WordLens.Services.Implementations;
@@ -64,12 +65,17 @@ public class App : Application
             DataContext = _services.GetRequiredService<ApplicationViewModel>();
 
             var hotkeyManager = _services.GetRequiredService<IHotkeyManagerService>();
-            _ = hotkeyManager.StartAsync();
             var clipboardMonitor = _services.GetRequiredService<IClipboardMonitorService>();
             var settingsService = _services.GetRequiredService<ISettingsService>();
             var localApiService = _services.GetRequiredService<ILocalApiService>();
             var themeService = _services.GetRequiredService<AvaloniaThemeService>();
-            _ = ApplyStartupSettingsAsync(settingsService, localApiService, themeService);
+            var logger = _services.GetRequiredService<ILogger<App>>();
+            _ = StartApplicationServicesAsync(
+                settingsService,
+                hotkeyManager,
+                localApiService,
+                themeService,
+                logger);
 
             var windowManager = _services.GetRequiredService<IWindowManagerService>();
 
@@ -138,6 +144,7 @@ public class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ProxyAwareHttpClientFactory>();
         services.AddSingleton<UpdateService>();
+        services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<IOcrService, OpenAIOcrService>();
         services.AddSingleton<TranslationService>();
         services.AddSingleton<LocalApiBridge>();
@@ -179,12 +186,31 @@ public class App : Application
         });
     }
 
-    private static async Task ApplyStartupSettingsAsync(
+    private static async Task StartApplicationServicesAsync(
         ISettingsService settingsService,
+        IHotkeyManagerService hotkeyManager,
+        ILocalApiService localApiService,
+        AvaloniaThemeService themeService,
+        ILogger<App> logger)
+    {
+        try
+        {
+            var settings = await settingsService.LoadAsync();
+            await Task.WhenAll(
+                hotkeyManager.StartAsync(settings),
+                ApplyStartupSettingsAsync(settings, localApiService, themeService));
+        }
+        catch (Exception ex)
+        {
+            logger.ZLogError(ex, $"启动应用服务失败: {ex.Message}");
+        }
+    }
+
+    private static async Task ApplyStartupSettingsAsync(
+        AppSettings settings,
         ILocalApiService localApiService,
         AvaloniaThemeService themeService)
     {
-        var settings = await settingsService.LoadAsync();
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             themeService.ApplyLocale(settings.UILanguage);

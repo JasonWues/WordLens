@@ -10,4 +10,6 @@ public interface IPathPickerService
     Task<IReadOnlyList<string>> PickFilesAsync(string title, IReadOnlyList<string> patterns);
 
     Task<string?> PickFolderAsync(string title);
+
+    Task<string?> PickSaveFileAsync(string title, string suggestedFileName, IReadOnlyList<string> patterns);
 }

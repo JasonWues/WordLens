@@ -39,10 +39,14 @@ public class HotkeyManagerService : IHotkeyManagerService
 
     public async Task StartAsync()
     {
+        var settings = await _settingsService.LoadAsync();
+        await StartAsync(settings);
+    }
+
+    public async Task StartAsync(AppSettings settings)
+    {
         _logger.ZLogInformation($"热键管理服务启动");
 
-        // 加载快捷键配置
-        var settings = await _settingsService.LoadAsync();
         _translationHotkey = settings.Hotkey;
         _ocrHotkey = settings.OcrHotkey;
 

@@ -21,6 +21,10 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - TTS 朗读（OpenAI 兼容语音接口 / 系统 TTS）
 - 翻译历史记录
 - 本地自动化 API（Local API）
+- 剪贴板监听翻译（Windows 后端）
+- 欧路词典生词本同步
+- 设置、翻译历史和截图数据备份
+- 界面语言和字体配置
 - 开机自启
 - HTTP 代理配置（系统代理 / 手动代理 / 认证代理）
 - Rust 原生截图和选中文本获取
@@ -56,6 +60,10 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 可将识别文本发送到翻译窗口
 
 OCR 使用单独的 OCR 源配置，不占用翻译源列表。OCR 源可以是 OpenAI 兼容视觉模型，也可以是平台本地 OCR 后端：Windows 使用系统 OCR，Linux 使用 `tesseract` 命令行后端。
+
+#### 剪贴板监听翻译
+
+托盘菜单可开启或停止剪贴板监听。启用后，复制新的文本内容会自动打开翻译窗口并开始翻译。当前内置监听后端主要面向 Windows，其他平台会回退为不支持状态。
 
 #### SkiaSharp OCR 预处理
 
@@ -94,6 +102,14 @@ WordLens 支持配置多个 OpenAI 兼容翻译源。触发翻译时，所有已
 - 清空历史
 - 收藏记录
 - 从历史记录重新翻译
+
+#### 欧路生词本同步
+
+在“常规”设置页启用欧路词典生词本同步后，可在翻译窗口将当前原文加入欧路生词本。配置项包括 OpenAPI Token、语言、生词本 ID 和星级。请求会走应用的代理配置。
+
+#### 数据备份
+
+在“常规”设置页可以导出 WordLens 备份包。备份文件为 `.zip`，包含 `settings.json`、翻译历史数据库和截图缓存，并带有 `backup-manifest.json` 清单。
 
 #### TTS 朗读
 
@@ -190,11 +206,12 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 
 1. 启动应用后，在系统托盘中找到 WordLens。
 2. 右键托盘图标，打开“设置”。
-3. 在“常规”页配置界面语言、开机自启、翻译快捷键、OCR 快捷键和本地 API。
+3. 在“常规”页配置界面语言、界面字体、开机自启、数据备份、翻译快捷键、OCR 快捷键、本地 API 和欧路生词本。
 4. 在“翻译源”页配置至少一个启用的翻译源。
 5. 在“OCR”页配置 OCR 源。
 6. 如需朗读，在“TTS”页启用并配置 LLM TTS 或系统 TTS。
 7. 在任意应用中选中文本并按翻译快捷键，或按 OCR 快捷键框选屏幕区域。
+8. 如需复制即翻译，可在托盘菜单中启用“监听剪贴板”。
 
 ### 配置和数据位置
 
@@ -232,6 +249,10 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 - 服务实现：`WordLens/Services/Implementations/`
 - 数据模型：`WordLens/Models/`
 - Native P/Invoke wrapper：`WordLens/Native/`
+- 平台中立抽象：`WordLens.Abstractions/`
+- Windows 平台服务：`WordLens.Windows/`
+- Linux 平台服务：`WordLens.Linux/`
+- macOS 平台服务：`WordLens.Macos/`
 
 #### Rust native
 
@@ -260,8 +281,9 @@ Rust crate 位于 `native/`，当前拆分为：
 - SoundFlow / MiniAudio
 - OpenAI 兼容 Chat Completions、Vision 和 Speech 接口
 - DeepL 翻译接口
+- 欧路词典 OpenAPI
 - ASP.NET Core Minimal APIs / Kestrel（本地自动化 API）
-- Microsoft.Windows.CsWin32 / Windows Runtime OCR 与 TTS
+- Microsoft.Windows.CsWin32 / Windows Runtime OCR、TTS 与剪贴板监听
 - Linux Tesseract OCR CLI
 - Rust `xcap`
 - Rust `selection`
@@ -271,8 +293,9 @@ Rust crate 位于 `native/`，当前拆分为：
 - 远程 OCR、翻译和 LLM TTS 依赖 OpenAI 兼容接口或 DeepL 等外部服务，需要自行配置可用服务。
 - 本地 OCR 当前支持 Windows 系统 OCR 和 Linux Tesseract OCR；Linux 需要系统中可执行 `tesseract`，并安装所需语言包。macOS 本地 OCR 尚未接入。
 - 本地 API 仅设计为本机自动化接口，应只监听 `127.0.0.1` 并使用 Token；不建议暴露到局域网或公网。
+- 剪贴板监听当前主要支持 Windows；其他平台后端尚未接入。
 - Linux 暂未提供内置本地 TTS 后端，可使用 OpenAI 兼容语音接口。
-- API Key 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
+- API Key、Local API Token 和欧路 OpenAPI Token 当前存储在本地配置中，并经过简单加密/混淆；后续更适合改为系统凭据库。
 - 单元测试位于 `WordLens.Test/`。
 - Rust 格式化和 clippy 需要本机安装 `rustfmt` 和 `clippy` 组件。
 
@@ -313,6 +336,10 @@ Current features include:
 - TTS playback with OpenAI-compatible speech APIs or system TTS
 - Translation history
 - Local automation API
+- Clipboard monitoring translation with a Windows backend
+- Eudic vocabulary sync
+- Backup for settings, translation history, and screenshot data
+- UI language and font configuration
 - Auto-start on login
 - HTTP proxy support, including system proxy, manual proxy, and authenticated proxy
 - Rust native screenshot and selected-text extraction
@@ -346,6 +373,10 @@ Press the OCR hotkey to open the screen capture overlay. After selecting a regio
 - The recognized text can be sent to the translation window
 
 OCR uses separate OCR provider settings and does not consume entries from the translation provider list. OCR providers can use OpenAI-compatible vision models or platform-local OCR backends: Windows uses system OCR, and Linux uses the `tesseract` command-line backend.
+
+### Clipboard Monitoring Translation
+
+The tray menu can start or stop clipboard monitoring. When enabled, copying new text opens the translation window and starts translation automatically. The built-in monitoring backend currently targets Windows; other platforms fall back to an unsupported state.
 
 ### SkiaSharp OCR Preprocessing
 
@@ -384,6 +415,14 @@ Successful translations are saved locally. The history window supports:
 - Clearing all entries
 - Favorites
 - Translating again from history
+
+### Eudic Vocabulary Sync
+
+Enable Eudic vocabulary sync in the General settings tab to add the current source text to a Eudic study list from the translation window. Configuration includes OpenAPI token, language, category ID, and star level. Requests use the app's proxy settings.
+
+### Data Backup
+
+The General settings tab can export a WordLens backup package. The backup is a `.zip` file containing `settings.json`, the translation history database, screenshot cache, and a `backup-manifest.json` manifest.
 
 ### TTS Playback
 
@@ -480,11 +519,12 @@ dotnet publish WordLens/WordLens.csproj -c Release -f net11.0-windows10.0.19041.
 
 1. Start WordLens and find it in the system tray.
 2. Right-click the tray icon and open Settings.
-3. Configure UI language, auto-start, translation hotkey, OCR hotkey, and the local API in the General tab.
+3. Configure UI language, UI font, auto-start, data backup, translation hotkey, OCR hotkey, the local API, and Eudic vocabulary sync in the General tab.
 4. Configure at least one enabled translation provider in the Providers tab.
 5. Configure the OCR provider in the OCR tab.
 6. Enable and configure an LLM speech provider or system TTS provider in the TTS tab if speech playback is needed.
 7. Select text in any app and press the translation hotkey, or press the OCR hotkey and select a screen region.
+8. To translate copied text automatically, enable clipboard monitoring from the tray menu.
 
 ### Config and Data Locations
 
@@ -522,6 +562,10 @@ Temporary screenshots:
 - Service implementations: `WordLens/Services/Implementations/`
 - Models: `WordLens/Models/`
 - Native P/Invoke wrappers: `WordLens/Native/`
+- Platform-neutral abstractions: `WordLens.Abstractions/`
+- Windows services: `WordLens.Windows/`
+- Linux services: `WordLens.Linux/`
+- macOS services: `WordLens.Macos/`
 
 #### Rust Native Module
 
@@ -550,8 +594,9 @@ The Rust crate lives in `native/` and is split into:
 - SoundFlow / MiniAudio
 - OpenAI-compatible Chat Completions, Vision, and Speech APIs
 - DeepL translation API
+- Eudic OpenAPI
 - ASP.NET Core Minimal APIs / Kestrel for the local automation API
-- Microsoft.Windows.CsWin32 / Windows Runtime OCR and TTS
+- Microsoft.Windows.CsWin32 / Windows Runtime OCR, TTS, and clipboard monitoring
 - Linux Tesseract OCR CLI
 - Rust `xcap`
 - Rust `selection`
@@ -561,8 +606,9 @@ The Rust crate lives in `native/` and is split into:
 - Remote OCR, translation, and LLM TTS depend on OpenAI-compatible APIs or external services such as DeepL. You need to configure your own available services.
 - Local OCR currently supports Windows system OCR and Linux Tesseract OCR. Linux requires a runnable `tesseract` command and installed language packages. macOS local OCR is not connected yet.
 - The local API is intended for local automation only. Keep it bound to `127.0.0.1` with token authentication; don't expose it to a LAN or the public internet.
+- Clipboard monitoring currently targets Windows; other platform backends are not connected yet.
 - Linux currently has no built-in local TTS backend; use an OpenAI-compatible speech API instead.
-- API keys are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
+- API keys, the Local API token, and the Eudic OpenAPI token are currently stored locally with simple encryption/obfuscation. A system credential store would be a better long-term option.
 - Unit tests live in `WordLens.Test/`.
 - Rust formatting and clippy checks require the `rustfmt` and `clippy` components.
 

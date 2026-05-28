@@ -27,6 +27,7 @@ namespace WordLens;
 [JsonSerializable(typeof(ApiErrorResponse))]
 [JsonSerializable(typeof(EudicAddWordRequest))]
 [JsonSerializable(typeof(EudicApiMessageResponse))]
+[JsonSerializable(typeof(BackupManifest))]
 public partial class SourceGenerationContext : JsonSerializerContext
 {
 }

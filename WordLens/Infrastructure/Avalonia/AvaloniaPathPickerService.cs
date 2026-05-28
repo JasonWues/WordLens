@@ -61,6 +61,27 @@ public sealed class AvaloniaPathPickerService : IPathPickerService
         return folders.FirstOrDefault()?.TryGetLocalPath();
     }
 
+    public async Task<string?> PickSaveFileAsync(
+        string title,
+        string suggestedFileName,
+        IReadOnlyList<string> patterns)
+    {
+        var storageProvider = GetStorageProvider();
+        if (storageProvider == null)
+            return null;
+
+        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = suggestedFileName,
+            FileTypeChoices = CreateFileTypeFilter(patterns),
+            DefaultExtension = GetDefaultExtension(patterns),
+            ShowOverwritePrompt = true
+        });
+
+        return file?.TryGetLocalPath();
+    }
+
     private static IStorageProvider? GetStorageProvider()
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
@@ -82,5 +103,11 @@ public sealed class AvaloniaPathPickerService : IPathPickerService
             },
             FilePickerFileTypes.All
         };
+    }
+
+    private static string? GetDefaultExtension(IReadOnlyList<string> patterns)
+    {
+        var pattern = patterns.FirstOrDefault(static p => p.StartsWith("*."));
+        return pattern?.Length > 2 ? pattern[2..] : null;
     }
 }

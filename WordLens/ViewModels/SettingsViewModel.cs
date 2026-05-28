@@ -220,6 +220,9 @@ public partial class SettingsViewModel : ViewModelBase
         if (ReferenceEquals(sender, GeneralSettings))
         {
             return propertyName is
+                nameof(GeneralSettingsViewModel.BackupStatus) or
+                nameof(GeneralSettingsViewModel.HasBackupStatus) or
+                nameof(GeneralSettingsViewModel.IsBackupRunning) or
                 nameof(GeneralSettingsViewModel.IsCapturingHotkey) or
                 nameof(GeneralSettingsViewModel.IsStartupSupported);
         }
