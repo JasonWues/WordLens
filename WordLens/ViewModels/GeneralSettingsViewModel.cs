@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -23,6 +24,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.DefaultOcr();
 
     [ObservableProperty] private int charsPerUpdate = 1;
+    [ObservableProperty] private string fontFamily = string.Empty;
     [ObservableProperty] private string hotkeyDisplay = "Ctrl+Shift+T";
     [ObservableProperty] private bool isCapturingHotkey;
     [ObservableProperty] private bool isStartupSupported = true;
@@ -53,6 +55,8 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         });
     }
 
+    public List<FontFamilyOption> AvailableFontFamilies { get; } = CreateFontFamilyOptions();
+
     public List<LanguageOption> AvailableUILanguages { get; } = new()
     {
         new LanguageOption("zh-CN", "简体中文"),
@@ -69,6 +73,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     public void Load(AppSettings settings)
     {
         UiLanguage = settings.UILanguage;
+        FontFamily = settings.FontFamily ?? string.Empty;
         _hotkeyConfig = CloneHotkeyConfig(settings.Hotkey);
         _ocrHotkeyConfig = CloneHotkeyConfig(settings.OcrHotkey);
         IsStartupSupported = _startupService.IsSupported;
@@ -130,6 +135,12 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         };
     }
 
+    [RelayCommand]
+    private void ResetFontFamily()
+    {
+        FontFamily = string.Empty;
+    }
+
     public static HotkeyConfig CloneHotkeyConfig(HotkeyConfig config)
     {
         return new HotkeyConfig
@@ -143,6 +154,11 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     {
         if (!string.IsNullOrEmpty(value))
             _themeService.ApplyLocale(value);
+    }
+
+    partial void OnFontFamilyChanged(string value)
+    {
+        _themeService.ApplyFontFamily(value);
     }
 
     [RelayCommand]
@@ -223,6 +239,19 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             .Replace('+', '-')
             .Replace('/', '_');
     }
+
+    private static List<FontFamilyOption> CreateFontFamilyOptions()
+    {
+        var options = new List<FontFamilyOption>
+        {
+            new(string.Empty, $"默认字体 ({AvaloniaThemeService.GetDefaultFontDisplayName()})")
+        };
+
+        options.AddRange(AvaloniaThemeService.GetSystemFontFamilyNames()
+            .Select(static fontFamily => new FontFamilyOption(fontFamily, fontFamily)));
+
+        return options;
+    }
 }
 
 public class LanguageOption
@@ -246,5 +275,17 @@ public class TranslationPopupPositionModeOption
     }
 
     public TranslationPopupPositionMode Mode { get; set; }
+    public string DisplayName { get; set; }
+}
+
+public class FontFamilyOption
+{
+    public FontFamilyOption(string family, string displayName)
+    {
+        Family = family;
+        DisplayName = displayName;
+    }
+
+    public string Family { get; set; }
     public string DisplayName { get; set; }
 }

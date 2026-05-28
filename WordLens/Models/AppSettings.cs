@@ -25,6 +25,11 @@ public class AppSettings
 
     public bool StartWithSystem { get; set; } = false;
 
+    /// <summary>
+    ///     应用界面字体。留空时使用 Avalonia 默认字体。
+    /// </summary>
+    public string FontFamily { get; set; } = string.Empty;
+
     public string? SelectedProvider { get; set; } = "OpenAI";
 
     public string? SelectedOcrProvider { get; set; } = "OpenAI OCR";

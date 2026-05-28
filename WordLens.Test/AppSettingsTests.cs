@@ -10,6 +10,7 @@ public class AppSettingsTests
         var settings = new AppSettings();
 
         Assert.Equal("zh-CN", settings.UILanguage);
+        Assert.Equal(string.Empty, settings.FontFamily);
         Assert.Equal("en", settings.LastTargetLanguage);
         Assert.Equal("OpenAI", settings.SelectedProvider);
         Assert.Single(settings.Providers);

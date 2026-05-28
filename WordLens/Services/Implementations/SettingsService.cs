@@ -70,6 +70,7 @@ public class SettingsService : ISettingsService
             needsSave |= NormalizeTtsProviders(settings);
             needsSave |= NormalizeTranslationPopup(settings);
             needsSave |= NormalizeLocalApi(settings);
+            needsSave |= NormalizeAppearance(settings);
 
             foreach (var provider in settings.Providers)
                 if (!string.IsNullOrEmpty(provider.ApiKey) &&
@@ -130,6 +131,7 @@ public class SettingsService : ISettingsService
             NormalizeTtsProviders(settings);
             NormalizeTranslationPopup(settings);
             NormalizeLocalApi(settings);
+            NormalizeAppearance(settings);
 
             _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}，TTS源数量: {settings.Tts.Providers.Count}");
 
@@ -354,6 +356,15 @@ public class SettingsService : ISettingsService
         }
 
         return needsSave;
+    }
+
+    private static bool NormalizeAppearance(AppSettings settings)
+    {
+        if (settings.FontFamily != null)
+            return false;
+
+        settings.FontFamily = string.Empty;
+        return true;
     }
 
     private static string GenerateLocalApiToken()

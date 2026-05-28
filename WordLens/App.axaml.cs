@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -67,7 +68,8 @@ public class App : Application
             var clipboardMonitor = _services.GetRequiredService<IClipboardMonitorService>();
             var settingsService = _services.GetRequiredService<ISettingsService>();
             var localApiService = _services.GetRequiredService<ILocalApiService>();
-            _ = StartLocalApiAsync(settingsService, localApiService);
+            var themeService = _services.GetRequiredService<AvaloniaThemeService>();
+            _ = ApplyStartupSettingsAsync(settingsService, localApiService, themeService);
 
             var windowManager = _services.GetRequiredService<IWindowManagerService>();
 
@@ -176,11 +178,18 @@ public class App : Application
         });
     }
 
-    private static async Task StartLocalApiAsync(
+    private static async Task ApplyStartupSettingsAsync(
         ISettingsService settingsService,
-        ILocalApiService localApiService)
+        ILocalApiService localApiService,
+        AvaloniaThemeService themeService)
     {
         var settings = await settingsService.LoadAsync();
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            themeService.ApplyLocale(settings.UILanguage);
+            themeService.ApplyFontFamily(settings.FontFamily);
+        });
+
         await localApiService.ApplyConfigAsync(settings.LocalApi);
     }
 }

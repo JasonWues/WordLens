@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFrameworks>net11.0;net11.0-windows10.0.19041.0</TargetFrameworks>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -20,6 +20,10 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0-macos'">
         <SupportedOSPlatformVersion>10.15</SupportedOSPlatformVersion>
         <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0-windows10.0.19041.0'">
+        <OutputType>WinExe</OutputType>
     </PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Release'">
@@ -95,7 +99,7 @@
 
         <!-- 1. 定义 Rust 项目相关的变量 -->
         <PropertyGroup>
-            <RustProjectDir>$(MSBuildProjectDirectory)\..\native\</RustProjectDir>
+            <RustProjectDir>$(MSBuildProjectDirectory)/../native/</RustProjectDir>
 
             <!-- 跨平台库文件名定义 -->
             <RustLibPrefix Condition="'$(OS)' != 'Windows_NT'">lib</RustLibPrefix>

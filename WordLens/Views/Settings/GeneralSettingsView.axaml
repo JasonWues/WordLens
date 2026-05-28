@@ -23,6 +23,28 @@
                            Opacity="0.6" />
             </StackPanel>
 
+            <StackPanel Spacing="8">
+                <TextBlock Text="界面字体" FontWeight="Bold" FontSize="14" />
+                <ComboBox ItemsSource="{Binding AvailableFontFamilies}"
+                          SelectedValue="{Binding FontFamily}"
+                          SelectedValueBinding="{Binding Family}"
+                          DisplayMemberBinding="{Binding DisplayName}"
+                          Width="300"
+                          HorizontalAlignment="Left" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBox Text="{Binding FontFamily}"
+                             PlaceholderText="输入字体名称"
+                             Width="300"
+                             VerticalContentAlignment="Center" />
+                    <Button Content="重置"
+                            Command="{Binding ResetFontFamilyCommand}" />
+                </StackPanel>
+                <TextBlock Text="可选择系统字体，也可输入已安装字体名称；留空使用默认字体"
+                           FontSize="12"
+                           Opacity="0.6"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
             <Separator />
 
             <StackPanel Spacing="8">

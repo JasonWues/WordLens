@@ -330,6 +330,7 @@ public partial class SettingsViewModel : ViewModelBase
         return new AppSettings
         {
             UILanguage = GeneralSettings.UiLanguage,
+            FontFamily = GeneralSettings.FontFamily,
             LastTargetLanguage = _originalSettings?.LastTargetLanguage ?? "en",
             StartWithSystem = GeneralSettings.StartWithSystem,
             Hotkey = GeneralSettings.BuildHotkeyConfig(),
@@ -399,6 +400,7 @@ public partial class SettingsViewModel : ViewModelBase
         return new AppSettings
         {
             UILanguage = settings.UILanguage,
+            FontFamily = settings.FontFamily,
             LastTargetLanguage = settings.LastTargetLanguage,
             StartWithSystem = settings.StartWithSystem,
             Hotkey = GeneralSettingsViewModel.CloneHotkeyConfig(settings.Hotkey),
