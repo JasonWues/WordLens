@@ -68,7 +68,7 @@
                              PlaceholderText="" />
 
                     <Grid Grid.Row="1"
-                          ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto"
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto"
                           ColumnSpacing="8"
                           Margin="10,0"
                           VerticalAlignment="Center">
@@ -91,7 +91,17 @@
                                       Data="{StaticResource copy_regular}" />
                         </Button>
 
-                        <PathIcon Grid.Column="2"
+                        <Button Grid.Column="2"
+                                Classes="icon-button compact"
+                                Command="{Binding AddSourceToVocabularyCommand}"
+                                IsEnabled="{Binding CanAddSourceToVocabulary}"
+                                ToolTip.Tip="加入欧路生词本">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Data="{StaticResource star_regular}" />
+                        </Button>
+
+                        <PathIcon Grid.Column="3"
                                   Width="12"
                                   Height="12"
                                   Margin="6,0"
@@ -99,7 +109,7 @@
                                   Data="{StaticResource link_regular}"
                                   VerticalAlignment="Center" />
 
-                        <Button Grid.Column="3"
+                        <Button Grid.Column="4"
                                 Classes="icon-button compact"
                                 Command="{Binding ClearSourceCommand}"
                                 IsEnabled="{Binding CanCopySource}"
@@ -109,7 +119,14 @@
                                       Data="{StaticResource dismiss_regular}" />
                         </Button>
 
-                        <Border Grid.Column="5"
+                        <TextBlock Grid.Column="5"
+                                   Text="{Binding VocabularyStatus}"
+                                   FontSize="10"
+                                   Foreground="#666666"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+
+                        <Border Grid.Column="6"
                                 Background="#FFFFFF"
                                 BorderBrush="#9A83C8"
                                 BorderThickness="1"
@@ -125,7 +142,7 @@
                                        TextTrimming="CharacterEllipsis" />
                         </Border>
 
-                        <Button Grid.Column="6"
+                        <Button Grid.Column="7"
                                 Classes="translate-button"
                                 Command="{Binding TranslateCommand}"
                                 ToolTip.Tip="翻译">

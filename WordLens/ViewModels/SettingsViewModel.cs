@@ -344,6 +344,7 @@ public partial class SettingsViewModel : ViewModelBase
             Streaming = GeneralSettings.BuildStreamingConfig(),
             TranslationPopup = GeneralSettings.BuildTranslationPopupConfig(currentTranslationPopup),
             LocalApi = GeneralSettings.BuildLocalApiConfig(),
+            EudicVocabulary = GeneralSettings.BuildEudicVocabularyConfig(),
             Proxy = NetworkSettings.BuildProxyConfig(),
             Tts = TtsSettings.BuildTtsConfig()
         };
@@ -417,6 +418,7 @@ public partial class SettingsViewModel : ViewModelBase
             },
             TranslationPopup = CloneTranslationPopupConfig(settings.TranslationPopup),
             LocalApi = CloneLocalApiConfig(settings.LocalApi),
+            EudicVocabulary = CloneEudicVocabularyConfig(settings.EudicVocabulary),
             Proxy = NetworkSettingsViewModel.CloneProxyConfig(settings.Proxy),
             Tts = TtsSettingsViewModel.CloneTtsConfig(settings.Tts)
         };
@@ -439,6 +441,18 @@ public partial class SettingsViewModel : ViewModelBase
             Enabled = config.Enabled,
             Port = config.Port,
             Token = config.Token
+        };
+    }
+
+    private static EudicVocabularyConfig CloneEudicVocabularyConfig(EudicVocabularyConfig config)
+    {
+        return new EudicVocabularyConfig
+        {
+            Enabled = config.Enabled,
+            Token = config.Token,
+            Language = config.Language,
+            CategoryId = config.CategoryId,
+            Star = config.Star
         };
     }
 }

@@ -98,6 +98,55 @@
             <Separator />
 
             <StackPanel Spacing="8">
+                <TextBlock Text="欧路生词本" FontWeight="Bold" FontSize="14" />
+                <CheckBox Content="启用欧路词典生词本同步"
+                          IsChecked="{Binding EudicEnabled}" />
+                <StackPanel Spacing="10"
+                            IsEnabled="{Binding EudicEnabled}"
+                            Margin="24,4,0,0"
+                            Opacity="{Binding EudicEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="OpenAPI Token" FontSize="13" />
+                        <TextBox Text="{Binding EudicToken}"
+                                 PasswordChar="*"
+                                 Width="300"
+                                 HorizontalAlignment="Left"
+                                 VerticalContentAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="语言" FontSize="13" />
+                            <ComboBox ItemsSource="{Binding AvailableEudicLanguages}"
+                                      SelectedValue="{Binding EudicLanguage}"
+                                      SelectedValueBinding="{Binding Code}"
+                                      DisplayMemberBinding="{Binding DisplayName}"
+                                      Width="120" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="生词本 ID" FontSize="13" />
+                            <TextBox Text="{Binding EudicCategoryId}"
+                                     Width="140"
+                                     VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="星级" FontSize="13" />
+                            <NumericUpDown Value="{Binding EudicStar}"
+                                           Minimum="0"
+                                           Maximum="5"
+                                           Increment="1"
+                                           Width="88" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="Token 可在欧路 OpenAPI 授权页生成；默认生词本 ID 通常为 0。"
+                           FontSize="12"
+                           Opacity="0.6"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Separator />
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="翻译框位置" FontWeight="Bold" FontSize="14" />
                 <ComboBox ItemsSource="{Binding AvailableTranslationPopupPositionModes}"
                           SelectedValue="{Binding TranslationPopupPositionMode}"

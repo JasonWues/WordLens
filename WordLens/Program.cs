@@ -59,7 +59,8 @@ internal sealed class Program
             .WithInterFont();
 
 #if DEBUG
-        builder = builder.LogToTrace();
+        builder = builder
+            .LogToTrace();
 #endif
 
         return builder;

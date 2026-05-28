@@ -65,11 +65,13 @@ public class SettingsService : ISettingsService
             settings.Tts ??= new TtsConfig();
             settings.Tts.Providers ??= new List<TtsProviderConfig>();
             settings.LocalApi ??= new LocalApiConfig();
+            settings.EudicVocabulary ??= new EudicVocabularyConfig();
             needsSave |= NormalizeHotkeys(settings);
             needsSave |= NormalizeOcrProviders(settings);
             needsSave |= NormalizeTtsProviders(settings);
             needsSave |= NormalizeTranslationPopup(settings);
             needsSave |= NormalizeLocalApi(settings);
+            needsSave |= NormalizeEudicVocabulary(settings);
             needsSave |= NormalizeAppearance(settings);
 
             foreach (var provider in settings.Providers)
@@ -99,6 +101,14 @@ public class SettingsService : ISettingsService
                     needsSave = true;
                 }
 
+            if (!string.IsNullOrWhiteSpace(settings.EudicVocabulary.Token) &&
+                !_encryptionService.IsEncrypted(settings.EudicVocabulary.Token))
+            {
+                _logger.ZLogInformation($"检测到未加密的欧路生词本 Token，正在加密");
+                settings.EudicVocabulary.Token = _encryptionService.Encrypt(settings.EudicVocabulary.Token);
+                needsSave = true;
+            }
+
             // 如果有未加密的配置，自动保存加密后的版本
             if (needsSave)
             {
@@ -126,11 +136,13 @@ public class SettingsService : ISettingsService
             settings.Tts ??= new TtsConfig();
             settings.Tts.Providers ??= new List<TtsProviderConfig>();
             settings.LocalApi ??= new LocalApiConfig();
+            settings.EudicVocabulary ??= new EudicVocabularyConfig();
             NormalizeHotkeys(settings);
             NormalizeOcrProviders(settings);
             NormalizeTtsProviders(settings);
             NormalizeTranslationPopup(settings);
             NormalizeLocalApi(settings);
+            NormalizeEudicVocabulary(settings);
             NormalizeAppearance(settings);
 
             _logger.ZLogInformation($"开始保存配置，翻译源数量: {settings.Providers.Count}，OCR源数量: {settings.OcrProviders.Count}，TTS源数量: {settings.Tts.Providers.Count}");
@@ -159,6 +171,13 @@ public class SettingsService : ISettingsService
                     _logger.ZLogDebug($"保存前加密TTS API Key: {provider.Name}");
                     provider.ApiKey = _encryptionService.Encrypt(provider.ApiKey);
                 }
+
+            if (!string.IsNullOrWhiteSpace(settings.EudicVocabulary.Token) &&
+                !_encryptionService.IsEncrypted(settings.EudicVocabulary.Token))
+            {
+                _logger.ZLogDebug($"保存前加密欧路生词本 Token");
+                settings.EudicVocabulary.Token = _encryptionService.Encrypt(settings.EudicVocabulary.Token);
+            }
 
             var json = JsonSerializer.Serialize(settings, SourceGenerationContext.Default.AppSettings);
             await File.WriteAllTextAsync(_path, json);
@@ -352,6 +371,43 @@ public class SettingsService : ISettingsService
         if (string.IsNullOrWhiteSpace(settings.LocalApi.Token))
         {
             settings.LocalApi.Token = GenerateLocalApiToken();
+            needsSave = true;
+        }
+
+        return needsSave;
+    }
+
+    private static bool NormalizeEudicVocabulary(AppSettings settings)
+    {
+        var needsSave = false;
+
+        if (settings.EudicVocabulary == null)
+        {
+            settings.EudicVocabulary = new EudicVocabularyConfig();
+            return true;
+        }
+
+        var language = settings.EudicVocabulary.Language?.Trim().ToLowerInvariant();
+        if (language is not ("en" or "fr" or "de" or "es"))
+        {
+            settings.EudicVocabulary.Language = "en";
+            needsSave = true;
+        }
+        else if (settings.EudicVocabulary.Language != language)
+        {
+            settings.EudicVocabulary.Language = language;
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.EudicVocabulary.CategoryId))
+        {
+            settings.EudicVocabulary.CategoryId = "0";
+            needsSave = true;
+        }
+
+        if (settings.EudicVocabulary.Star is < 0 or > 5)
+        {
+            settings.EudicVocabulary.Star = Math.Clamp(settings.EudicVocabulary.Star, 0, 5);
             needsSave = true;
         }
 

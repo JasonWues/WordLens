@@ -24,6 +24,7 @@ public partial class PopupWindowViewModel : ViewModelBase
     private readonly IClipboardService? _clipboardService;
     private readonly ISettingsService _settingsService;
     private readonly ITranslationHistoryService _historyService;
+    private readonly IEudicVocabularyService? _eudicVocabularyService;
     private readonly ITtsService? _ttsService;
     private readonly TranslationService _translationService;
     private readonly Task _languageInitializationTask = Task.CompletedTask;
@@ -31,6 +32,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     private bool _isInitializingLanguages;
     private bool _isSavingPendingHistory;
     private ObservableCollection<TranslationResult>? _trackedTranslationResults;
+
+    [ObservableProperty] private bool isAddingToVocabulary;
 
     [ObservableProperty] private bool isBusy;
 
@@ -54,6 +57,8 @@ public partial class PopupWindowViewModel : ViewModelBase
 
     [ObservableProperty] private ObservableCollection<TranslationResult> translationResults = new();
 
+    [ObservableProperty] private string vocabularyStatus = string.Empty;
+
 
     public PopupWindowViewModel()
     {
@@ -61,6 +66,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         _translationService = null!;
         _settingsService = null!;
         _historyService = null!;
+        _eudicVocabularyService = null;
         _ttsService = null;
         _logger = null!;
 
@@ -73,6 +79,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         ISettingsService settingsService,
         ITranslationHistoryService historyService,
         IClipboardService clipboardService,
+        IEudicVocabularyService eudicVocabularyService,
         ITtsService ttsService,
         ILogger<PopupWindowViewModel> logger)
     {
@@ -80,6 +87,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         _settingsService = settingsService;
         _historyService = historyService;
         _clipboardService = clipboardService;
+        _eudicVocabularyService = eudicVocabularyService;
         _ttsService = ttsService;
         _logger = logger;
 
@@ -91,6 +99,11 @@ public partial class PopupWindowViewModel : ViewModelBase
     public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
 
     public bool CanSpeakSource => CanCopySource;
+
+    public bool CanAddSourceToVocabulary =>
+        CanCopySource &&
+        !IsAddingToVocabulary &&
+        _eudicVocabularyService != null;
 
     public bool CanUseTranslationAsSource =>
         TranslationResults.Any(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
@@ -155,11 +168,20 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(CanCopySource));
         OnPropertyChanged(nameof(CanSpeakSource));
+        OnPropertyChanged(nameof(CanAddSourceToVocabulary));
         OnPropertyChanged(nameof(SourceCharacterCount));
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        VocabularyStatus = string.Empty;
         CopySourceCommand.NotifyCanExecuteChanged();
         SpeakSourceCommand.NotifyCanExecuteChanged();
+        AddSourceToVocabularyCommand.NotifyCanExecuteChanged();
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsAddingToVocabularyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanAddSourceToVocabulary));
+        AddSourceToVocabularyCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsBusyChanged(bool value)
@@ -555,6 +577,29 @@ public partial class PopupWindowViewModel : ViewModelBase
     public async Task CopySourceAsync()
     {
         await CopyTextAsync(SourceText);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddSourceToVocabulary))]
+    public async Task AddSourceToVocabularyAsync(CancellationToken cancellationToken)
+    {
+        if (_eudicVocabularyService == null || string.IsNullOrWhiteSpace(SourceText))
+            return;
+
+        IsAddingToVocabulary = true;
+        VocabularyStatus = "正在加入欧路生词本...";
+
+        try
+        {
+            var result = await _eudicVocabularyService.AddWordAsync(
+                SourceText,
+                null,
+                cancellationToken);
+            VocabularyStatus = result.Message;
+        }
+        finally
+        {
+            IsAddingToVocabulary = false;
+        }
     }
 
     [RelayCommand]

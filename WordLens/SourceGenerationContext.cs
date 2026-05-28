@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Collections.Generic;
 using WordLens.Models;
+using WordLens.Services.Implementations;
 using WordLens.Services.LocalApi;
 
 namespace WordLens;
@@ -24,6 +25,8 @@ namespace WordLens;
 [JsonSerializable(typeof(TranslateApiResult))]
 [JsonSerializable(typeof(OpenTranslationWindowApiRequest))]
 [JsonSerializable(typeof(ApiErrorResponse))]
+[JsonSerializable(typeof(EudicAddWordRequest))]
+[JsonSerializable(typeof(EudicApiMessageResponse))]
 public partial class SourceGenerationContext : JsonSerializerContext
 {
 }

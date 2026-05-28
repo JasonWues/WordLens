@@ -144,6 +144,7 @@ public class App : Application
         services.AddSingleton<ILocalApiService, LocalApiService>();
         services.AddSingleton<ISelectionService, SelectionService>();
         services.AddSingleton<ITranslationHistoryService, TranslationHistoryService>();
+        services.AddSingleton<IEudicVocabularyService, EudicVocabularyService>();
         services.AddHttpClient();
 
         // 截图服务 - Rust xcap 跨平台实现

@@ -45,6 +45,8 @@ public class AppSettings
 
     public LocalApiConfig LocalApi { get; set; } = new();
 
+    public EudicVocabularyConfig EudicVocabulary { get; set; } = new();
+
     public TranslationPopupConfig TranslationPopup { get; set; } = new();
 
     /// <summary>
@@ -158,6 +160,22 @@ public class LocalApiConfig
     public int Port { get; set; } = 49631;
 
     public string Token { get; set; } = string.Empty;
+}
+
+public class EudicVocabularyConfig
+{
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    ///     欧路 OpenAPI 授权 Token。存储时为加密格式：ENC::xxxxx
+    /// </summary>
+    public string Token { get; set; } = string.Empty;
+
+    public string Language { get; set; } = "en";
+
+    public string CategoryId { get; set; } = "0";
+
+    public int Star { get; set; } = 1;
 }
 
 public class ProviderConfig : ObservableObject

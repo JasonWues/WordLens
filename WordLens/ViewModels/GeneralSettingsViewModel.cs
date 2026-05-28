@@ -8,6 +8,7 @@ using SharpHook.Data;
 using WordLens.Abstractions.Models;
 using WordLens.Abstractions.Services;
 using WordLens.Infrastructure.Avalonia;
+using WordLens.Infrastructure.Security;
 using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
@@ -19,11 +20,17 @@ public partial class GeneralSettingsViewModel : ViewModelBase
 {
     private readonly IStartupService _startupService;
     private readonly AvaloniaThemeService _themeService;
+    private readonly EncryptionService _encryptionService;
     private string _currentCapturingType = string.Empty;
     private HotkeyConfig _hotkeyConfig = HotkeyConfig.Default();
     private HotkeyConfig _ocrHotkeyConfig = HotkeyConfig.DefaultOcr();
 
     [ObservableProperty] private int charsPerUpdate = 1;
+    [ObservableProperty] private string eudicCategoryId = "0";
+    [ObservableProperty] private bool eudicEnabled;
+    [ObservableProperty] private string eudicLanguage = "en";
+    [ObservableProperty] private int eudicStar = 1;
+    [ObservableProperty] private string eudicToken = string.Empty;
     [ObservableProperty] private string fontFamily = string.Empty;
     [ObservableProperty] private string hotkeyDisplay = "Ctrl+Shift+T";
     [ObservableProperty] private bool isCapturingHotkey;
@@ -40,10 +47,12 @@ public partial class GeneralSettingsViewModel : ViewModelBase
 
     public GeneralSettingsViewModel(
         AvaloniaThemeService themeService,
-        IStartupService startupService)
+        IStartupService startupService,
+        EncryptionService encryptionService)
     {
         _themeService = themeService;
         _startupService = startupService;
+        _encryptionService = encryptionService;
 
         WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
         {
@@ -62,6 +71,14 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         new LanguageOption("zh-CN", "简体中文"),
         new LanguageOption("en", "English"),
         new LanguageOption("ja", "日本語")
+    };
+
+    public List<EudicLanguageOption> AvailableEudicLanguages { get; } = new()
+    {
+        new EudicLanguageOption("en", "英语"),
+        new EudicLanguageOption("fr", "法语"),
+        new EudicLanguageOption("de", "德语"),
+        new EudicLanguageOption("es", "西语")
     };
 
     public List<TranslationPopupPositionModeOption> AvailableTranslationPopupPositionModes { get; } = new()
@@ -85,6 +102,15 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         LocalApiEnabled = settings.LocalApi.Enabled;
         LocalApiPort = settings.LocalApi.Port;
         LocalApiToken = settings.LocalApi.Token;
+        EudicEnabled = settings.EudicVocabulary.Enabled;
+        EudicToken = string.IsNullOrWhiteSpace(settings.EudicVocabulary.Token)
+            ? string.Empty
+            : _encryptionService.IsEncrypted(settings.EudicVocabulary.Token)
+                ? _encryptionService.Decrypt(settings.EudicVocabulary.Token)
+                : settings.EudicVocabulary.Token;
+        EudicLanguage = settings.EudicVocabulary.Language;
+        EudicCategoryId = settings.EudicVocabulary.CategoryId;
+        EudicStar = settings.EudicVocabulary.Star;
         UpdateHotkeyDisplay();
         UpdateOcrHotkeyDisplay();
     }
@@ -132,6 +158,18 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             Enabled = LocalApiEnabled,
             Port = LocalApiPort,
             Token = string.IsNullOrWhiteSpace(LocalApiToken) ? GenerateLocalApiToken() : LocalApiToken
+        };
+    }
+
+    public EudicVocabularyConfig BuildEudicVocabularyConfig()
+    {
+        return new EudicVocabularyConfig
+        {
+            Enabled = EudicEnabled,
+            Token = EudicToken.Trim(),
+            Language = string.IsNullOrWhiteSpace(EudicLanguage) ? "en" : EudicLanguage.Trim().ToLowerInvariant(),
+            CategoryId = string.IsNullOrWhiteSpace(EudicCategoryId) ? "0" : EudicCategoryId.Trim(),
+            Star = Math.Clamp(EudicStar, 0, 5)
         };
     }
 
@@ -257,6 +295,18 @@ public partial class GeneralSettingsViewModel : ViewModelBase
 public class LanguageOption
 {
     public LanguageOption(string code, string displayName)
+    {
+        Code = code;
+        DisplayName = displayName;
+    }
+
+    public string Code { get; set; }
+    public string DisplayName { get; set; }
+}
+
+public class EudicLanguageOption
+{
+    public EudicLanguageOption(string code, string displayName)
     {
         Code = code;
         DisplayName = displayName;

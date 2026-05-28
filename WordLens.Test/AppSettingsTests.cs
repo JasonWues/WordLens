@@ -19,6 +19,10 @@ public class AppSettingsTests
         Assert.Single(settings.OcrProviders);
         Assert.Equal("OpenAI OCR", settings.OcrProviders[0].Name);
         Assert.True(settings.OcrProviders[0].IsEnabled);
+        Assert.False(settings.EudicVocabulary.Enabled);
+        Assert.Equal("en", settings.EudicVocabulary.Language);
+        Assert.Equal("0", settings.EudicVocabulary.CategoryId);
+        Assert.Equal(1, settings.EudicVocabulary.Star);
     }
 
     [Fact]
