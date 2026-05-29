@@ -158,10 +158,10 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
-            await _initializeTask;
+            await _initializeTask.ConfigureAwait(false);
 
             await using var connection = CreateConnection();
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
             var rows = await connection.QueryAsync<TranslationHistoryRow>(
                 """
                 SELECT Id,
@@ -174,7 +174,7 @@ public class TranslationHistoryService : ITranslationHistoryService
                        IsFavorite
                 FROM TranslationHistory
                 ORDER BY CreatedAt DESC
-                """);
+                """).ConfigureAwait(false);
 
             var histories = rows.Select(ToModel).ToList();
             _logger.ZLogInformation($"获取所有历史记录成功，共 {histories.Count} 条");
@@ -192,7 +192,7 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
-            await _initializeTask;
+            await _initializeTask.ConfigureAwait(false);
 
             var parameters = new PageParameter
             {
@@ -201,7 +201,7 @@ public class TranslationHistoryService : ITranslationHistoryService
             };
 
             await using var connection = CreateConnection();
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
             var rows = await connection.QueryAsync<TranslationHistoryRow>(
                 """
                 SELECT Id,
@@ -216,7 +216,7 @@ public class TranslationHistoryService : ITranslationHistoryService
                 ORDER BY CreatedAt DESC
                 LIMIT @Take OFFSET @Skip
                 """,
-                parameters);
+                parameters).ConfigureAwait(false);
 
             var histories = rows.Select(ToModel).ToList();
             _logger.ZLogDebug($"分页获取历史记录成功，跳过 {parameters.Skip}，获取 {parameters.Take}，返回 {histories.Count} 条");
@@ -234,11 +234,11 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
-            await _initializeTask;
+            await _initializeTask.ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(keyword))
             {
-                return await GetAllAsync();
+                return await GetAllAsync().ConfigureAwait(false);
             }
 
             var parameters = new SearchParameter
@@ -247,7 +247,7 @@ public class TranslationHistoryService : ITranslationHistoryService
             };
 
             await using var connection = CreateConnection();
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
             var rows = await connection.QueryAsync<TranslationHistoryRow>(
                 """
                 SELECT Id,
@@ -264,7 +264,7 @@ public class TranslationHistoryService : ITranslationHistoryService
                    OR ProviderNames LIKE @Pattern
                 ORDER BY CreatedAt DESC
                 """,
-                parameters);
+                parameters).ConfigureAwait(false);
 
             var histories = rows.Select(ToModel).ToList();
             _logger.ZLogInformation($"搜索历史记录成功，关键词: '{keyword}'，找到 {histories.Count} 条");
@@ -376,15 +376,15 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
-            await _initializeTask;
+            await _initializeTask.ConfigureAwait(false);
 
             await using var connection = CreateConnection();
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
             var count = await connection.ExecuteScalarAsync<long>(
                 """
                 SELECT COUNT(1)
                 FROM TranslationHistory
-                """);
+                """).ConfigureAwait(false);
             _logger.ZLogDebug($"获取历史记录总数: {count}");
             return count > int.MaxValue ? int.MaxValue : (int)count;
         }
@@ -429,10 +429,10 @@ public class TranslationHistoryService : ITranslationHistoryService
     {
         try
         {
-            await _initializeTask;
+            await _initializeTask.ConfigureAwait(false);
 
             await using var connection = CreateConnection();
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
             var rows = await connection.QueryAsync<TranslationHistoryRow>(
                 """
                 SELECT Id,
@@ -446,7 +446,7 @@ public class TranslationHistoryService : ITranslationHistoryService
                 FROM TranslationHistory
                 WHERE IsFavorite = 1
                 ORDER BY CreatedAt DESC
-                """);
+                """).ConfigureAwait(false);
 
             var favorites = rows.Select(ToModel).ToList();
             _logger.ZLogInformation($"获取收藏记录成功，共 {favorites.Count} 条");

@@ -213,9 +213,9 @@ public class WindowManagerService : IWindowManagerService
                 };
 
                 // 订阅窗口关闭事件，清理引用
-                _screenCaptureWindow.Closed += (s, e) =>
+                _screenCaptureWindow.Closed += async (s, e) =>
                 {
-                    _semaphore.Wait();
+                    await _semaphore.WaitAsync();
                     try
                     {
                         _logger.ZLogInformation($"截图窗口已关闭，清理引用");
@@ -269,51 +269,56 @@ public class WindowManagerService : IWindowManagerService
     /// </summary>
     public void ShowOcrResultWindow(WriteableBitmap screenshot, string? recognizedText = null)
     {
-        _semaphore.Wait();
+        Dispatcher.UIThread.Post(async () => await ShowOcrResultWindowCoreAsync(screenshot, recognizedText));
+    }
+
+    private async Task ShowOcrResultWindowCoreAsync(WriteableBitmap screenshot, string? recognizedText)
+    {
+        await _semaphore.WaitAsync();
         try
         {
-            Dispatcher.UIThread.Invoke(() =>
+            if (_ocrResultWindow == null)
             {
-                if (_ocrResultWindow == null)
+                _logger.ZLogInformation($"创建新的 OCR 结果窗口");
+
+                using var scope = _serviceProvider.CreateScope();
+                var viewModel = scope.ServiceProvider.GetRequiredService<OcrResultViewModel>();
+                viewModel.LoadScreenshot(screenshot, recognizedText);
+
+                _ocrResultWindow = new OcrResultWindowView
                 {
-                    _logger.ZLogInformation($"创建新的 OCR 结果窗口");
+                    DataContext = viewModel
+                };
 
-                    using var scope = _serviceProvider.CreateScope();
-                    var viewModel = scope.ServiceProvider.GetRequiredService<OcrResultViewModel>();
-                    viewModel.LoadScreenshot(screenshot, recognizedText);
-
-                    _ocrResultWindow = new OcrResultWindowView
-                    {
-                        DataContext = viewModel
-                    };
-
-                    _ocrResultWindow.Closed += (s, e) =>
-                    {
-                        _semaphore.Wait();
-                        try
-                        {
-                            _logger.ZLogInformation($"OCR 结果窗口已关闭，清理引用");
-                            _ocrResultWindow = null;
-                        }
-                        finally
-                        {
-                            _semaphore.Release();
-                        }
-                    };
-
-                    _ocrResultWindow.Show();
-                }
-                else
+                _ocrResultWindow.Closed += async (s, e) =>
                 {
-                    _logger.ZLogInformation($"OCR 结果窗口已存在，更新内容并激活");
+                    await _semaphore.WaitAsync();
+                    try
+                    {
+                        _logger.ZLogInformation($"OCR 结果窗口已关闭，清理引用");
+                        _ocrResultWindow = null;
+                    }
+                    finally
+                    {
+                        _semaphore.Release();
+                    }
+                };
 
-                    if (_ocrResultWindow.DataContext is OcrResultViewModel vm)
-                        vm.LoadScreenshot(screenshot, recognizedText);
+                _ocrResultWindow.Show();
+            }
+            else
+            {
+                _logger.ZLogInformation($"OCR 结果窗口已存在，更新内容并激活");
 
-                    ActivateWindow(_ocrResultWindow);
-                }
+                if (_ocrResultWindow.DataContext is OcrResultViewModel vm)
+                    vm.LoadScreenshot(screenshot, recognizedText);
 
-            });
+                ActivateWindow(_ocrResultWindow);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"显示 OCR 结果窗口时发生错误");
         }
         finally
         {

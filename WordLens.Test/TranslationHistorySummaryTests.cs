@@ -41,6 +41,18 @@ public class TranslationHistorySummaryTests
         Assert.Equal("解析结果失败", TranslationHistoryViewModel.GetResultSummary(history));
     }
 
+    [Fact]
+    public void ResultSummary_IsPrecomputed_WhenResultsJsonChanges()
+    {
+        var history = CreateHistoryWithResults(new string('中', 170));
+
+        Assert.Equal(new string('中', 160) + "...", history.ResultSummary);
+
+        history.ResultsJson = null;
+
+        Assert.Equal("无翻译结果", history.ResultSummary);
+    }
+
     private static TranslationHistory CreateHistoryWithResults(params string[] results)
     {
         var items = new List<TranslationHistoryResult>();

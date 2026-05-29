@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,6 +16,8 @@ namespace WordLens.ViewModels;
 
 public partial class TranslationHistoryViewModel : ViewModelBase
 {
+    private const int HistoryPageSize = 80;
+
     private readonly ITranslationHistoryService _historyService;
     private readonly ILogger<TranslationHistoryViewModel> _logger;
     private bool _hasLoaded;
@@ -25,6 +26,10 @@ public partial class TranslationHistoryViewModel : ViewModelBase
 
     [ObservableProperty] private bool isBusy;
 
+    [ObservableProperty] private bool isLoadingMore;
+
+    [ObservableProperty] private bool hasMoreHistories;
+
     [ObservableProperty] private bool isShowingFavoritesOnly;
 
     [ObservableProperty] private string searchKeyword = string.Empty;
@@ -32,6 +37,8 @@ public partial class TranslationHistoryViewModel : ViewModelBase
     [ObservableProperty] private TranslationHistory? selectedHistory;
 
     [ObservableProperty] private int totalCount;
+
+    public bool CanLoadMoreHistories => HasMoreHistories && !IsBusy && !IsLoadingMore;
 
     public TranslationHistoryViewModel()
     {
@@ -64,6 +71,27 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         await LoadHistoriesAsync();
     }
 
+    partial void OnIsBusyChanged(bool value)
+    {
+        NotifyLoadMoreStateChanged();
+    }
+
+    partial void OnIsLoadingMoreChanged(bool value)
+    {
+        NotifyLoadMoreStateChanged();
+    }
+
+    partial void OnHasMoreHistoriesChanged(bool value)
+    {
+        NotifyLoadMoreStateChanged();
+    }
+
+    private void NotifyLoadMoreStateChanged()
+    {
+        OnPropertyChanged(nameof(CanLoadMoreHistories));
+        LoadMoreHistoriesCommand.NotifyCanExecuteChanged();
+    }
+
     /// <summary>
     /// 加载历史记录
     /// </summary>
@@ -77,7 +105,10 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         {
             _logger.ZLogInformation($"开始加载历史记录，搜索关键词: '{SearchKeyword}', 仅显示收藏: {IsShowingFavoritesOnly}");
 
+            TotalCount = await _historyService.GetCountAsync();
+
             List<TranslationHistory> historyList;
+            var hasMoreHistories = false;
 
             if (IsShowingFavoritesOnly)
             {
@@ -91,8 +122,9 @@ public partial class TranslationHistoryViewModel : ViewModelBase
             }
             else
             {
-                // 显示所有记录
-                historyList = await _historyService.GetAllAsync();
+                // 默认历史列表可能很大，先加载首屏，再按需追加。
+                historyList = await _historyService.GetPagedAsync(0, HistoryPageSize);
+                hasMoreHistories = historyList.Count < TotalCount;
             }
 
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -100,7 +132,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
                 Histories = new ObservableCollection<TranslationHistory>(historyList);
             });
 
-            TotalCount = await _historyService.GetCountAsync();
+            HasMoreHistories = hasMoreHistories;
             _hasLoaded = true;
 
             _logger.ZLogInformation($"历史记录加载完成，共 {Histories.Count} 条显示，总计 {TotalCount} 条");
@@ -134,6 +166,37 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         await LoadHistoriesAsync();
     }
 
+    [RelayCommand(CanExecute = nameof(CanLoadMoreHistories))]
+    private async Task LoadMoreHistoriesAsync()
+    {
+        if (!CanLoadMoreHistories)
+            return;
+
+        IsLoadingMore = true;
+        try
+        {
+            var historyList = await _historyService.GetPagedAsync(Histories.Count, HistoryPageSize);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                foreach (var history in historyList)
+                    Histories.Add(history);
+            });
+
+            TotalCount = await _historyService.GetCountAsync();
+            HasMoreHistories = Histories.Count < TotalCount;
+
+            _logger.ZLogInformation($"追加加载历史记录 {historyList.Count} 条，当前显示 {Histories.Count}/{TotalCount}");
+        }
+        catch (Exception ex)
+        {
+            _logger.ZLogError(ex, $"追加加载历史记录失败: {ex.Message}");
+        }
+        finally
+        {
+            IsLoadingMore = false;
+        }
+    }
+
     /// <summary>
     /// 删除指定的历史记录
     /// </summary>
@@ -153,6 +216,9 @@ public partial class TranslationHistoryViewModel : ViewModelBase
             });
 
             TotalCount = await _historyService.GetCountAsync();
+            HasMoreHistories = !IsShowingFavoritesOnly &&
+                               string.IsNullOrWhiteSpace(SearchKeyword) &&
+                               Histories.Count < TotalCount;
 
             _logger.ZLogInformation($"历史记录删除成功");
         }
@@ -179,6 +245,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
             });
 
             TotalCount = 0;
+            HasMoreHistories = false;
 
             _logger.ZLogInformation($"所有历史记录已清空");
         }
@@ -210,6 +277,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
                 {
                     Histories.Remove(history);
                 });
+                TotalCount = await _historyService.GetCountAsync();
             }
 
             _logger.ZLogInformation($"收藏状态已更新");
@@ -259,24 +327,6 @@ public partial class TranslationHistoryViewModel : ViewModelBase
     /// </summary>
     public static string GetResultSummary(TranslationHistory history)
     {
-        try
-        {
-            if (string.IsNullOrEmpty(history.ResultsJson))
-                return "无翻译结果";
-
-            var results = JsonSerializer.Deserialize(
-                history.ResultsJson,
-                SourceGenerationContext.Default.ListTranslationHistoryResult);
-            if (results == null || results.Count == 0)
-                return "无翻译结果";
-
-            // 返回第一个翻译结果的前100个字符
-            var firstResult = results[0].Result ?? string.Empty;
-            return firstResult.Length > 100 ? firstResult.Substring(0, 100) + "..." : firstResult;
-        }
-        catch
-        {
-            return "解析结果失败";
-        }
+        return TranslationHistorySummary.Create(history.ResultsJson, 100);
     }
 }

@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0-macos'">
-        <SupportedOSPlatformVersion>10.15</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
         <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
     </PropertyGroup>
 
@@ -48,10 +48,10 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Avalonia" Version="12.0.3" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.0.3" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.3" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.3" />
+        <PackageReference Include="Avalonia" Version="12.0.4" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
@@ -62,7 +62,7 @@
         <PackageReference Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.4.26230.115" />
         <PackageReference Include="Semi.Avalonia" Version="12.0.3" />
         <PackageReference Include="SharpHook" Version="7.1.2" />
-        <PackageReference Include="SkiaSharp" Version="3.119.4-preview.1.1" />
+        <PackageReference Include="SkiaSharp" Version="3.119.4" />
         <PackageReference Include="Sortable.Avalonia" Version="2.2.0" />
         <PackageReference Include="SoundFlow" Version="1.4.1" />
         <PackageReference Include="ZLogger" Version="2.5.10" />
