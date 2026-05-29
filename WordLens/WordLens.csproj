@@ -20,6 +20,7 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0-macos'">
         <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
         <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+        <ApplicationId>com.crimsonninja.wordlens</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0-windows10.0.19041.0'">
@@ -41,8 +42,75 @@
 		<DebugSymbols>false</DebugSymbols>
 	</PropertyGroup>
 
+    <PropertyGroup>
+        <UseStaticNativeHelper Condition="'$(UseStaticNativeHelper)' == ''">false</UseStaticNativeHelper>
+        <StaticNativeHelperEnabled Condition="'$(UseStaticNativeHelper)' == 'true' and '$(PublishAot)' == 'true'">true</StaticNativeHelperEnabled>
+        <StaticNativeHelperEnabled Condition="'$(StaticNativeHelperEnabled)' == ''">false</StaticNativeHelperEnabled>
+
+        <RustProjectDir>$(MSBuildProjectDirectory)/../native/</RustProjectDir>
+        <RustBuildProfile Condition="'$(Configuration)' == 'Release'">release</RustBuildProfile>
+        <RustBuildProfile Condition="'$(Configuration)' != 'Release'">debug</RustBuildProfile>
+
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'win-x64'">x86_64-pc-windows-msvc</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'win-arm64'">aarch64-pc-windows-msvc</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'linux-x64'">x86_64-unknown-linux-gnu</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">aarch64-unknown-linux-gnu</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'linux-musl-x64'">x86_64-unknown-linux-musl</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'linux-musl-arm64'">aarch64-unknown-linux-musl</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'osx-x64'">x86_64-apple-darwin</RustTargetTriple>
+        <RustTargetTriple Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">aarch64-apple-darwin</RustTargetTriple>
+
+        <RustTargetPlatform Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('win'))">Windows</RustTargetPlatform>
+        <RustTargetPlatform Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('linux'))">Linux</RustTargetPlatform>
+        <RustTargetPlatform Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('osx'))">OSX</RustTargetPlatform>
+        <RustTargetPlatform Condition="'$(RustTargetPlatform)' == '' and '$(OS)' == 'Windows_NT'">Windows</RustTargetPlatform>
+        <RustTargetPlatform Condition="'$(RustTargetPlatform)' == '' and $([MSBuild]::IsOSPlatform('Linux'))">Linux</RustTargetPlatform>
+        <RustTargetPlatform Condition="'$(RustTargetPlatform)' == '' and $([MSBuild]::IsOSPlatform('OSX'))">OSX</RustTargetPlatform>
+
+        <RustLibPrefix Condition="'$(RustTargetPlatform)' != 'Windows'">lib</RustLibPrefix>
+        <RustLibExt Condition="'$(RustTargetPlatform)' == 'Windows'">.dll</RustLibExt>
+        <RustLibExt Condition="'$(RustTargetPlatform)' == 'Linux'">.so</RustLibExt>
+        <RustLibExt Condition="'$(RustTargetPlatform)' == 'OSX'">.dylib</RustLibExt>
+        <RustLibName>$(RustLibPrefix)native$(RustLibExt)</RustLibName>
+
+        <RustStaticLibPrefix Condition="'$(RustTargetPlatform)' != 'Windows'">lib</RustStaticLibPrefix>
+        <RustStaticLibExt Condition="'$(RustTargetPlatform)' == 'Windows'">.lib</RustStaticLibExt>
+        <RustStaticLibExt Condition="'$(RustTargetPlatform)' != 'Windows'">.a</RustStaticLibExt>
+        <RustStaticLibName>$(RustStaticLibPrefix)native$(RustStaticLibExt)</RustStaticLibName>
+
+        <RustCargoReleaseArg Condition="'$(Configuration)' == 'Release'">--release</RustCargoReleaseArg>
+        <RustCargoTargetArg Condition="'$(RustTargetTriple)' != ''">--target $(RustTargetTriple)</RustCargoTargetArg>
+        <RustBuildCommand>cargo build $(RustCargoReleaseArg) $(RustCargoTargetArg)</RustBuildCommand>
+        <RustOutDir Condition="'$(RustTargetTriple)' != ''">$(RustProjectDir)target/$(RustTargetTriple)/$(RustBuildProfile)/</RustOutDir>
+        <RustOutDir Condition="'$(RustTargetTriple)' == ''">$(RustProjectDir)target/$(RustBuildProfile)/</RustOutDir>
+        <RustStaticLibPath>$(RustOutDir)$(RustStaticLibName)</RustStaticLibPath>
+    </PropertyGroup>
+
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(StaticNativeHelperEnabled)' == 'true'">
+        <DirectPInvoke Include="native" />
+        <NativeLibrary Include="$(RustStaticLibPath)" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(StaticNativeHelperEnabled)' == 'true' and '$(RustTargetPlatform)' == 'Windows'">
+        <LinkerArg Include="userenv.lib" />
+        <LinkerArg Include="pathcch.lib" />
+        <LinkerArg Include="shell32.lib" />
+        <LinkerArg Include="propsys.lib" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(StaticNativeHelperEnabled)' == 'true' and '$(RustTargetPlatform)' == 'Linux'">
+        <LinkerArg Include="-lEGL" />
+        <LinkerArg Include="-lgbm" />
+        <LinkerArg Include="-lwayland-client" />
+        <LinkerArg Include="-lwayland-server" />
+        <LinkerArg Include="-lpipewire-0.3" />
+        <LinkerArg Include="-lxcb" />
+        <LinkerArg Include="-lgcc_s" />
+        <LinkerArg Include="-lutil" />
     </ItemGroup>
 
 
@@ -95,41 +163,22 @@
 
     <Target Name="BuildRust" BeforeTargets="Build" Condition="'$(TargetFramework)' != ''">
         <!-- 打印一条消息，方便在构建日志中看到这个过程 -->
-        <Message Text="--- 开始编译 Rust 原生库 ---" Importance="high" />
+        <Message Text="--- 开始编译 Rust 原生库: $(RustBuildCommand) ---" Importance="high" />
 
-        <!-- 1. 定义 Rust 项目相关的变量 -->
-        <PropertyGroup>
-            <RustProjectDir>$(MSBuildProjectDirectory)/../native/</RustProjectDir>
-
-            <!-- 跨平台库文件名定义 -->
-            <RustLibPrefix Condition="'$(OS)' != 'Windows_NT'">lib</RustLibPrefix>
-
-            <RustLibExt Condition="'$(OS)' == 'Windows_NT'">.dll</RustLibExt>
-            <RustLibExt Condition="$([MSBuild]::IsOSPlatform('Linux'))">.so</RustLibExt>
-            <RustLibExt Condition="$([MSBuild]::IsOSPlatform('OSX'))">.dylib</RustLibExt>
-
-            <RustLibName>$(RustLibPrefix)native$(RustLibExt)</RustLibName>
-        </PropertyGroup>
-
-        <!-- 2. 根据 C# 的构建配置 (Debug/Release) 来决定 Rust 的构建参数 -->
-        <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-            <RustBuildCommand>cargo build --release</RustBuildCommand>
-            <RustOutDir>$(RustProjectDir)target/release/</RustOutDir>
-        </PropertyGroup>
-
-        <PropertyGroup Condition="'$(Configuration)' != 'Release'">
-            <RustBuildCommand>cargo build</RustBuildCommand>
-            <RustOutDir>$(RustProjectDir)target/debug/</RustOutDir>
-        </PropertyGroup>
-
-        <!-- 3. 执行 cargo build 命令 -->
+        <!-- 1. 执行 cargo build 命令 -->
         <Exec Command="$(RustBuildCommand)" WorkingDirectory="$(RustProjectDir)" />
 
-        <!-- 4. 复制文件到输出目录 (为了 dotnet build 和本地调试) -->
+        <Error Condition="'$(StaticNativeHelperEnabled)' == 'true' and !Exists('$(RustStaticLibPath)')"
+               Text="已启用 UseStaticNativeHelper，但没有找到 Rust 静态库: $(RustStaticLibPath)" />
+
+        <!-- 2. 复制文件到输出目录 (为了 dotnet build 和本地调试) -->
         <Copy SourceFiles="$(RustOutDir)$(RustLibName)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
 
-        <!-- 5. 如果正在执行 publish，则额外复制到发布目录 -->
-        <Copy SourceFiles="$(RustOutDir)$(RustLibName)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" Condition="'$(PublishDir)' != ''" />
+        <!-- 3. 动态 helper 发布时复制；静态 helper 发布时由 NativeAOT 链接进主程序。 -->
+        <Copy SourceFiles="$(RustOutDir)$(RustLibName)"
+              DestinationFolder="$(PublishDir)"
+              SkipUnchangedFiles="true"
+              Condition="'$(PublishDir)' != '' and '$(StaticNativeHelperEnabled)' != 'true'" />
 
         <Message Text="--- Rust 原生库编译并复制完成 ---" Importance="high" />
     </Target>
