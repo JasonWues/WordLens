@@ -65,6 +65,11 @@ public class HotkeyManagerService : IHotkeyManagerService
     public async Task ReloadConfigAsync()
     {
         var settings = await _settingsService.LoadAsync();
+        await ReloadConfigAsync(settings);
+    }
+
+    public async Task ReloadConfigAsync(AppSettings settings)
+    {
         _translationHotkey = settings.Hotkey;
         _ocrHotkey = settings.OcrHotkey;
 

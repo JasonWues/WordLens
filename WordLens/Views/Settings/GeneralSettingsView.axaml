@@ -62,10 +62,10 @@
 
             <StackPanel Spacing="8">
                 <TextBlock Text="数据备份" FontWeight="Bold" FontSize="14" />
-                <Grid ColumnDefinitions="Auto,*">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" RowSpacing="8">
                     <Button Content="备份数据"
                             Command="{Binding CreateBackupCommand}"
-                            IsEnabled="{Binding !IsBackupRunning}"
+                            IsEnabled="{Binding IsBackupOperationIdle}"
                             MinWidth="100" />
                     <TextBlock Text="{Binding BackupStatus}"
                                Grid.Column="1"
@@ -75,8 +75,22 @@
                                Margin="8,0,0,0"
                                Opacity="0.7"
                                TextWrapping="Wrap" />
+                    <Button Grid.Row="1"
+                            Content="恢复备份"
+                            Command="{Binding RestoreBackupCommand}"
+                            IsEnabled="{Binding IsBackupOperationIdle}"
+                            MinWidth="100" />
+                    <TextBlock Text="{Binding RestoreStatus}"
+                               Grid.Row="1"
+                               Grid.Column="1"
+                               IsVisible="{Binding HasRestoreStatus}"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Margin="8,0,0,0"
+                               Opacity="0.7"
+                               TextWrapping="Wrap" />
                 </Grid>
-                <TextBlock Text="备份包含设置、翻译历史数据库和截图缓存，API Key 会按本地加密后的形式写入备份文件。"
+                <TextBlock Text="备份包含设置、翻译历史数据库和截图缓存。恢复会覆盖当前数据，并自动创建一份恢复前备份。"
                            FontSize="12"
                            Opacity="0.6"
                            TextWrapping="Wrap" />

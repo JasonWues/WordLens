@@ -9,4 +9,5 @@ public interface IHotkeyManagerService : IDisposable, IAsyncDisposable
     Task StartAsync();
     Task StartAsync(AppSettings settings);
     Task ReloadConfigAsync();
+    Task ReloadConfigAsync(AppSettings settings);
 }

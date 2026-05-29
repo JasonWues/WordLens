@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,6 +34,13 @@ public sealed class BackupService : IBackupService
         CancellationToken cancellationToken = default)
     {
         return Task.Run(() => CreateBackup(destinationPath, cancellationToken), cancellationToken);
+    }
+
+    public Task<RestoreBackupResult> RestoreBackupAsync(
+        string sourcePath,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.Run(() => RestoreBackup(sourcePath, cancellationToken), cancellationToken);
     }
 
     private BackupResult CreateBackup(string destinationPath, CancellationToken cancellationToken)
@@ -78,6 +86,100 @@ public sealed class BackupService : IBackupService
             TryDeleteFile(tempPath);
             throw;
         }
+    }
+
+    private RestoreBackupResult RestoreBackup(string sourcePath, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath))
+            throw new ArgumentException("备份文件路径不能为空。", nameof(sourcePath));
+
+        var fullSourcePath = Path.GetFullPath(sourcePath);
+        if (!File.Exists(fullSourcePath))
+            throw new FileNotFoundException("备份文件不存在。", fullSourcePath);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), $"WordLensRestore-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            var restoredEntries = ExtractBackup(fullSourcePath, tempDirectory, cancellationToken);
+            if (restoredEntries.Count == 0)
+                throw new InvalidDataException("备份中没有可恢复的数据。");
+
+            var preRestoreBackupPath = CreatePreRestoreBackup(cancellationToken).DestinationPath;
+
+            Directory.CreateDirectory(_appDataDirectory);
+            RestoreFileIfExists(tempDirectory, "settings.json", cancellationToken);
+            RestoreFileIfExists(tempDirectory, "translation_history.db", cancellationToken);
+            RestoreFileOrDeleteIfMissing(tempDirectory, "translation_history.db-wal", cancellationToken);
+            RestoreFileOrDeleteIfMissing(tempDirectory, "translation_history.db-shm", cancellationToken);
+            RestoreScreenshots(tempDirectory, cancellationToken);
+
+            _logger.ZLogInformation($"备份恢复成功: {fullSourcePath}, 文件数: {restoredEntries.Count}");
+            return new RestoreBackupResult(fullSourcePath, restoredEntries.Count, preRestoreBackupPath);
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    private HashSet<string> ExtractBackup(
+        string sourcePath,
+        string destinationDirectory,
+        CancellationToken cancellationToken)
+    {
+        using var archive = ZipFile.OpenRead(sourcePath);
+        var manifestEntry = archive.GetEntry(ManifestEntryName) ??
+                            throw new InvalidDataException("不是有效的 WordLens 备份：缺少备份清单。");
+
+        using var manifestStream = manifestEntry.Open();
+        var manifest = JsonSerializer.Deserialize(manifestStream, SourceGenerationContext.Default.BackupManifest) ??
+                       throw new InvalidDataException("不是有效的 WordLens 备份：备份清单无法读取。");
+
+        if (!string.Equals(manifest.AppName, AppName, StringComparison.Ordinal))
+            throw new InvalidDataException("不是有效的 WordLens 备份：应用名称不匹配。");
+
+        if (manifest.Version != 1)
+            throw new InvalidDataException($"不支持的备份版本：{manifest.Version}。");
+
+        var restorableEntries = manifest.Files
+            .Select(static file => NormalizeEntryName(file.Path))
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var entryName in restorableEntries)
+        {
+            if (!IsRestorableEntry(entryName))
+                throw new InvalidDataException($"备份包含不允许恢复的路径：{entryName}");
+        }
+
+        var extractedEntries = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var entry in archive.Entries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.Equals(entry.FullName, ManifestEntryName, StringComparison.Ordinal))
+                continue;
+
+            var entryName = NormalizeEntryName(entry.FullName);
+            if (!restorableEntries.Contains(entryName))
+                continue;
+
+            ExtractEntry(entry, destinationDirectory, entryName, cancellationToken);
+            extractedEntries.Add(entryName);
+        }
+
+        if (!extractedEntries.SetEquals(restorableEntries))
+            throw new InvalidDataException("备份文件不完整：清单和文件内容不一致。");
+
+        return extractedEntries;
+    }
+
+    private BackupResult CreatePreRestoreBackup(CancellationToken cancellationToken)
+    {
+        var backupDirectory = Path.Combine(_appDataDirectory, "Backups");
+        var backupPath = Path.Combine(backupDirectory, $"WordLens-before-restore-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
+        return CreateBackup(backupPath, cancellationToken);
     }
 
     private void AddFileIfExists(
@@ -149,6 +251,94 @@ public sealed class BackupService : IBackupService
         JsonSerializer.Serialize(stream, manifest, SourceGenerationContext.Default.BackupManifest);
     }
 
+    private static void ExtractEntry(
+        ZipArchiveEntry entry,
+        string destinationDirectory,
+        string entryName,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var destinationPath = GetSafeDestinationPath(destinationDirectory, entryName);
+        var destinationParent = Path.GetDirectoryName(destinationPath);
+        if (!string.IsNullOrWhiteSpace(destinationParent))
+            Directory.CreateDirectory(destinationParent);
+
+        using var source = entry.Open();
+        using var destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        source.CopyTo(destination);
+    }
+
+    private void RestoreFileIfExists(
+        string sourceDirectory,
+        string relativePath,
+        CancellationToken cancellationToken)
+    {
+        var sourcePath = Path.Combine(sourceDirectory, relativePath);
+        if (!File.Exists(sourcePath))
+            return;
+
+        RestoreFile(sourcePath, Path.Combine(_appDataDirectory, relativePath), cancellationToken);
+    }
+
+    private void RestoreFileOrDeleteIfMissing(
+        string sourceDirectory,
+        string relativePath,
+        CancellationToken cancellationToken)
+    {
+        var sourcePath = Path.Combine(sourceDirectory, relativePath);
+        var targetPath = Path.Combine(_appDataDirectory, relativePath);
+
+        if (File.Exists(sourcePath))
+        {
+            RestoreFile(sourcePath, targetPath, cancellationToken);
+            return;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        TryDeleteFile(targetPath);
+    }
+
+    private void RestoreScreenshots(string sourceDirectory, CancellationToken cancellationToken)
+    {
+        var sourcePath = Path.Combine(sourceDirectory, "Screenshots");
+        var targetPath = Path.Combine(_appDataDirectory, "Screenshots");
+        var oldPath = Path.Combine(_appDataDirectory, $".Screenshots.restore-{Guid.NewGuid():N}.bak");
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (Directory.Exists(targetPath))
+            Directory.Move(targetPath, oldPath);
+
+        try
+        {
+            if (Directory.Exists(sourcePath))
+                CopyDirectory(sourcePath, targetPath, cancellationToken);
+            else
+                Directory.CreateDirectory(targetPath);
+
+            TryDeleteDirectory(oldPath);
+        }
+        catch
+        {
+            TryDeleteDirectory(targetPath);
+            if (Directory.Exists(oldPath))
+                Directory.Move(oldPath, targetPath);
+            throw;
+        }
+    }
+
+    private static void RestoreFile(string sourcePath, string targetPath, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var targetDirectory = Path.GetDirectoryName(targetPath);
+        if (!string.IsNullOrWhiteSpace(targetDirectory))
+            Directory.CreateDirectory(targetDirectory);
+
+        File.Copy(sourcePath, targetPath, overwrite: true);
+    }
+
     private static string NormalizeDestinationPath(string destinationPath)
     {
         var fullPath = Path.GetFullPath(destinationPath);
@@ -161,6 +351,57 @@ public sealed class BackupService : IBackupService
     {
         return path.Replace(Path.DirectorySeparatorChar, '/')
             .Replace(Path.AltDirectorySeparatorChar, '/');
+    }
+
+    private static string NormalizeEntryName(string path)
+    {
+        return path.Replace('\\', '/').TrimStart('/');
+    }
+
+    private static bool IsRestorableEntry(string entryName)
+    {
+        if (string.IsNullOrWhiteSpace(entryName) ||
+            entryName.EndsWith('/') ||
+            entryName.Contains(':') ||
+            entryName.Split('/').Any(static part => part is "." or ".."))
+            return false;
+
+        return entryName is
+                   "settings.json" or
+                   "translation_history.db" or
+                   "translation_history.db-wal" or
+                   "translation_history.db-shm" ||
+               entryName.StartsWith("Screenshots/", StringComparison.Ordinal);
+    }
+
+    private static string GetSafeDestinationPath(string destinationDirectory, string entryName)
+    {
+        var destinationPath = Path.GetFullPath(Path.Combine(
+            destinationDirectory,
+            entryName.Replace('/', Path.DirectorySeparatorChar)));
+        var root = Path.GetFullPath(destinationDirectory);
+        if (!destinationPath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException($"备份包含不安全的路径：{entryName}");
+
+        return destinationPath;
+    }
+
+    private static void CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(targetDirectory);
+
+        foreach (var sourcePath in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var relativePath = Path.GetRelativePath(sourceDirectory, sourcePath);
+            var targetPath = Path.Combine(targetDirectory, relativePath);
+            var targetParent = Path.GetDirectoryName(targetPath);
+            if (!string.IsNullOrWhiteSpace(targetParent))
+                Directory.CreateDirectory(targetParent);
+
+            File.Copy(sourcePath, targetPath, overwrite: true);
+        }
     }
 
     private static string GetDefaultAppDataDirectory()
@@ -179,6 +420,19 @@ public sealed class BackupService : IBackupService
         catch
         {
             // Cleanup failure should not hide the original backup error.
+        }
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+                Directory.Delete(path, recursive: true);
+        }
+        catch
+        {
+            // Cleanup failure should not hide the original backup or restore error.
         }
     }
 }

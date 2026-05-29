@@ -7,8 +7,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using WordLens.Abstractions.Models;
+using WordLens.Messages;
 using WordLens.Models;
 using WordLens.Services;
 using WordLens.Services.LocalApi;
@@ -65,6 +67,11 @@ public partial class SettingsViewModel : ViewModelBase
         About = aboutViewModel;
 
         ObserveSettingsChanges();
+        WeakReferenceMessenger.Default.Register<BackupRestoredMessage>(this, static (recipient, message) =>
+        {
+            if (recipient is SettingsViewModel viewModel)
+                _ = viewModel.ReloadAfterBackupRestoreAsync();
+        });
     }
 
     public GeneralSettingsViewModel GeneralSettings { get; }
@@ -128,7 +135,7 @@ public partial class SettingsViewModel : ViewModelBase
             _ = History.InitializeAsync();
     }
 
-    private async Task LoadSettingsAsync()
+    private async Task<AppSettings> LoadSettingsAsync()
     {
         _isLoadingSettings = true;
 
@@ -142,6 +149,7 @@ public partial class SettingsViewModel : ViewModelBase
             SyncProviderHandlers(TtsSettings.TtsProviders, _trackedTtsProviders);
             _hasLoadedSettings = true;
             AutoSaveStatus = "已保存";
+            return settings;
         }
         finally
         {
@@ -223,6 +231,10 @@ public partial class SettingsViewModel : ViewModelBase
                 nameof(GeneralSettingsViewModel.BackupStatus) or
                 nameof(GeneralSettingsViewModel.HasBackupStatus) or
                 nameof(GeneralSettingsViewModel.IsBackupRunning) or
+                nameof(GeneralSettingsViewModel.RestoreStatus) or
+                nameof(GeneralSettingsViewModel.HasRestoreStatus) or
+                nameof(GeneralSettingsViewModel.IsRestoreRunning) or
+                nameof(GeneralSettingsViewModel.IsBackupOperationIdle) or
                 nameof(GeneralSettingsViewModel.IsCapturingHotkey) or
                 nameof(GeneralSettingsViewModel.IsStartupSupported);
         }
@@ -326,6 +338,24 @@ public partial class SettingsViewModel : ViewModelBase
         await _localApiService.ApplyConfigAsync(settings.LocalApi);
         _originalSettings = CloneSettings(settings);
         return hotkeysChanged;
+    }
+
+    private async Task ReloadAfterBackupRestoreAsync()
+    {
+        try
+        {
+            AutoSaveStatus = "正在加载恢复的设置...";
+            var settings = await LoadSettingsAsync();
+            await _hotkeyManagerService.ReloadConfigAsync(settings);
+            await _localApiService.ApplyConfigAsync(settings.LocalApi);
+            WeakReferenceMessenger.Default.Send(new TranslationHistoryChangedMessage());
+            AutoSaveStatus = "已恢复";
+        }
+        catch (Exception ex)
+        {
+            AutoSaveStatus = "恢复后加载失败";
+            _logger.ZLogError(ex, $"恢复备份后加载设置失败: {ex.Message}");
+        }
     }
 
     private AppSettings BuildSettingsFromViewModels(TranslationPopupConfig? currentTranslationPopup)

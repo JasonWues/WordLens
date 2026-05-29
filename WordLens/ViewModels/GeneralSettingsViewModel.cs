@@ -42,11 +42,13 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     [ObservableProperty] private string hotkeyDisplay = "Ctrl+Shift+T";
     [ObservableProperty] private bool isCapturingHotkey;
     [ObservableProperty] private bool isBackupRunning;
+    [ObservableProperty] private bool isRestoreRunning;
     [ObservableProperty] private bool isStartupSupported = true;
     [ObservableProperty] private bool localApiEnabled;
     [ObservableProperty] private int localApiPort = 49631;
     [ObservableProperty] private string localApiToken = string.Empty;
     [ObservableProperty] private string ocrHotkeyDisplay = "Ctrl+Shift+W";
+    [ObservableProperty] private string restoreStatus = string.Empty;
     [ObservableProperty] private bool startWithSystem;
     [ObservableProperty] private bool streamingEnabled = true;
     [ObservableProperty] private TranslationPopupPositionMode translationPopupPositionMode = TranslationPopupPositionMode.FollowMouse;
@@ -81,6 +83,10 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     public List<FontFamilyOption> AvailableFontFamilies { get; } = CreateFontFamilyOptions();
 
     public bool HasBackupStatus => !string.IsNullOrWhiteSpace(BackupStatus);
+
+    public bool HasRestoreStatus => !string.IsNullOrWhiteSpace(RestoreStatus);
+
+    public bool IsBackupOperationIdle => !IsBackupRunning && !IsRestoreRunning;
 
     public List<LanguageOption> AvailableUILanguages { get; } = new()
     {
@@ -198,7 +204,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateBackupAsync()
     {
-        if (IsBackupRunning)
+        if (!IsBackupOperationIdle)
             return;
 
         var suggestedFileName = $"WordLens-backup-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
@@ -233,6 +239,44 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private async Task RestoreBackupAsync()
+    {
+        if (!IsBackupOperationIdle)
+            return;
+
+        RestoreStatus = "请选择要恢复的备份文件...";
+
+        var sourcePath = await _pathPickerService.PickFileAsync(
+            "选择 WordLens 备份",
+            new[] { "*.zip" });
+
+        if (string.IsNullOrWhiteSpace(sourcePath))
+        {
+            RestoreStatus = "已取消恢复。";
+            return;
+        }
+
+        try
+        {
+            IsRestoreRunning = true;
+            RestoreStatus = "正在恢复备份...";
+            var result = await _backupService.RestoreBackupAsync(sourcePath);
+            RestoreStatus =
+                $"恢复完成：{result.FileCount} 个文件。恢复前备份已保存为 {System.IO.Path.GetFileName(result.PreRestoreBackupPath)}。";
+            WeakReferenceMessenger.Default.Send(new BackupRestoredMessage(result));
+        }
+        catch (Exception ex)
+        {
+            RestoreStatus = $"恢复失败：{ex.Message}";
+            _logger.ZLogError(ex, $"恢复备份失败: {ex.Message}");
+        }
+        finally
+        {
+            IsRestoreRunning = false;
+        }
+    }
+
     public static HotkeyConfig CloneHotkeyConfig(HotkeyConfig config)
     {
         return new HotkeyConfig
@@ -256,6 +300,21 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     partial void OnBackupStatusChanged(string value)
     {
         OnPropertyChanged(nameof(HasBackupStatus));
+    }
+
+    partial void OnRestoreStatusChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasRestoreStatus));
+    }
+
+    partial void OnIsBackupRunningChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsBackupOperationIdle));
+    }
+
+    partial void OnIsRestoreRunningChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsBackupOperationIdle));
     }
 
     [RelayCommand]

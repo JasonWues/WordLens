@@ -23,7 +23,7 @@ WordLens 面向日常阅读、写作和跨语言资料处理场景。它可以�
 - 本地自动化 API（Local API）
 - 剪贴板监听翻译（Windows 后端）
 - 欧路词典生词本同步
-- 设置、翻译历史和截图数据备份
+- 设置、翻译历史和截图数据备份与恢复
 - 界面语言和字体配置
 - 开机自启
 - HTTP 代理配置（系统代理 / 手动代理 / 认证代理）
@@ -107,9 +107,9 @@ WordLens 支持配置多个 OpenAI 兼容翻译源。触发翻译时，所有已
 
 在“常规”设置页启用欧路词典生词本同步后，可在翻译窗口将当前原文加入欧路生词本。配置项包括 OpenAPI Token、语言、生词本 ID 和星级。请求会走应用的代理配置。
 
-#### 数据备份
+#### 数据备份与恢复
 
-在“常规”设置页可以导出 WordLens 备份包。备份文件为 `.zip`，包含 `settings.json`、翻译历史数据库和截图缓存，并带有 `backup-manifest.json` 清单。
+在“常规”设置页可以导出或恢复 WordLens 备份包。备份文件为 `.zip`，包含 `settings.json`、翻译历史数据库和截图缓存，并带有 `backup-manifest.json` 清单。恢复会覆盖当前数据，并在覆盖前自动生成一份恢复前备份。
 
 #### TTS 朗读
 
@@ -338,7 +338,7 @@ Current features include:
 - Local automation API
 - Clipboard monitoring translation with a Windows backend
 - Eudic vocabulary sync
-- Backup for settings, translation history, and screenshot data
+- Backup and restore for settings, translation history, and screenshot data
 - UI language and font configuration
 - Auto-start on login
 - HTTP proxy support, including system proxy, manual proxy, and authenticated proxy
@@ -420,9 +420,9 @@ Successful translations are saved locally. The history window supports:
 
 Enable Eudic vocabulary sync in the General settings tab to add the current source text to a Eudic study list from the translation window. Configuration includes OpenAPI token, language, category ID, and star level. Requests use the app's proxy settings.
 
-### Data Backup
+### Data Backup and Restore
 
-The General settings tab can export a WordLens backup package. The backup is a `.zip` file containing `settings.json`, the translation history database, screenshot cache, and a `backup-manifest.json` manifest.
+The General settings tab can export or restore a WordLens backup package. The backup is a `.zip` file containing `settings.json`, the translation history database, screenshot cache, and a `backup-manifest.json` manifest. Restore overwrites the current data and automatically creates a pre-restore backup first.
 
 ### TTS Playback
 
