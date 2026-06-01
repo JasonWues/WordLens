@@ -200,6 +200,8 @@ public class WindowManagerService : IWindowManagerService
         await _semaphore.WaitAsync();
         try
         {
+            HideTranslationWindowBeforeCapture();
+
             if (_screenCaptureWindow == null)
             {
                 _logger.ZLogInformation($"创建新的截图窗口");
@@ -262,6 +264,16 @@ public class WindowManagerService : IWindowManagerService
         {
             _semaphore.Release();
         }
+    }
+
+    private void HideTranslationWindowBeforeCapture()
+    {
+        if (_translationWindow is not { IsVisible: true } translationWindow)
+            return;
+
+        _logger.ZLogInformation($"OCR截图前隐藏翻译窗口");
+        _ = SaveTranslationWindowPositionAsync(translationWindow.Position);
+        translationWindow.Hide();
     }
 
     /// <summary>

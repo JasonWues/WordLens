@@ -86,9 +86,24 @@ public class App : Application
                 _ = localApiService.StopAsync();
                 windowManager.CloseAllWindows();
             };
+
+            if (ShouldShowSettingsOnStartup(desktop.Args))
+            {
+                Dispatcher.UIThread.Post(async () => await windowManager.ShowSettingsWindowAsync());
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static bool ShouldShowSettingsOnStartup(string[]? args)
+    {
+        if (args == null || args.Length == 0)
+            return false;
+
+        return args.Any(static arg =>
+            string.Equals(arg, "--show-settings", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(arg, "--settings", StringComparison.OrdinalIgnoreCase));
     }
 
 
