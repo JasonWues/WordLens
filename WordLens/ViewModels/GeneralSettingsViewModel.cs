@@ -264,7 +264,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             var result = await _backupService.RestoreBackupAsync(sourcePath);
             RestoreStatus =
                 $"恢复完成：{result.FileCount} 个文件。恢复前备份已保存为 {System.IO.Path.GetFileName(result.PreRestoreBackupPath)}。";
-            WeakReferenceMessenger.Default.Send(new BackupRestoredMessage(result));
+            WeakReferenceMessenger.Default.Send(new BackupRestoredMessage(result)); 
         }
         catch (Exception ex)
         {

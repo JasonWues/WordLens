@@ -113,25 +113,98 @@
         <Setter Property="Background" Value="#172F72E5" />
     </Style>
 
+    <Style Selector="Button.translate-button.primary-translate">
+        <Setter Property="Background" Value="#1F7A68" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+    </Style>
+
+    <Style Selector="Button.translate-button.primary-translate:pointerover">
+        <Setter Property="Background" Value="#238874" />
+    </Style>
+
+    <Style Selector="Button.translate-button.primary-translate:pressed">
+        <Setter Property="Background" Value="#176856" />
+    </Style>
+
+    <Style Selector="Button.icon-button.popup-icon">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="28" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="Foreground" Value="#344054" />
+    </Style>
+
+    <Style Selector="Button.icon-button.popup-icon:pointerover">
+        <Setter Property="Background" Value="#E9EEF5" />
+        <Setter Property="Foreground" Value="#172033" />
+    </Style>
+
+    <Style Selector="Button.icon-button.popup-icon:pressed">
+        <Setter Property="Background" Value="#DDE6EF" />
+    </Style>
+
+    <Style Selector="Button.icon-button.popup-icon.topmost-active">
+        <Setter Property="Background" Value="#E8F2FF" />
+        <Setter Property="Foreground" Value="#2463D6" />
+    </Style>
+
+    <Style Selector="Button.icon-button.swap-button">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#DDE5EE" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#1F7A68" />
+    </Style>
+
+    <Style Selector="Button.icon-button.swap-button:pointerover">
+        <Setter Property="Background" Value="#F0F8F5" />
+        <Setter Property="BorderBrush" Value="#B9D9CE" />
+    </Style>
+
+    <Style Selector="Button.icon-button.provider-refresh">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="#E7F4EF" />
+        <Setter Property="Foreground" Value="#1F7A68" />
+    </Style>
+
+    <Style Selector="Button.icon-button.provider-refresh:pointerover">
+        <Setter Property="Background" Value="#D7EEE5" />
+    </Style>
+
     <Style Selector="ComboBox.language-selector">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="12,0,10,0" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="#111111" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="#172033" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
 
     <Style Selector="ComboBox.provider-selector">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="12,0,10,0" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="#111111" />
+        <Setter Property="Padding" Value="0,0,10,0" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="#172033" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
     </Style>
 
@@ -176,17 +249,133 @@
     </Style>
 
     <Style Selector="TextBox.source-editor">
-        <Setter Property="Padding" Value="12,10,12,6" />
+        <Setter Property="Padding" Value="12,4,12,8" />
         <Setter Property="VerticalContentAlignment" Value="Top" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="LineHeight" Value="20" />
+        <Setter Property="LineHeight" Value="21" />
+        <Setter Property="Foreground" Value="#172033" />
     </Style>
 
     <Style Selector="TextBox.result-editor">
-        <Setter Property="Padding" Value="12,2,12,12" />
+        <Setter Property="Padding" Value="12,0,12,13" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="LineHeight" Value="19" />
+        <Setter Property="LineHeight" Value="20" />
         <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Foreground" Value="#172033" />
+    </Style>
+
+    <Style Selector="Border.popup-card">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#E0E7EF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+
+    <Style Selector="Border.source-card">
+        <Setter Property="BoxShadow" Value="0 6 18 0 #12000000" />
+    </Style>
+
+    <Style Selector="Border.popup-control-strip">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#E0E7EF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+
+    <Style Selector="Border.target-pill">
+        <Setter Property="Background" Value="#F4F7FA" />
+        <Setter Property="BorderBrush" Value="#DDE5EE" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Height" Value="24" />
+    </Style>
+
+    <Style Selector="Border.result-card">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#E0E7EF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="BoxShadow" Value="0 5 16 0 #0E000000" />
+    </Style>
+
+    <Style Selector="Border.result-card:pointerover">
+        <Setter Property="BorderBrush" Value="#BED9D0" />
+    </Style>
+
+    <Style Selector="Border.result-header">
+        <Setter Property="Background" Value="#F8FAFC" />
+        <Setter Property="BorderBrush" Value="#E6ECF2" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+
+    <Style Selector="Border.result-body">
+        <Setter Property="Background" Value="#FFFFFF" />
+    </Style>
+
+    <Style Selector="Border.tiny-pill">
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style Selector="Border.tiny-pill.loading">
+        <Setter Property="Background" Value="#EEF4FF" />
+        <Setter Property="BorderBrush" Value="#C7D7FE" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Border.tiny-pill.success">
+        <Setter Property="Background" Value="#E7F4EF" />
+        <Setter Property="BorderBrush" Value="#B9D9CE" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Border.tiny-pill.error">
+        <Setter Property="Background" Value="#FFF1F0" />
+        <Setter Property="BorderBrush" Value="#F4C7C3" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="TextBlock.popup-caption">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="#697386" />
+    </Style>
+
+    <Style Selector="TextBlock.section-title">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#172033" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.strip-label">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#697386" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.tiny-pill-text">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.tiny-pill-text.loading">
+        <Setter Property="Foreground" Value="#3053A4" />
+    </Style>
+
+    <Style Selector="TextBlock.tiny-pill-text.success">
+        <Setter Property="Foreground" Value="#1F7A68" />
+    </Style>
+
+    <Style Selector="TextBlock.tiny-pill-text.error">
+        <Setter Property="Foreground" Value="#B42318" />
     </Style>
 
     <!-- OCR result window -->

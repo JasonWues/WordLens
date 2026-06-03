@@ -87,21 +87,16 @@ public class XcapScreenshotService : IScreenshotService
 
             using (var framebuffer = writeableBitmap.Lock())
             {
-                fixed (byte* source = screenshot.Buffer)
-                {
-                    var bytesPerRow = screenshot.Width * 4;
-                    var sourceStride = screenshot.Stride;
-                    var destinationStride = framebuffer.RowBytes;
-                    var destination = (byte*)framebuffer.Address.ToPointer();
+                var bytesPerRow = checked(screenshot.Width * 4);
+                var sourceStride = screenshot.Stride;
+                var destinationStride = framebuffer.RowBytes;
+                var destination = (byte*)framebuffer.Address.ToPointer();
 
-                    for (var row = 0; row < screenshot.Height; row++)
-                    {
-                        Buffer.MemoryCopy(
-                            source + row * sourceStride,
-                            destination + row * destinationStride,
-                            destinationStride,
-                            bytesPerRow);
-                    }
+                for (var row = 0; row < screenshot.Height; row++)
+                {
+                    var sourceRow = screenshot.Buffer.AsSpan(checked(row * sourceStride), bytesPerRow);
+                    var destinationRow = new Span<byte>(destination + checked(row * destinationStride), bytesPerRow);
+                    sourceRow.CopyTo(destinationRow);
                 }
             }
 

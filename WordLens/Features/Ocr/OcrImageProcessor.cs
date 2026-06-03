@@ -80,14 +80,11 @@ internal static class OcrImageProcessor
         if (destination is null)
             throw new InvalidOperationException("Failed to access grayscale OCR bitmap pixels.");
 
-        fixed (byte* source = luma)
+        for (var y = 0; y < height; y++)
         {
-            for (var y = 0; y < height; y++)
-            {
-                var sourceRow = source + checked(y * width);
-                var destinationRow = destination + checked(y * bitmap.RowBytes);
-                Buffer.MemoryCopy(sourceRow, destinationRow, bitmap.RowBytes, width);
-            }
+            var sourceRow = luma.Slice(checked(y * width), width);
+            var destinationRow = new Span<byte>(destination + checked(y * bitmap.RowBytes), width);
+            sourceRow.CopyTo(destinationRow);
         }
 
         return bitmap;

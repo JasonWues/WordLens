@@ -22,8 +22,8 @@ namespace WordLens.Services.Implementations;
 /// </summary>
 public class WindowManagerService : IWindowManagerService
 {
-    private const int TranslationWindowDefaultWidth = 340;
-    private const int TranslationWindowDefaultHeight = 450;
+    private const int TranslationWindowDefaultWidth = 380;
+    private const int TranslationWindowDefaultHeight = 520;
     private const int TranslationWindowPointerOffset = 12;
 
     private readonly IServiceProvider _serviceProvider;
