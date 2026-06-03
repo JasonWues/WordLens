@@ -11,20 +11,20 @@
     <ScrollViewer>
         <StackPanel Spacing="16" Margin="20">
             <StackPanel Spacing="8">
-                <TextBlock Text="界面语言" FontWeight="Bold" FontSize="14" />
+                <TextBlock Text="{DynamicResource General_UILanguage_Title}" FontWeight="Bold" FontSize="14" />
                 <ComboBox ItemsSource="{Binding AvailableUILanguages}"
                           SelectedValue="{Binding UiLanguage}"
                           SelectedValueBinding="{Binding Code}"
                           DisplayMemberBinding="{Binding DisplayName}"
                           Width="300"
                           HorizontalAlignment="Left" />
-                <TextBlock Text="选择应用界面显示语言（翻译语言请在翻译窗口中选择）"
+                <TextBlock Text="{DynamicResource General_UILanguage_Description}"
                            FontSize="12"
                            Opacity="0.6" />
             </StackPanel>
 
             <StackPanel Spacing="8">
-                <TextBlock Text="界面字体" FontWeight="Bold" FontSize="14" />
+                <TextBlock Text="{DynamicResource General_Font_Title}" FontWeight="Bold" FontSize="14" />
                 <ComboBox ItemsSource="{Binding AvailableFontFamilies}"
                           SelectedValue="{Binding FontFamily}"
                           SelectedValueBinding="{Binding Family}"
@@ -33,13 +33,13 @@
                           HorizontalAlignment="Left" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBox Text="{Binding FontFamily}"
-                             PlaceholderText="输入字体名称"
+                             PlaceholderText="{DynamicResource General_Font_Placeholder}"
                              Width="300"
                              VerticalContentAlignment="Center" />
-                    <Button Content="重置"
+                    <Button Content="{DynamicResource Common_Reset}"
                             Command="{Binding ResetFontFamilyCommand}" />
                 </StackPanel>
-                <TextBlock Text="可选择系统字体，也可输入已安装字体名称；留空使用默认字体"
+                <TextBlock Text="{DynamicResource General_Font_Description}"
                            FontSize="12"
                            Opacity="0.6"
                            TextWrapping="Wrap" />
@@ -48,11 +48,11 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="启动" FontWeight="Bold" FontSize="14" />
-                <CheckBox Content="开机时自动启动 WordLens"
+                <TextBlock Text="{DynamicResource General_Startup_Title}" FontWeight="Bold" FontSize="14" />
+                <CheckBox Content="{DynamicResource General_Startup_StartWithSystem}"
                           IsChecked="{Binding StartWithSystem}"
                           IsEnabled="{Binding IsStartupSupported}" />
-                <TextBlock Text="当前系统不支持自动配置开机自启"
+                <TextBlock Text="{DynamicResource General_Startup_Unsupported}"
                            FontSize="12"
                            Opacity="0.6"
                            IsVisible="{Binding !IsStartupSupported}" />
@@ -61,9 +61,9 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="数据备份" FontWeight="Bold" FontSize="14" />
+                <TextBlock Text="{DynamicResource General_Backup_Title}" FontWeight="Bold" FontSize="14" />
                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" RowSpacing="8">
-                    <Button Content="备份数据"
+                    <Button Content="{DynamicResource General_Backup_Create}"
                             Command="{Binding CreateBackupCommand}"
                             IsEnabled="{Binding IsBackupOperationIdle}"
                             MinWidth="100" />
@@ -76,7 +76,7 @@
                                Opacity="0.7"
                                TextWrapping="Wrap" />
                     <Button Grid.Row="1"
-                            Content="恢复备份"
+                            Content="{DynamicResource General_Backup_Restore}"
                             Command="{Binding RestoreBackupCommand}"
                             IsEnabled="{Binding IsBackupOperationIdle}"
                             MinWidth="100" />
@@ -90,7 +90,7 @@
                                Opacity="0.7"
                                TextWrapping="Wrap" />
                 </Grid>
-                <TextBlock Text="备份包含设置、翻译历史数据库和截图缓存。恢复会覆盖当前数据，并自动创建一份恢复前备份。"
+                <TextBlock Text="{DynamicResource General_Backup_Description}"
                            FontSize="12"
                            Opacity="0.6"
                            TextWrapping="Wrap" />
@@ -99,15 +99,15 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="本地 API" FontWeight="Bold" FontSize="14" />
-                <CheckBox Content="启用本地自动化 API"
+                <TextBlock Text="{DynamicResource General_LocalApi_Title}" FontWeight="Bold" FontSize="14" />
+                <CheckBox Content="{DynamicResource General_LocalApi_Enable}"
                           IsChecked="{Binding LocalApiEnabled}" />
                 <StackPanel Spacing="8"
                             IsEnabled="{Binding LocalApiEnabled}"
                             Margin="24,4,0,0"
                             Opacity="{Binding LocalApiEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="监听端口" FontSize="13" />
+                        <TextBlock Text="{DynamicResource General_LocalApi_Port}" FontSize="13" />
                         <NumericUpDown Value="{Binding LocalApiPort}"
                                        Minimum="1024"
                                        Maximum="65535"
@@ -116,18 +116,18 @@
                                        HorizontalAlignment="Left" />
                     </StackPanel>
                     <StackPanel Spacing="4">
-                        <TextBlock Text="访问 Token" FontSize="13" />
+                        <TextBlock Text="{DynamicResource General_LocalApi_Token}" FontSize="13" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBox Text="{Binding LocalApiToken}"
                                      Width="260"
                                      IsReadOnly="True"
                                      VerticalContentAlignment="Center" />
-                            <Button Content="重置"
+                            <Button Content="{DynamicResource Common_Reset}"
                                     Command="{Binding RegenerateLocalApiTokenCommand}" />
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
-                <TextBlock Text="仅监听 127.0.0.1。外部调用需携带 Authorization: Bearer Token。"
+                <TextBlock Text="{DynamicResource General_LocalApi_Description}"
                            FontSize="12"
                            Opacity="0.6"
                            TextWrapping="Wrap" />
@@ -136,15 +136,15 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="欧路生词本" FontWeight="Bold" FontSize="14" />
-                <CheckBox Content="启用欧路词典生词本同步"
+                <TextBlock Text="{DynamicResource General_Eudic_Title}" FontWeight="Bold" FontSize="14" />
+                <CheckBox Content="{DynamicResource General_Eudic_Enable}"
                           IsChecked="{Binding EudicEnabled}" />
                 <StackPanel Spacing="10"
                             IsEnabled="{Binding EudicEnabled}"
                             Margin="24,4,0,0"
                             Opacity="{Binding EudicEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="OpenAPI Token" FontSize="13" />
+                        <TextBlock Text="{DynamicResource General_Eudic_Token}" FontSize="13" />
                         <TextBox Text="{Binding EudicToken}"
                                  PasswordChar="*"
                                  Width="300"
@@ -153,7 +153,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <StackPanel Spacing="4">
-                            <TextBlock Text="语言" FontSize="13" />
+                            <TextBlock Text="{DynamicResource General_Eudic_Language}" FontSize="13" />
                             <ComboBox ItemsSource="{Binding AvailableEudicLanguages}"
                                       SelectedValue="{Binding EudicLanguage}"
                                       SelectedValueBinding="{Binding Code}"
@@ -161,13 +161,13 @@
                                       Width="120" />
                         </StackPanel>
                         <StackPanel Spacing="4">
-                            <TextBlock Text="生词本 ID" FontSize="13" />
+                            <TextBlock Text="{DynamicResource General_Eudic_CategoryId}" FontSize="13" />
                             <TextBox Text="{Binding EudicCategoryId}"
                                      Width="140"
                                      VerticalContentAlignment="Center" />
                         </StackPanel>
                         <StackPanel Spacing="4">
-                            <TextBlock Text="星级" FontSize="13" />
+                            <TextBlock Text="{DynamicResource General_Eudic_Star}" FontSize="13" />
                             <NumericUpDown Value="{Binding EudicStar}"
                                            Minimum="0"
                                            Maximum="5"
@@ -176,7 +176,7 @@
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
-                <TextBlock Text="Token 可在欧路 OpenAPI 授权页生成；默认生词本 ID 通常为 0。"
+                <TextBlock Text="{DynamicResource General_Eudic_Description}"
                            FontSize="12"
                            Opacity="0.6"
                            TextWrapping="Wrap" />
@@ -185,14 +185,14 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="翻译框位置" FontWeight="Bold" FontSize="14" />
+                <TextBlock Text="{DynamicResource General_PopupPosition_Title}" FontWeight="Bold" FontSize="14" />
                 <ComboBox ItemsSource="{Binding AvailableTranslationPopupPositionModes}"
                           SelectedValue="{Binding TranslationPopupPositionMode}"
                           SelectedValueBinding="{Binding Mode}"
                           DisplayMemberBinding="{Binding DisplayName}"
                           Width="220"
                           HorizontalAlignment="Left" />
-                <TextBlock Text="跟随鼠标会在触发翻译时靠近当前鼠标位置；记住位置会使用上次关闭翻译框时的位置"
+                <TextBlock Text="{DynamicResource General_PopupPosition_Description}"
                            FontSize="12"
                            Opacity="0.6"
                            TextWrapping="Wrap" />
@@ -201,13 +201,13 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="快捷键" FontWeight="Bold" FontSize="14" />
+                <TextBlock Text="{DynamicResource General_Hotkey_Title}" FontWeight="Bold" FontSize="14" />
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <TextBox Text="{Binding HotkeyDisplay}"
                              IsReadOnly="True"
                              Width="200"
                              VerticalContentAlignment="Center" />
-                    <Button Content="设置快捷键"
+                    <Button Content="{DynamicResource General_Hotkey_SetTranslation}"
                             Command="{Binding StartCaptureHotkeyCommand}"
                             CommandParameter="text"
                             IsEnabled="{Binding !IsCapturingHotkey}"
@@ -218,19 +218,19 @@
                              IsReadOnly="True"
                              Width="200"
                              VerticalContentAlignment="Center" />
-                    <Button Content="设置OCR快捷键"
+                    <Button Content="{DynamicResource General_Hotkey_SetOcr}"
                             Command="{Binding StartCaptureHotkeyCommand}"
                             CommandParameter="ocr"
                             IsEnabled="{Binding !IsCapturingHotkey}"
                             MinWidth="100" />
                 </StackPanel>
                 <TextBlock IsVisible="{Binding IsCapturingHotkey}"
-                           Text="请按下想要设置的快捷键组合（按 ESC 取消）"
+                           Text="{DynamicResource General_Hotkey_CaptureHintActive}"
                            FontSize="12"
                            Foreground="Orange"
                            FontWeight="Bold" />
                 <TextBlock IsVisible="{Binding !IsCapturingHotkey}"
-                           Text="点击按钮后按下想要设置的快捷键组合"
+                           Text="{DynamicResource General_Hotkey_CaptureHintIdle}"
                            FontSize="12"
                            Opacity="0.6" />
             </StackPanel>
@@ -238,48 +238,48 @@
             <Separator />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="流式输出" FontWeight="Bold" FontSize="14" />
+                <TextBlock Text="{DynamicResource General_Streaming_Title}" FontWeight="Bold" FontSize="14" />
 
-                <CheckBox Content="启用流式输出（实时显示翻译结果）"
+                <CheckBox Content="{DynamicResource General_Streaming_Enable}"
                           IsChecked="{Binding StreamingEnabled}"
-                          ToolTip.Tip="启用后翻译内容将实时逐步显示，提供更好的用户体验" />
+                          ToolTip.Tip="{DynamicResource General_Streaming_EnableTooltip}" />
 
                 <StackPanel Spacing="12"
                             IsEnabled="{Binding StreamingEnabled}"
                             Margin="24,8,0,0"
                             Opacity="{Binding StreamingEnabled, Converter={x:Static conv:BoolToOpacityConverter.BoolToOpacityValueConverter}}">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="打字机效果延迟（毫秒）" FontSize="13" />
+                        <TextBlock Text="{DynamicResource General_Streaming_Delay}" FontSize="13" />
                         <NumericUpDown Value="{Binding TypewriterDelayMs}"
                                        Minimum="0"
                                        Maximum="200"
                                        Increment="10"
                                        Width="200"
                                        HorizontalAlignment="Left"
-                                       ToolTip.Tip="每个字符显示之间的延迟时间" />
-                        <TextBlock Text="0 = 无延迟，实时显示；推荐值：30-50毫秒"
+                                       ToolTip.Tip="{DynamicResource General_Streaming_DelayTooltip}" />
+                        <TextBlock Text="{DynamicResource General_Streaming_DelayDescription}"
                                    FontSize="11"
                                    Opacity="0.6"
                                    TextWrapping="Wrap" />
                     </StackPanel>
 
                     <StackPanel Spacing="4">
-                        <TextBlock Text="每次显示字符数" FontSize="13" />
+                        <TextBlock Text="{DynamicResource General_Streaming_Chars}" FontSize="13" />
                         <NumericUpDown Value="{Binding CharsPerUpdate}"
                                        Minimum="1"
                                        Maximum="10"
                                        Increment="1"
                                        Width="200"
                                        HorizontalAlignment="Left"
-                                       ToolTip.Tip="一次性显示的字符数量" />
-                        <TextBlock Text="1 = 逐字显示；较大值可加快显示速度"
+                                       ToolTip.Tip="{DynamicResource General_Streaming_CharsTooltip}" />
+                        <TextBlock Text="{DynamicResource General_Streaming_CharsDescription}"
                                    FontSize="11"
                                    Opacity="0.6"
                                    TextWrapping="Wrap" />
                     </StackPanel>
                 </StackPanel>
 
-                <TextBlock Text="提示：流式输出可以让翻译过程更加流畅，但如果网络不稳定可以关闭此功能"
+                <TextBlock Text="{DynamicResource General_Streaming_Description}"
                            FontSize="11"
                            Opacity="0.6"
                            TextWrapping="Wrap"

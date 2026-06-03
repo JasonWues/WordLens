@@ -25,6 +25,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     private readonly IBackupService _backupService;
     private readonly IPathPickerService _pathPickerService;
     private readonly AvaloniaThemeService _themeService;
+    private readonly ILocalizationService _localizationService;
     private readonly EncryptionService _encryptionService;
     private readonly ILogger<GeneralSettingsViewModel> _logger;
     private string _currentCapturingType = string.Empty;
@@ -57,6 +58,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
 
     public GeneralSettingsViewModel(
         AvaloniaThemeService themeService,
+        ILocalizationService localizationService,
         IStartupService startupService,
         EncryptionService encryptionService,
         IBackupService backupService,
@@ -64,11 +66,15 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         ILogger<GeneralSettingsViewModel> logger)
     {
         _themeService = themeService;
+        _localizationService = localizationService;
         _startupService = startupService;
         _encryptionService = encryptionService;
         _backupService = backupService;
         _pathPickerService = pathPickerService;
         _logger = logger;
+        AvailableFontFamilies = CreateFontFamilyOptions(_localizationService);
+        RefreshLocalizedOptions();
+        _localizationService.CultureChanged += OnCultureChanged;
 
         WeakReferenceMessenger.Default.Register<CapturingKeyMessage>(this, (r, m) =>
         {
@@ -80,7 +86,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         });
     }
 
-    public List<FontFamilyOption> AvailableFontFamilies { get; } = CreateFontFamilyOptions();
+    public List<FontFamilyOption> AvailableFontFamilies { get; }
 
     public bool HasBackupStatus => !string.IsNullOrWhiteSpace(BackupStatus);
 
@@ -90,23 +96,23 @@ public partial class GeneralSettingsViewModel : ViewModelBase
 
     public List<LanguageOption> AvailableUILanguages { get; } = new()
     {
-        new LanguageOption("zh-CN", "简体中文"),
-        new LanguageOption("en", "English"),
-        new LanguageOption("ja", "日本語")
+        new("zh-CN", "General_Language_Chinese"),
+        new("en", "General_Language_English"),
+        new("ja", "General_Language_Japanese")
     };
 
     public List<EudicLanguageOption> AvailableEudicLanguages { get; } = new()
     {
-        new EudicLanguageOption("en", "英语"),
-        new EudicLanguageOption("fr", "法语"),
-        new EudicLanguageOption("de", "德语"),
-        new EudicLanguageOption("es", "西语")
+        new("en", "General_EudicLanguage_English"),
+        new("fr", "General_EudicLanguage_French"),
+        new("de", "General_EudicLanguage_German"),
+        new("es", "General_EudicLanguage_Spanish")
     };
 
     public List<TranslationPopupPositionModeOption> AvailableTranslationPopupPositionModes { get; } = new()
     {
-        new TranslationPopupPositionModeOption(TranslationPopupPositionMode.FollowMouse, "跟随鼠标"),
-        new TranslationPopupPositionModeOption(TranslationPopupPositionMode.RememberPosition, "记住位置")
+        new(TranslationPopupPositionMode.FollowMouse, "General_PopupPosition_FollowMouse"),
+        new(TranslationPopupPositionMode.RememberPosition, "General_PopupPosition_RememberPosition")
     };
 
     public void Load(AppSettings settings)
@@ -208,29 +214,32 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             return;
 
         var suggestedFileName = $"WordLens-backup-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
-        BackupStatus = "请选择备份保存位置...";
+        BackupStatus = _localizationService.GetString("General_Backup_ChooseDestination");
 
         var destinationPath = await _pathPickerService.PickSaveFileAsync(
-            "保存 WordLens 备份",
+            _localizationService.GetString("General_Backup_SaveDialogTitle"),
             suggestedFileName,
             new[] { "*.zip" });
 
         if (string.IsNullOrWhiteSpace(destinationPath))
         {
-            BackupStatus = "已取消备份。";
+            BackupStatus = _localizationService.GetString("General_Backup_Canceled");
             return;
         }
 
         try
         {
             IsBackupRunning = true;
-            BackupStatus = "正在创建备份...";
+            BackupStatus = _localizationService.GetString("General_Backup_Running");
             var result = await _backupService.CreateBackupAsync(destinationPath);
-            BackupStatus = $"备份完成：{result.FileCount} 个文件，{FormatFileSize(result.SizeBytes)}。";
+            BackupStatus = _localizationService.GetString(
+                "General_Backup_DoneFormat",
+                result.FileCount,
+                FormatFileSize(result.SizeBytes));
         }
         catch (Exception ex)
         {
-            BackupStatus = $"备份失败：{ex.Message}";
+            BackupStatus = _localizationService.GetString("General_Backup_FailedFormat", ex.Message);
             _logger.ZLogError(ex, $"创建备份失败: {ex.Message}");
         }
         finally
@@ -245,30 +254,32 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         if (!IsBackupOperationIdle)
             return;
 
-        RestoreStatus = "请选择要恢复的备份文件...";
+        RestoreStatus = _localizationService.GetString("General_Restore_ChooseSource");
 
         var sourcePath = await _pathPickerService.PickFileAsync(
-            "选择 WordLens 备份",
+            _localizationService.GetString("General_Restore_OpenDialogTitle"),
             new[] { "*.zip" });
 
         if (string.IsNullOrWhiteSpace(sourcePath))
         {
-            RestoreStatus = "已取消恢复。";
+            RestoreStatus = _localizationService.GetString("General_Restore_Canceled");
             return;
         }
 
         try
         {
             IsRestoreRunning = true;
-            RestoreStatus = "正在恢复备份...";
+            RestoreStatus = _localizationService.GetString("General_Restore_Running");
             var result = await _backupService.RestoreBackupAsync(sourcePath);
-            RestoreStatus =
-                $"恢复完成：{result.FileCount} 个文件。恢复前备份已保存为 {System.IO.Path.GetFileName(result.PreRestoreBackupPath)}。";
+            RestoreStatus = _localizationService.GetString(
+                "General_Restore_DoneFormat",
+                result.FileCount,
+                System.IO.Path.GetFileName(result.PreRestoreBackupPath));
             WeakReferenceMessenger.Default.Send(new BackupRestoredMessage(result)); 
         }
         catch (Exception ex)
         {
-            RestoreStatus = $"恢复失败：{ex.Message}";
+            RestoreStatus = _localizationService.GetString("General_Restore_FailedFormat", ex.Message);
             _logger.ZLogError(ex, $"恢复备份失败: {ex.Message}");
         }
         finally
@@ -289,7 +300,7 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     partial void OnUiLanguageChanged(string value)
     {
         if (!string.IsNullOrEmpty(value))
-            _themeService.ApplyLocale(value);
+            _localizationService.ApplyCulture(value);
     }
 
     partial void OnFontFamilyChanged(string value)
@@ -330,9 +341,9 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         _currentCapturingType = type;
 
         if (type == "ocr")
-            OcrHotkeyDisplay = "请按下快捷键...";
+            OcrHotkeyDisplay = _localizationService.GetString("General_Hotkey_CapturePlaceholder");
         else
-            HotkeyDisplay = "请按下快捷键...";
+            HotkeyDisplay = _localizationService.GetString("General_Hotkey_CapturePlaceholder");
     }
 
     private void CaptureKey(KeyCode keyCode, EventMask modifiers)
@@ -409,11 +420,48 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         return $"{megabytes:F1} MB";
     }
 
-    private static List<FontFamilyOption> CreateFontFamilyOptions()
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        RefreshLocalizedOptions();
+
+        if (!IsCapturingHotkey)
+            return;
+
+        if (_currentCapturingType == "ocr")
+            OcrHotkeyDisplay = _localizationService.GetString("General_Hotkey_CapturePlaceholder");
+        else
+            HotkeyDisplay = _localizationService.GetString("General_Hotkey_CapturePlaceholder");
+    }
+
+    private void RefreshLocalizedOptions()
+    {
+        foreach (var option in AvailableUILanguages)
+            option.DisplayName = _localizationService.GetString(option.ResourceKey);
+
+        foreach (var option in AvailableEudicLanguages)
+            option.DisplayName = _localizationService.GetString(option.ResourceKey);
+
+        foreach (var option in AvailableTranslationPopupPositionModes)
+            option.DisplayName = _localizationService.GetString(option.ResourceKey);
+
+        var defaultFontOption = AvailableFontFamilies.FirstOrDefault(static option => option.Family.Length == 0);
+        if (defaultFontOption != null)
+        {
+            defaultFontOption.DisplayName = _localizationService.GetString(
+                "General_DefaultFontFormat",
+                AvaloniaThemeService.GetDefaultFontDisplayName());
+        }
+    }
+
+    private static List<FontFamilyOption> CreateFontFamilyOptions(ILocalizationService localizationService)
     {
         var options = new List<FontFamilyOption>
         {
-            new(string.Empty, $"默认字体 ({AvaloniaThemeService.GetDefaultFontDisplayName()})")
+            new(
+                string.Empty,
+                localizationService.GetString(
+                    "General_DefaultFontFormat",
+                    AvaloniaThemeService.GetDefaultFontDisplayName()))
         };
 
         options.AddRange(AvaloniaThemeService.GetSystemFontFamilyNames()
@@ -423,50 +471,84 @@ public partial class GeneralSettingsViewModel : ViewModelBase
     }
 }
 
-public class LanguageOption
+public class LanguageOption : ObservableObject
 {
-    public LanguageOption(string code, string displayName)
+    private string _displayName;
+
+    public LanguageOption(string code, string resourceKey)
     {
         Code = code;
-        DisplayName = displayName;
+        ResourceKey = resourceKey;
+        _displayName = resourceKey;
     }
 
     public string Code { get; set; }
-    public string DisplayName { get; set; }
+    public string ResourceKey { get; }
+
+    public string DisplayName
+    {
+        get => _displayName;
+        set => SetProperty(ref _displayName, value);
+    }
 }
 
-public class EudicLanguageOption
+public class EudicLanguageOption : ObservableObject
 {
-    public EudicLanguageOption(string code, string displayName)
+    private string _displayName;
+
+    public EudicLanguageOption(string code, string resourceKey)
     {
         Code = code;
-        DisplayName = displayName;
+        ResourceKey = resourceKey;
+        _displayName = resourceKey;
     }
 
     public string Code { get; set; }
-    public string DisplayName { get; set; }
+    public string ResourceKey { get; }
+
+    public string DisplayName
+    {
+        get => _displayName;
+        set => SetProperty(ref _displayName, value);
+    }
 }
 
-public class TranslationPopupPositionModeOption
+public class TranslationPopupPositionModeOption : ObservableObject
 {
-    public TranslationPopupPositionModeOption(TranslationPopupPositionMode mode, string displayName)
+    private string _displayName;
+
+    public TranslationPopupPositionModeOption(TranslationPopupPositionMode mode, string resourceKey)
     {
         Mode = mode;
-        DisplayName = displayName;
+        ResourceKey = resourceKey;
+        _displayName = resourceKey;
     }
 
     public TranslationPopupPositionMode Mode { get; set; }
-    public string DisplayName { get; set; }
+    public string ResourceKey { get; }
+
+    public string DisplayName
+    {
+        get => _displayName;
+        set => SetProperty(ref _displayName, value);
+    }
 }
 
-public class FontFamilyOption
+public class FontFamilyOption : ObservableObject
 {
+    private string _displayName;
+
     public FontFamilyOption(string family, string displayName)
     {
         Family = family;
-        DisplayName = displayName;
+        _displayName = displayName;
     }
 
     public string Family { get; set; }
-    public string DisplayName { get; set; }
+
+    public string DisplayName
+    {
+        get => _displayName;
+        set => SetProperty(ref _displayName, value);
+    }
 }

@@ -14,7 +14,7 @@
         ExtendClientAreaToDecorationsHint="True"
         TransparencyLevelHint="Transparent"
         Background="Transparent"
-        Title="WordLens - 翻译">
+        Title="{DynamicResource Popup_WindowTitle}">
     <Design.DataContext>
         <vm:PopupWindowViewModel />
     </Design.DataContext>
@@ -55,7 +55,7 @@
                     </StackPanel>
 
                     <TextBlock Grid.Column="1"
-                               Text="翻译"
+                               Text="{DynamicResource Popup_Title}"
                                Classes="popup-caption"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
@@ -64,7 +64,7 @@
                             Classes="icon-button popup-icon"
                             Classes.topmost-active="{Binding IsTopmost}"
                             Command="{Binding ToggleTopmostCommand}"
-                            ToolTip.Tip="置顶窗口"
+                            ToolTip.Tip="{DynamicResource Common_PinTopmost}"
                             Margin="0,4,2,4">
                         <PathIcon Width="13"
                                   Height="13"
@@ -74,7 +74,7 @@
                     <Button Grid.Column="3"
                             Classes="icon-button popup-icon close"
                             Click="Close_Click"
-                            ToolTip.Tip="关闭"
+                            ToolTip.Tip="{DynamicResource Common_Close}"
                             Margin="0,4,8,4">
                         <PathIcon Width="11"
                                   Height="11"
@@ -97,12 +97,12 @@
                                           Height="13"
                                           Foreground="#1F7A68"
                                           Data="{StaticResource link_regular}" />
-                                <TextBlock Text="原文"
+                                <TextBlock Text="{DynamicResource Popup_SourceSection}"
                                            Classes="section-title" />
                             </StackPanel>
 
                             <TextBlock Grid.Column="2"
-                                       Text="{Binding SourceCharacterCount, StringFormat='{}{0} 字符'}"
+                                       Text="{Binding SourceCharacterCountText}"
                                        Classes="popup-caption"
                                        VerticalAlignment="Center" />
                         </Grid>
@@ -110,7 +110,7 @@
                         <TextBox Grid.Row="1"
                                  Text="{Binding SourceText}"
                                  Classes="transparent-editor source-editor"
-                                 PlaceholderText="输入或粘贴要翻译的文本" />
+                                 PlaceholderText="{DynamicResource Popup_SourcePlaceholder}" />
 
                         <Grid Grid.Row="2"
                               ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto"
@@ -121,7 +121,7 @@
                                     Classes="icon-button popup-icon"
                                     Command="{Binding SpeakSourceCommand}"
                                     IsEnabled="{Binding CanSpeakSource}"
-                                    ToolTip.Tip="朗读原文">
+                                    ToolTip.Tip="{DynamicResource Popup_SpeakSource}">
                                 <PathIcon Width="13"
                                           Height="13"
                                           Data="{StaticResource speaker_regular}" />
@@ -131,7 +131,7 @@
                                     Classes="icon-button popup-icon"
                                     Command="{Binding CopySourceCommand}"
                                     IsEnabled="{Binding CanCopySource}"
-                                    ToolTip.Tip="复制原文">
+                                    ToolTip.Tip="{DynamicResource Popup_CopySource}">
                                 <PathIcon Width="13"
                                           Height="13"
                                           Data="{StaticResource copy_regular}" />
@@ -141,7 +141,7 @@
                                     Classes="icon-button popup-icon"
                                     Command="{Binding AddSourceToVocabularyCommand}"
                                     IsEnabled="{Binding CanAddSourceToVocabulary}"
-                                    ToolTip.Tip="加入欧路生词本">
+                                    ToolTip.Tip="{DynamicResource Popup_AddVocabulary}">
                                 <PathIcon Width="13"
                                           Height="13"
                                           Data="{StaticResource star_regular}" />
@@ -151,7 +151,7 @@
                                     Classes="icon-button popup-icon close"
                                     Command="{Binding ClearSourceCommand}"
                                     IsEnabled="{Binding CanCopySource}"
-                                    ToolTip.Tip="清空">
+                                    ToolTip.Tip="{DynamicResource Popup_ClearSource}">
                                 <PathIcon Width="12"
                                           Height="12"
                                           Data="{StaticResource dismiss_regular}" />
@@ -167,7 +167,7 @@
                                     Classes="target-pill"
                                     MinWidth="66"
                                     VerticalAlignment="Center">
-                                <TextBlock Text="{Binding SelectedTargetLanguage.DisplayName, FallbackValue=英语, TargetNullValue=英语}"
+                                <TextBlock Text="{Binding SelectedTargetLanguage.DisplayName, FallbackValue=English, TargetNullValue=English}"
                                            FontSize="11"
                                            FontWeight="Medium"
                                            Foreground="#172033"
@@ -178,7 +178,7 @@
                             <Button Grid.Column="6"
                                     Classes="translate-button primary-translate"
                                     Command="{Binding TranslateCommand}"
-                                    ToolTip.Tip="翻译">
+                                    ToolTip.Tip="{DynamicResource Common_Translate}">
                                 <PathIcon Width="15"
                                           Height="15"
                                           Data="{StaticResource translate_regular}" />
@@ -211,7 +211,7 @@
                                 Command="{Binding SwapLanguagesCommand}"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                ToolTip.Tip="交换语言">
+                                ToolTip.Tip="{DynamicResource Popup_SwapLanguages}">
                             <PathIcon Width="15"
                                       Height="15"
                                       Data="{StaticResource arrow_swap_regular}" />
@@ -241,7 +241,7 @@
                           Margin="12,0"
                           VerticalAlignment="Center">
                         <TextBlock Grid.Column="0"
-                                   Text="翻译源"
+                                   Text="{DynamicResource Popup_ProviderLabel}"
                                    Classes="strip-label" />
 
                         <ComboBox Grid.Column="1"
@@ -261,7 +261,7 @@
                         <Button Grid.Column="2"
                                 Classes="icon-button provider-refresh"
                                 Command="{Binding RetranslateWithSelectedProviderCommand}"
-                                ToolTip.Tip="使用所选翻译源重新翻译">
+                                ToolTip.Tip="{DynamicResource Popup_RetranslateWithProvider}">
                             <PathIcon Width="14"
                                       Height="14"
                                       Data="{StaticResource translate_regular}" />
@@ -310,7 +310,7 @@
                                                         Classes="icon-button popup-icon close"
                                                         Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).RemoveTranslationCommand}"
                                                         CommandParameter="{Binding}"
-                                                        ToolTip.Tip="移除此翻译源">
+                                                        ToolTip.Tip="{DynamicResource Popup_RemoveResult}">
                                                     <PathIcon Width="10"
                                                               Height="10"
                                                               Data="{StaticResource dismiss_regular}" />
@@ -332,7 +332,7 @@
                                                             Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).SpeakTranslationCommand}"
                                                             CommandParameter="{Binding Result}"
                                                             IsVisible="{Binding IsSuccess}"
-                                                            ToolTip.Tip="朗读此翻译">
+                                                            ToolTip.Tip="{DynamicResource Popup_SpeakResult}">
                                                         <PathIcon Width="13"
                                                                   Height="13"
                                                                   Data="{StaticResource speaker_regular}" />
@@ -343,7 +343,7 @@
                                                             Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).CopyTranslationCommand}"
                                                             CommandParameter="{Binding Result}"
                                                             IsVisible="{Binding IsSuccess}"
-                                                            ToolTip.Tip="复制此翻译">
+                                                            ToolTip.Tip="{DynamicResource Popup_CopyResult}">
                                                         <PathIcon Width="13"
                                                                   Height="13"
                                                                   Data="{StaticResource copy_regular}" />
@@ -354,7 +354,7 @@
                                                             Command="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).UseTranslationAsSourceCommand}"
                                                             IsEnabled="{Binding $parent[Window].((vm:PopupWindowViewModel)DataContext).CanUseTranslationAsSource}"
                                                             IsVisible="{Binding IsSuccess}"
-                                                            ToolTip.Tip="将译文作为新原文">
+                                                            ToolTip.Tip="{DynamicResource Popup_UseResultAsSource}">
                                                         <PathIcon Width="13"
                                                                   Height="13"
                                                                   Data="{StaticResource arrow_turn_up_regular}" />
@@ -366,19 +366,19 @@
                                                           VerticalAlignment="Center">
                                                         <Border Classes="tiny-pill loading"
                                                                 IsVisible="{Binding IsLoading}">
-                                                            <TextBlock Text="翻译中"
+                                                            <TextBlock Text="{DynamicResource Popup_StatusLoading}"
                                                                        Classes="tiny-pill-text loading" />
                                                         </Border>
 
                                                         <Border Classes="tiny-pill success"
                                                                 IsVisible="{Binding IsSuccess}">
-                                                            <TextBlock Text="完成"
+                                                            <TextBlock Text="{DynamicResource Popup_StatusDone}"
                                                                        Classes="tiny-pill-text success" />
                                                         </Border>
 
                                                         <Border Classes="tiny-pill error"
                                                                 IsVisible="{Binding IsError}">
-                                                            <TextBlock Text="失败"
+                                                            <TextBlock Text="{DynamicResource Popup_StatusFailed}"
                                                                        Classes="tiny-pill-text error" />
                                                         </Border>
                                                     </Grid>
@@ -414,7 +414,7 @@
                     Background="Transparent"
                     Cursor="BottomRightCorner"
                     PointerPressed="ResizeGrip_PointerPressed"
-                    ToolTip.Tip="拖拽调整窗口大小">
+                    ToolTip.Tip="{DynamicResource Popup_ResizeTip}">
                 <PathIcon Width="10"
                           Height="10"
                           Margin="0,0,4,4"

@@ -16,18 +16,22 @@ public partial class ApplicationViewModel : ViewModelBase
     private readonly IWindowManagerService _windowManager;
     private readonly IHotkeyManagerService _hotkeyManager;
     private readonly IClipboardMonitorService _clipboardMonitor;
+    private readonly ILocalizationService _localizationService;
 
     [ObservableProperty] private bool isClipboardMonitorEnabled;
 
     public ApplicationViewModel(
         IWindowManagerService windowManager,
         IHotkeyManagerService hotkeyManager,
-        IClipboardMonitorService clipboardMonitor)
+        IClipboardMonitorService clipboardMonitor,
+        ILocalizationService localizationService)
     {
         _windowManager = windowManager;
         _hotkeyManager = hotkeyManager;
         _clipboardMonitor = clipboardMonitor;
+        _localizationService = localizationService;
         _clipboardMonitor.TextChanged += OnClipboardTextChanged;
+        _localizationService.CultureChanged += OnCultureChanged;
 
         // 注册翻译窗口消息
         WeakReferenceMessenger.Default.Register<TriggerTranslationMessage, string>(this, "text",
@@ -59,7 +63,13 @@ public partial class ApplicationViewModel : ViewModelBase
         });
     }
 
-    public string ClipboardMonitorMenuHeader => IsClipboardMonitorEnabled ? "停止监听剪贴板" : "监听剪贴板";
+    public string ClipboardMonitorMenuHeader => IsClipboardMonitorEnabled
+        ? _localizationService.GetString("Tray_ClipboardStop")
+        : _localizationService.GetString("Tray_ClipboardStart");
+
+    public string SettingsMenuHeader => _localizationService.GetString("Tray_Settings");
+
+    public string ExitMenuHeader => _localizationService.GetString("Tray_Exit");
 
     [RelayCommand]
     private async Task ShowSettingAsync()
@@ -84,6 +94,7 @@ public partial class ApplicationViewModel : ViewModelBase
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime application)
         {
             _clipboardMonitor.TextChanged -= OnClipboardTextChanged;
+            _localizationService.CultureChanged -= OnCultureChanged;
             _clipboardMonitor.Dispose();
             _hotkeyManager.Dispose();
             application.Shutdown();
@@ -93,6 +104,13 @@ public partial class ApplicationViewModel : ViewModelBase
     partial void OnIsClipboardMonitorEnabledChanged(bool value)
     {
         OnPropertyChanged(nameof(ClipboardMonitorMenuHeader));
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(ClipboardMonitorMenuHeader));
+        OnPropertyChanged(nameof(SettingsMenuHeader));
+        OnPropertyChanged(nameof(ExitMenuHeader));
     }
 
     private void OnClipboardTextChanged(object? sender, ClipboardTextChangedEventArgs e)

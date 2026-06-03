@@ -24,6 +24,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     private readonly SemaphoreSlim _autoSaveSemaphore = new(1, 1);
     private readonly IHotkeyManagerService _hotkeyManagerService;
+    private readonly ILocalizationService _localizationService;
     private readonly ILocalApiService _localApiService;
     private readonly ILogger<SettingsViewModel> _logger;
     private readonly ISettingsService _settingsService;
@@ -33,6 +34,7 @@ public partial class SettingsViewModel : ViewModelBase
     private CancellationTokenSource? _autoSaveCts;
     private bool _hasLoadedSettings;
     private bool _isLoadingSettings;
+    private string _autoSaveStatusKey = "Settings_AutoSaved";
     private AppSettings? _originalSettings;
 
     [ObservableProperty] private string autoSaveStatus = "已保存";
@@ -44,6 +46,7 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         ISettingsService settingsService,
         IHotkeyManagerService hotkeyManagerService,
+        ILocalizationService localizationService,
         ILocalApiService localApiService,
         GeneralSettingsViewModel generalSettings,
         TranslationSettingsViewModel translationSettings,
@@ -56,6 +59,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _settingsService = settingsService;
         _hotkeyManagerService = hotkeyManagerService;
+        _localizationService = localizationService;
         _localApiService = localApiService;
         _logger = logger;
         GeneralSettings = generalSettings;
@@ -67,6 +71,8 @@ public partial class SettingsViewModel : ViewModelBase
         About = aboutViewModel;
 
         ObserveSettingsChanges();
+        AutoSaveStatus = _localizationService.GetString(_autoSaveStatusKey);
+        _localizationService.CultureChanged += OnCultureChanged;
         WeakReferenceMessenger.Default.Register<BackupRestoredMessage>(this, static (recipient, message) =>
         {
             if (recipient is SettingsViewModel viewModel)
@@ -148,7 +154,7 @@ public partial class SettingsViewModel : ViewModelBase
             SyncProviderHandlers(OcrSettings.OcrProviders, _trackedOcrProviders);
             SyncProviderHandlers(TtsSettings.TtsProviders, _trackedTtsProviders);
             _hasLoadedSettings = true;
-            AutoSaveStatus = "已保存";
+            SetAutoSaveStatus("Settings_AutoSaved");
             return settings;
         }
         finally
@@ -272,7 +278,7 @@ public partial class SettingsViewModel : ViewModelBase
         if (_isLoadingSettings || !_hasLoadedSettings)
             return;
 
-        AutoSaveStatus = "待保存";
+        SetAutoSaveStatus("Settings_PendingSave");
         _autoSaveCts?.Cancel();
         _autoSaveCts?.Dispose();
 
@@ -292,14 +298,14 @@ public partial class SettingsViewModel : ViewModelBase
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 IsAutoSaving = true;
-                AutoSaveStatus = "保存中...";
+                SetAutoSaveStatus("Settings_Saving");
 
                 var hotkeysChanged = await SaveSettingsCoreAsync();
                 if (hotkeysChanged)
                     await _hotkeyManagerService.ReloadConfigAsync();
 
                 if (!cancellationToken.IsCancellationRequested)
-                    AutoSaveStatus = "已保存";
+                    SetAutoSaveStatus("Settings_AutoSaved");
             }
             finally
             {
@@ -315,7 +321,7 @@ public partial class SettingsViewModel : ViewModelBase
         catch (Exception ex)
         {
             IsAutoSaving = false;
-            AutoSaveStatus = "保存失败";
+            SetAutoSaveStatus("Settings_SaveFailed");
             _logger.ZLogError(ex, $"自动保存设置失败: {ex.Message}");
         }
     }
@@ -344,18 +350,29 @@ public partial class SettingsViewModel : ViewModelBase
     {
         try
         {
-            AutoSaveStatus = "正在加载恢复的设置...";
+            SetAutoSaveStatus("Settings_LoadingRestoredSettings");
             var settings = await LoadSettingsAsync();
             await _hotkeyManagerService.ReloadConfigAsync(settings);
             await _localApiService.ApplyConfigAsync(settings.LocalApi);
             WeakReferenceMessenger.Default.Send(new TranslationHistoryChangedMessage());
-            AutoSaveStatus = "已恢复";
+            SetAutoSaveStatus("Settings_Restored");
         }
         catch (Exception ex)
         {
-            AutoSaveStatus = "恢复后加载失败";
+            SetAutoSaveStatus("Settings_RestoreLoadFailed");
             _logger.ZLogError(ex, $"恢复备份后加载设置失败: {ex.Message}");
         }
+    }
+
+    private void SetAutoSaveStatus(string resourceKey)
+    {
+        _autoSaveStatusKey = resourceKey;
+        AutoSaveStatus = _localizationService.GetString(resourceKey);
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        AutoSaveStatus = _localizationService.GetString(_autoSaveStatusKey);
     }
 
     private AppSettings BuildSettingsFromViewModels(TranslationPopupConfig? currentTranslationPopup)

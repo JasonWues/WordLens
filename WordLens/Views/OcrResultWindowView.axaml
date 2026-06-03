@@ -14,7 +14,7 @@
         ExtendClientAreaToDecorationsHint="True"
         TransparencyLevelHint="Transparent"
         Background="Transparent"
-        Title="WordLens - OCR">
+        Title="{DynamicResource Ocr_WindowTitle}">
     <Design.DataContext>
         <vm:OcrResultViewModel />
     </Design.DataContext>
@@ -49,7 +49,7 @@
                                       Foreground="#1F7A68"
                                       Data="{StaticResource translate_regular}" />
                         </Border>
-                        <TextBlock Text="OCR 翻译"
+                        <TextBlock Text="{DynamicResource Ocr_Title}"
                                    FontWeight="SemiBold"
                                    FontSize="14"
                                    VerticalAlignment="Center" />
@@ -67,7 +67,7 @@
                     <Button Grid.Column="2"
                             Classes="icon-button medium"
                             Click="Minimize_Click"
-                            ToolTip.Tip="最小化">
+                            ToolTip.Tip="{DynamicResource Common_Minimize}">
                         <PathIcon Width="15"
                                   Height="15"
                                   Data="{StaticResource subtract_regular}" />
@@ -76,7 +76,7 @@
                     <Button Grid.Column="3"
                             Classes="icon-button medium danger-close"
                             Click="Close_Click"
-                            ToolTip.Tip="关闭">
+                            ToolTip.Tip="{DynamicResource Common_Close}">
                         <PathIcon Width="15"
                                   Height="15"
                                   Data="{StaticResource dismiss_regular}" />
@@ -98,7 +98,7 @@
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Stretch"
                                IsVisible="{Binding HasScreenshot}" />
-                        <TextBlock Text="暂无截图"
+                        <TextBlock Text="{DynamicResource Ocr_NoScreenshot}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    Foreground="#66727C"
@@ -114,7 +114,7 @@
                         Classes="panel">
                     <TextBox Classes="ocr-editor"
                              Text="{Binding RecognizedText}"
-                             PlaceholderText="识别到的文字会显示在这里，也可以手动修正后再翻译"
+                             PlaceholderText="{DynamicResource Ocr_EditorPlaceholder}"
                              HorizontalAlignment="Stretch"
                              VerticalAlignment="Stretch" />
                 </Border>
@@ -142,7 +142,7 @@
                             <PathIcon Width="15"
                                       Height="15"
                                       Data="{StaticResource arrow_turn_up_regular}" />
-                            <TextBlock Text="重新识别" />
+                            <TextBlock Text="{DynamicResource Ocr_ReRecognize}" />
                         </StackPanel>
                     </Button>
 
@@ -154,7 +154,7 @@
                             <PathIcon Width="15"
                                       Height="15"
                                       Data="{StaticResource translate_regular}" />
-                            <TextBlock Text="翻译" />
+                            <TextBlock Text="{DynamicResource Common_Translate}" />
                         </StackPanel>
                     </Button>
                 </Grid>

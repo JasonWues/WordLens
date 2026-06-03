@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,8 +17,11 @@ public partial class OcrResultViewModel : ViewModelBase
 {
     private readonly ILogger<OcrResultViewModel> _logger;
     private readonly IOcrService _ocrService;
+    private readonly ILocalizationService? _localizationService;
     private readonly IWindowManagerService _windowManager;
     private int _recognitionVersion;
+    private object[] _statusTextArgs = Array.Empty<object>();
+    private string _statusTextKey = "Ocr_StatusWaiting";
 
     [ObservableProperty] private bool hasError;
 
@@ -32,6 +36,7 @@ public partial class OcrResultViewModel : ViewModelBase
     public OcrResultViewModel()
     {
         _ocrService = null!;
+        _localizationService = null;
         _windowManager = null!;
         _logger = null!;
     }
@@ -39,11 +44,15 @@ public partial class OcrResultViewModel : ViewModelBase
     public OcrResultViewModel(
         IOcrService ocrService,
         IWindowManagerService windowManager,
+        ILocalizationService localizationService,
         ILogger<OcrResultViewModel> logger)
     {
         _ocrService = ocrService;
         _windowManager = windowManager;
+        _localizationService = localizationService;
         _logger = logger;
+        SetStatusText("Ocr_StatusWaiting");
+        _localizationService.CultureChanged += OnCultureChanged;
     }
 
     public bool CanReRecognize => Screenshot != null && !IsBusy;
@@ -60,7 +69,9 @@ public partial class OcrResultViewModel : ViewModelBase
         Screenshot = bitmap;
         RecognizedText = initialText?.Trim() ?? "";
         HasError = false;
-        StatusText = HasRecognizedText ? $"识别完成，{RecognizedText.Length} 个字符" : "准备识别";
+        SetStatusText(
+            HasRecognizedText ? "Ocr_StatusDoneFormat" : "Ocr_StatusReady",
+            RecognizedText.Length);
 
         if (!HasRecognizedText)
             _ = ReRecognizeAsync();
@@ -93,7 +104,7 @@ public partial class OcrResultViewModel : ViewModelBase
 
         IsBusy = true;
         HasError = false;
-        StatusText = "正在识别...";
+        SetStatusText("Ocr_StatusRecognizing");
 
         try
         {
@@ -106,9 +117,10 @@ public partial class OcrResultViewModel : ViewModelBase
 
             RecognizedText = text?.Trim() ?? "";
 
-            StatusText = HasRecognizedText
-                ? $"识别完成，{RecognizedText.Length} 个字符"
-                : "未识别到文字";
+            if (HasRecognizedText)
+                SetStatusText("Ocr_StatusDoneFormat", RecognizedText.Length);
+            else
+                SetStatusText("Ocr_StatusNoText");
 
             _logger.ZLogInformation($"OCR 识别完成，文本长度: {RecognizedText.Length}");
         }
@@ -118,7 +130,7 @@ public partial class OcrResultViewModel : ViewModelBase
                 return;
 
             HasError = true;
-            StatusText = $"识别失败：{ex.Message}";
+            SetStatusText("Ocr_StatusFailedFormat", ex.Message);
             _logger.ZLogError(ex, $"OCR 识别失败: {ex.Message}");
         }
         finally
@@ -142,5 +154,31 @@ public partial class OcrResultViewModel : ViewModelBase
     {
         ReRecognizeCommand.NotifyCanExecuteChanged();
         TranslateCommand.NotifyCanExecuteChanged();
+    }
+
+    private void SetStatusText(string resourceKey, params object[] args)
+    {
+        _statusTextKey = resourceKey;
+        _statusTextArgs = args;
+        StatusText = _localizationService?.GetString(resourceKey, args) ?? GetFallbackStatusText(resourceKey, args);
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        StatusText = _localizationService?.GetString(_statusTextKey, _statusTextArgs)
+                     ?? GetFallbackStatusText(_statusTextKey, _statusTextArgs);
+    }
+
+    private static string GetFallbackStatusText(string resourceKey, object[] args)
+    {
+        return resourceKey switch
+        {
+            "Ocr_StatusReady" => "准备识别",
+            "Ocr_StatusRecognizing" => "正在识别...",
+            "Ocr_StatusDoneFormat" => $"识别完成，{args.FirstOrDefault() ?? 0} 个字符",
+            "Ocr_StatusNoText" => "未识别到文字",
+            "Ocr_StatusFailedFormat" => $"识别失败：{args.FirstOrDefault() ?? string.Empty}",
+            _ => "等待识别"
+        };
     }
 }

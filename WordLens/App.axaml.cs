@@ -69,12 +69,14 @@ public class App : Application
             var settingsService = _services.GetRequiredService<ISettingsService>();
             var localApiService = _services.GetRequiredService<ILocalApiService>();
             var themeService = _services.GetRequiredService<AvaloniaThemeService>();
+            var localizationService = _services.GetRequiredService<ILocalizationService>();
             var logger = _services.GetRequiredService<ILogger<App>>();
             _ = StartApplicationServicesAsync(
                 settingsService,
                 hotkeyManager,
                 localApiService,
                 themeService,
+                localizationService,
                 logger);
 
             var windowManager = _services.GetRequiredService<IWindowManagerService>();
@@ -148,6 +150,7 @@ public class App : Application
         services.AddSingleton<IClipboardMonitorService, ClipboardMonitorService>();
         services.AddSingleton<EncryptionService>();
         services.AddSingleton<AvaloniaThemeService>();
+        services.AddSingleton<ILocalizationService, LocalizationService>();
         services.TryAddSingleton<IStartupService, UnsupportedStartupService>();
         services.AddSingleton<IClipboardService, AvaloniaClipboardService>();
         services.AddSingleton<IPathPickerService, AvaloniaPathPickerService>();
@@ -206,6 +209,7 @@ public class App : Application
         IHotkeyManagerService hotkeyManager,
         ILocalApiService localApiService,
         AvaloniaThemeService themeService,
+        ILocalizationService localizationService,
         ILogger<App> logger)
     {
         try
@@ -213,7 +217,7 @@ public class App : Application
             var settings = await settingsService.LoadAsync();
             await Task.WhenAll(
                 hotkeyManager.StartAsync(settings),
-                ApplyStartupSettingsAsync(settings, localApiService, themeService));
+                ApplyStartupSettingsAsync(settings, localApiService, themeService, localizationService));
         }
         catch (Exception ex)
         {
@@ -224,11 +228,12 @@ public class App : Application
     private static async Task ApplyStartupSettingsAsync(
         AppSettings settings,
         ILocalApiService localApiService,
-        AvaloniaThemeService themeService)
+        AvaloniaThemeService themeService,
+        ILocalizationService localizationService)
     {
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            themeService.ApplyLocale(settings.UILanguage);
+            localizationService.ApplyCulture(settings.UILanguage);
             themeService.ApplyFontFamily(settings.FontFamily);
         });
 

@@ -22,6 +22,7 @@ public partial class PopupWindowViewModel : ViewModelBase
 {
     private readonly ILogger<PopupWindowViewModel> _logger;
     private readonly IClipboardService? _clipboardService;
+    private readonly ILocalizationService? _localizationService;
     private readonly ISettingsService _settingsService;
     private readonly ITranslationHistoryService _historyService;
     private readonly IEudicVocabularyService? _eudicVocabularyService;
@@ -63,6 +64,7 @@ public partial class PopupWindowViewModel : ViewModelBase
     public PopupWindowViewModel()
     {
         _clipboardService = null;
+        _localizationService = null;
         _translationService = null!;
         _settingsService = null!;
         _historyService = null!;
@@ -79,6 +81,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         ISettingsService settingsService,
         ITranslationHistoryService historyService,
         IClipboardService clipboardService,
+        ILocalizationService localizationService,
         IEudicVocabularyService eudicVocabularyService,
         ITtsService ttsService,
         ILogger<PopupWindowViewModel> logger)
@@ -87,6 +90,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         _settingsService = settingsService;
         _historyService = historyService;
         _clipboardService = clipboardService;
+        _localizationService = localizationService;
         _eudicVocabularyService = eudicVocabularyService;
         _ttsService = ttsService;
         _logger = logger;
@@ -94,6 +98,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         // 初始化语言列表
         _languageInitializationTask = InitializeLanguagesAsync();
         TrackTranslationResults(TranslationResults);
+        _localizationService.CultureChanged += OnCultureChanged;
     }
 
     public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
@@ -117,6 +122,10 @@ public partial class PopupWindowViewModel : ViewModelBase
     public bool HasTranslationResults => TranslationResults.Count > 0;
 
     public int SourceCharacterCount => SourceText?.Length ?? 0;
+
+    public string SourceCharacterCountText => _localizationService?.GetString(
+        "Popup_CharacterCountFormat",
+        SourceCharacterCount) ?? $"{SourceCharacterCount} 字符";
 
     private void InitializeLanguageCollections()
     {
@@ -170,6 +179,7 @@ public partial class PopupWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanSpeakSource));
         OnPropertyChanged(nameof(CanAddSourceToVocabulary));
         OnPropertyChanged(nameof(SourceCharacterCount));
+        OnPropertyChanged(nameof(SourceCharacterCountText));
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
         VocabularyStatus = string.Empty;
         CopySourceCommand.NotifyCanExecuteChanged();
@@ -586,7 +596,7 @@ public partial class PopupWindowViewModel : ViewModelBase
             return;
 
         IsAddingToVocabulary = true;
-        VocabularyStatus = "正在加入欧路生词本...";
+        VocabularyStatus = _localizationService?.GetString("Popup_AddVocabularyRunning") ?? "正在加入欧路生词本...";
 
         try
         {
@@ -654,6 +664,11 @@ public partial class PopupWindowViewModel : ViewModelBase
         {
             _logger?.ZLogError(ex, $"朗读文本失败: {ex.Message}");
         }
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(SourceCharacterCountText));
     }
 
     [RelayCommand]
