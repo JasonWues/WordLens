@@ -54,7 +54,7 @@ public sealed class EncryptionService
         if (string.IsNullOrEmpty(cipherText))
             return cipherText;
 
-        // 检查是否加密，如果没有加密标识，说明是明文（向后兼容）
+        // 检查是否加密，如果没有加密标识，说明是明文（向后兼容） 
         if (!IsEncrypted(cipherText))
             return cipherText;
 

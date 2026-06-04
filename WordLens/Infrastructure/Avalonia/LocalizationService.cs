@@ -2,8 +2,6 @@ using System;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml.Styling;
-using Avalonia.Styling;
 using Semi.Avalonia;
 using WordLens.Services;
 
@@ -12,12 +10,16 @@ namespace WordLens.Infrastructure.Avalonia;
 public sealed class LocalizationService : ILocalizationService
 {
     private const string DefaultCulture = "zh-CN";
-    private const string LocalizationResourcePrefix = "/Assets/Localization/Strings.";
-    private ResourceInclude? _currentResourceInclude;
 
     public event EventHandler? CultureChanged;
 
     public string CurrentCulture { get; private set; } = DefaultCulture;
+
+    public LocalizationService()
+    {
+        if (Application.Current is { } application)
+            ReplaceLocalizationResources(application, CurrentCulture);
+    }
 
     public void ApplyCulture(string? cultureName)
     {
@@ -82,22 +84,6 @@ public sealed class LocalizationService : ILocalizationService
         if (application.Resources is not ResourceDictionary resources)
             return;
 
-        if (_currentResourceInclude != null)
-            resources.MergedDictionaries.Remove(_currentResourceInclude);
-
-        for (var index = resources.MergedDictionaries.Count - 1; index >= 0; index--)
-        {
-            if (resources.MergedDictionaries[index] is ResourceInclude include &&
-                include.Source?.OriginalString.StartsWith(LocalizationResourcePrefix, StringComparison.Ordinal) == true)
-            {
-                resources.MergedDictionaries.RemoveAt(index);
-            }
-        }
-
-        _currentResourceInclude = new ResourceInclude(new Uri("avares://WordLens/"))
-        {
-            Source = new Uri($"{LocalizationResourcePrefix}{culture}.axaml", UriKind.Relative)
-        };
-        resources.MergedDictionaries.Add(_currentResourceInclude);
+        LocalizationResources.ApplyTo(resources, culture);
     }
 }
