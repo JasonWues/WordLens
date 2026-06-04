@@ -9,6 +9,7 @@
         <PublishAot>false</PublishAot>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Copyright>CrimsonNinja</Copyright>
+        <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
         <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
         <Features>runtime-async=on</Features>
 	</PropertyGroup>
