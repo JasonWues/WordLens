@@ -122,17 +122,24 @@ internal static class OcrImageProcessor
             return;
 
         var range = high - low;
-        for (var i = 0; i < buffer.Length; i++)
+        Span<byte> lookup = stackalloc byte[256];
+        for (var value = 0; value < lookup.Length; value++)
         {
-            var normalized = Math.Round((Math.Max(buffer[i] - low, 0) / (double)range) * 255);
-            buffer[i] = (byte)Math.Clamp(normalized, 0, 255);
+            var normalized = Math.Round((Math.Max(value - low, 0) / (double)range) * 255);
+            lookup[value] = (byte)Math.Clamp(normalized, 0, 255);
         }
+
+        for (var i = 0; i < buffer.Length; i++)
+            buffer[i] = lookup[buffer[i]];
     }
 
     private static void SharpenLuma(Span<byte> buffer, int width, int height)
     {
         if (width < 3 || height < 3)
             return;
+
+        const int fixedPointScale = 4733; // round(0.65 / 9 * 2^16)
+        const int fixedPointShift = 16;
 
         var sourceBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
         try
@@ -142,21 +149,31 @@ internal static class OcrImageProcessor
 
             for (var y = 1; y < height - 1; y++)
             {
+                var rowAbove = (y - 1) * width;
+                var row = y * width;
+                var rowBelow = (y + 1) * width;
+                var lastInteriorX = width - 2;
+                var sum =
+                    source[rowAbove] + source[rowAbove + 1] + source[rowAbove + 2] +
+                    source[row] + source[row + 1] + source[row + 2] +
+                    source[rowBelow] + source[rowBelow + 1] + source[rowBelow + 2];
+
                 for (var x = 1; x < width - 1; x++)
                 {
-                    var index = y * width + x;
-                    var sum = 0u;
-
-                    for (var offsetY = y - 1; offsetY <= y + 1; offsetY++)
-                    {
-                        for (var offsetX = x - 1; offsetX <= x + 1; offsetX++)
-                            sum += source[offsetY * width + offsetX];
-                    }
-
-                    var blurred = sum / 9.0;
+                    var index = row + x;
                     var original = source[index];
-                    var sharpened = Math.Round(original + (original - blurred) * 0.65);
-                    buffer[index] = (byte)Math.Clamp(sharpened, 0, 255);
+                    var delta = original * 9 - sum;
+                    var sharpened = original + RoundedShift(delta * fixedPointScale, fixedPointShift);
+                    buffer[index] = ClampToByte(sharpened);
+
+                    if (x == lastInteriorX)
+                        continue;
+
+                    var removeColumn = x - 1;
+                    var addColumn = x + 2;
+                    sum +=
+                        source[rowAbove + addColumn] + source[row + addColumn] + source[rowBelow + addColumn] -
+                        source[rowAbove + removeColumn] - source[row + removeColumn] - source[rowBelow + removeColumn];
                 }
             }
         }
@@ -164,6 +181,22 @@ internal static class OcrImageProcessor
         {
             ArrayPool<byte>.Shared.Return(sourceBuffer);
         }
+    }
+
+    private static int RoundedShift(int value, int shift)
+    {
+        var offset = 1 << (shift - 1);
+        return value >= 0
+            ? (value + offset) >> shift
+            : -((-value + offset) >> shift);
+    }
+
+    private static byte ClampToByte(int value)
+    {
+        if ((uint)value <= byte.MaxValue)
+            return (byte)value;
+
+        return value < 0 ? byte.MinValue : byte.MaxValue;
     }
 
     private static SKBitmap? ScaleForOcr(SKBitmap bitmap)
