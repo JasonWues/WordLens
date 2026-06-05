@@ -135,7 +135,7 @@ public class App : Application
 #else
         services.AddSingleton<IGlobalHook, SimpleGlobalHook>();
         services.AddSingleton<IHotkeyBackend, SharpHookHotkeyBackend>();
-        services.AddSingleton<IClipboardMonitorBackend, UnsupportedClipboardMonitorBackend>();
+        services.AddSingleton<IClipboardMonitorBackend, AvaloniaPollingClipboardMonitorBackend>();
 #if MACOS
         services.AddWordLensMacos();
 #else
