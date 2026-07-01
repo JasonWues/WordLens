@@ -1,7 +1,6 @@
 {
   "$schema": "https://aka.ms/CsWin32.schema.json",
   "className": "PInvoke",
-  "namespace": "Windows.Win32",
   "public": false,
   "wideCharOnly": true,
   "allowMarshaling": false,

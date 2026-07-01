@@ -117,17 +117,17 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Avalonia" Version="12.0.4" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4" />
+        <PackageReference Include="Avalonia" Version="12.0.5" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.5" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="Dapper" Version="2.1.79" />
         <PackageReference Include="Dapper.AOT" Version="1.0.52" />
-        <PackageReference Include="Irihi.Ursa" Version="2.0.0" />
-        <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
+        <PackageReference Include="Irihi.Ursa" Version="2.1.0" />
+        <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.1.0" />
         <PackageReference Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.5.26302.115" />
         <PackageReference Include="Semi.Avalonia" Version="12.0.3" />
         <PackageReference Include="SharpHook" Version="7.1.2" />
