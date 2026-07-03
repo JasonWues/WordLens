@@ -11,6 +11,7 @@ xcap = { version = "=0.9.6", features = ["wgc"] }
 # Vision-based local OCR is macOS-only; keep these bindings out of the
 # Windows/Linux dependency graph so non-Apple builds don't pull/compile them.
 [target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.4"
 objc2-foundation = "0.3.2"
 objc2-vision = "0.3.2"
 
