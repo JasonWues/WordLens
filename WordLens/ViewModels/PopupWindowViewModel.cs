@@ -33,6 +33,12 @@ public partial class PopupWindowViewModel : ViewModelBase
     private bool _isInitializingLanguages;
     private bool _isSavingPendingHistory;
     private ObservableCollection<TranslationResult>? _trackedTranslationResults;
+    private CancellationTokenSource? _translationCts;
+    private CancellationTokenSource? _speechCts;
+    private CancellationTokenSource? _sourceCopyFeedbackCts;
+    private readonly Dictionary<TranslationResult, CancellationTokenSource> _copyFeedbackTokens = new();
+    private int _activeSpeechCount;
+    private static readonly TimeSpan CopyFeedbackDuration = TimeSpan.FromSeconds(1.5);
 
     [ObservableProperty] private bool isAddingToVocabulary;
 
@@ -59,6 +65,12 @@ public partial class PopupWindowViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<TranslationResult> translationResults = new();
 
     [ObservableProperty] private string vocabularyStatus = string.Empty;
+
+    // 复制原文成功后的短暂反馈状态
+    [ObservableProperty] private bool isSourceCopied;
+
+    // 是否正在朗读（源文本或译文）
+    [ObservableProperty] private bool isSpeaking;
 
 
     public PopupWindowViewModel()
@@ -120,6 +132,17 @@ public partial class PopupWindowViewModel : ViewModelBase
         TranslationResults.All(static r => !r.IsLoading);
 
     public bool HasTranslationResults => TranslationResults.Count > 0;
+
+    public bool IsTranslating => IsBusy || TranslationResults.Any(static r => r.IsLoading);
+
+    public bool CanSwapLanguages =>
+        SelectedSourceLanguage is { } sourceLanguage &&
+        sourceLanguage.Code != "auto" &&
+        SelectedTargetLanguage != null;
+
+    public bool HasEnabledProviders => AvailableTranslationProviders.Count > 0;
+
+    public bool ShowEmptyHint => !HasTranslationResults && !IsTranslating;
 
     public int SourceCharacterCount => SourceText?.Length ?? 0;
 
@@ -197,7 +220,10 @@ public partial class PopupWindowViewModel : ViewModelBase
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        OnPropertyChanged(nameof(IsTranslating));
+        OnPropertyChanged(nameof(ShowEmptyHint));
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+        StopTranslationCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedTranslationProviderChanged(ProviderConfig? value)
@@ -247,7 +273,9 @@ public partial class PopupWindowViewModel : ViewModelBase
 
     private void OnTranslationResultPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(TranslationResult.IsSuccess) or nameof(TranslationResult.Result))
+        if (e.PropertyName is nameof(TranslationResult.IsLoading)
+            or nameof(TranslationResult.IsSuccess)
+            or nameof(TranslationResult.Result))
             NotifyTranslationResultsStateChanged();
 
         if (e.PropertyName is nameof(TranslationResult.IsLoading) or nameof(TranslationResult.IsSuccess))
@@ -259,7 +287,16 @@ public partial class PopupWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasTranslationResults));
         OnPropertyChanged(nameof(CanUseTranslationAsSource));
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        OnPropertyChanged(nameof(IsTranslating));
+        OnPropertyChanged(nameof(ShowEmptyHint));
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+        StopTranslationCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedSourceLanguageChanged(LanguageInfo? value)
+    {
+        OnPropertyChanged(nameof(CanSwapLanguages));
+        SwapLanguagesCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedTargetLanguageChanged(LanguageInfo? value)
@@ -267,6 +304,9 @@ public partial class PopupWindowViewModel : ViewModelBase
         // 保存用户的选择
         if (value != null && !_isInitializingLanguages && _settingsService != null)
             _ = SaveLastTargetLanguageAsync(value.Code);
+
+        OnPropertyChanged(nameof(CanSwapLanguages));
+        SwapLanguagesCommand.NotifyCanExecuteChanged();
     }
 
     private async Task SaveLastTargetLanguageAsync(string languageCode)
@@ -310,6 +350,7 @@ public partial class PopupWindowViewModel : ViewModelBase
             AvailableTranslationProviders.FirstOrDefault(p => p.Name == settings.SelectedProvider) ??
             AvailableTranslationProviders.FirstOrDefault();
 
+        OnPropertyChanged(nameof(HasEnabledProviders));
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
     }
@@ -330,9 +371,33 @@ public partial class PopupWindowViewModel : ViewModelBase
         };
     }
 
+    /// <summary>
+    ///     开始一次翻译运行并返回其取消令牌。
+    ///     窗口管理器直调 TranslateAsync 时传入的是 CancellationToken.None，
+    ///     因此取消能力由 VM 自持的 CTS 提供；停止按钮取消该 CTS。
+    /// </summary>
+    /// <param name="cancelActiveRun">
+    ///     true 表示取消并替换当前运行（新翻译）；false 表示并入当前运行（单卡刷新，不打断其他卡片的流式输出）。
+    /// </param>
+    private CancellationToken BeginTranslationRun(CancellationToken externalToken, bool cancelActiveRun = true)
+    {
+        if (!cancelActiveRun && _translationCts is { IsCancellationRequested: false })
+            return _translationCts.Token;
+
+        var previous = _translationCts;
+        _translationCts = externalToken.CanBeCanceled
+            ? CancellationTokenSource.CreateLinkedTokenSource(externalToken)
+            : new CancellationTokenSource();
+        previous?.Cancel();
+        previous?.Dispose();
+        return _translationCts.Token;
+    }
+
     [RelayCommand]
     public async Task TranslateAsync(CancellationToken cancellationToken)
     {
+        var runToken = BeginTranslationRun(cancellationToken);
+
         IsBusy = true;
         _pendingHistorySave = null;
         TranslationResults.Clear();
@@ -363,11 +428,16 @@ public partial class PopupWindowViewModel : ViewModelBase
 
             _logger.ZLogInformation($"开始翻译，源语言: {sourceLanguageCode}, 目标语言: {targetLanguageCode}");
 
+            runToken.ThrowIfCancellationRequested();
+
             var results = await _translationService.TranslateAsync(
                 sourceText,
                 targetLanguageCode,
                 sourceLanguageCode,
-                cancellationToken);
+                runToken);
+
+            // 等待期间被取消（例如新的翻译已启动）时，不把过期结果加进集合
+            runToken.ThrowIfCancellationRequested();
 
             foreach (var result in results) TranslationResults.Add(result);
 
@@ -383,6 +453,10 @@ public partial class PopupWindowViewModel : ViewModelBase
                 await SaveToHistoryAsync(results, sourceText, sourceLanguageCode, targetLanguageCode);
             }
         }
+        catch (OperationCanceledException)
+        {
+            _logger.ZLogInformation($"翻译已被用户取消");
+        }
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"翻译过程中发生异常");
@@ -396,6 +470,35 @@ public partial class PopupWindowViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanRetranslateWithSelectedProvider))]
     public async Task RetranslateWithSelectedProviderAsync(CancellationToken cancellationToken)
     {
+        await RetranslateProviderCoreAsync(SelectedTranslationProvider?.Name, cancellationToken, cancelActiveRun: true);
+    }
+
+    [RelayCommand(CanExecute = nameof(IsTranslating))]
+    public void StopTranslation()
+    {
+        _logger.ZLogInformation($"用户请求停止翻译");
+        _translationCts?.Cancel();
+    }
+
+    /// <summary>
+    ///     重新翻译单个结果卡片对应的翻译源，不打断其他卡片的进行中任务。
+    /// </summary>
+    [RelayCommand]
+    public async Task RefreshTranslationAsync(TranslationResult? result, CancellationToken cancellationToken)
+    {
+        if (result == null || result.IsLoading || string.IsNullOrWhiteSpace(result.ProviderName))
+            return;
+
+        await RetranslateProviderCoreAsync(result.ProviderName, cancellationToken, cancelActiveRun: false);
+    }
+
+    private async Task RetranslateProviderCoreAsync(
+        string? providerName,
+        CancellationToken externalToken,
+        bool cancelActiveRun)
+    {
+        var runToken = BeginTranslationRun(externalToken, cancelActiveRun);
+
         IsBusy = true;
 
         try
@@ -403,7 +506,6 @@ public partial class PopupWindowViewModel : ViewModelBase
             await _languageInitializationTask;
             await RefreshTranslationProvidersAsync();
 
-            var providerName = SelectedTranslationProvider?.Name;
             if (string.IsNullOrWhiteSpace(providerName))
             {
                 _logger.ZLogWarning($"未选择翻译源，跳过重新翻译");
@@ -432,12 +534,17 @@ public partial class PopupWindowViewModel : ViewModelBase
             _logger.ZLogInformation(
                 $"使用翻译源重新翻译，翻译源: {providerName}, 源语言: {sourceLanguageCode}, 目标语言: {targetLanguageCode}");
 
+            runToken.ThrowIfCancellationRequested();
+
             var result = await _translationService.TranslateWithProviderAsync(
                 providerName,
                 sourceText,
                 targetLanguageCode,
                 sourceLanguageCode,
-                cancellationToken);
+                runToken);
+
+            // 等待期间被取消时，不把过期结果加进集合
+            runToken.ThrowIfCancellationRequested();
 
             InsertOrReplaceTranslationResult(result);
 
@@ -454,6 +561,10 @@ public partial class PopupWindowViewModel : ViewModelBase
             {
                 await SaveToHistoryAsync(new List<TranslationResult> { result }, sourceText, sourceLanguageCode, targetLanguageCode);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.ZLogInformation($"重新翻译已被用户取消");
         }
         catch (Exception ex)
         {
@@ -586,7 +697,23 @@ public partial class PopupWindowViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanCopySource))]
     public async Task CopySourceAsync()
     {
-        await CopyTextAsync(SourceText);
+        if (!await CopyTextAsync(SourceText))
+            return;
+
+        _sourceCopyFeedbackCts?.Cancel();
+        _sourceCopyFeedbackCts?.Dispose();
+        var cts = _sourceCopyFeedbackCts = new CancellationTokenSource();
+
+        IsSourceCopied = true;
+        try
+        {
+            await Task.Delay(CopyFeedbackDuration, cts.Token);
+            IsSourceCopied = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // 新的复制操作重启了反馈计时
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanAddSourceToVocabulary))]
@@ -613,9 +740,38 @@ public partial class PopupWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public async Task CopyTranslationAsync(string? text)
+    public async Task CopyTranslationAsync(TranslationResult? result)
     {
-        await CopyTextAsync(text);
+        if (result == null || !await CopyTextAsync(result.Result))
+            return;
+
+        await ShowCopyFeedbackAsync(result);
+    }
+
+    private async Task ShowCopyFeedbackAsync(TranslationResult result)
+    {
+        if (_copyFeedbackTokens.TryGetValue(result, out var previous))
+            previous.Cancel();
+
+        var cts = new CancellationTokenSource();
+        _copyFeedbackTokens[result] = cts;
+
+        result.IsCopied = true;
+        try
+        {
+            await Task.Delay(CopyFeedbackDuration, cts.Token);
+            result.IsCopied = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // 新的复制操作重启了反馈计时
+        }
+        finally
+        {
+            if (_copyFeedbackTokens.TryGetValue(result, out var current) && ReferenceEquals(current, cts))
+                _copyFeedbackTokens.Remove(result);
+            cts.Dispose();
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanSpeakSource))]
@@ -633,6 +789,8 @@ public partial class PopupWindowViewModel : ViewModelBase
     [RelayCommand]
     public void StopSpeech()
     {
+        // 取消令牌可以中断 LLM TTS 的生成阶段，Stop 只能停止已开始的播放
+        _speechCts?.Cancel();
         _ttsService?.Stop();
     }
 
@@ -643,12 +801,13 @@ public partial class PopupWindowViewModel : ViewModelBase
             TranslationResults.Remove(result);
     }
 
-    private async Task CopyTextAsync(string? text)
+    private async Task<bool> CopyTextAsync(string? text)
     {
         if (string.IsNullOrWhiteSpace(text) || _clipboardService == null)
-            return;
+            return false;
 
         await _clipboardService.SetTextAsync(text);
+        return true;
     }
 
     private async Task SpeakTextAsync(string? text)
@@ -656,13 +815,30 @@ public partial class PopupWindowViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(text) || _ttsService == null)
             return;
 
+        // 抢占进行中的朗读，避免在 TTS 服务的串行队列里排队等待
+        _speechCts?.Cancel();
+        _speechCts?.Dispose();
+        var cts = _speechCts = new CancellationTokenSource();
+
+        _activeSpeechCount++;
+        IsSpeaking = true;
         try
         {
-            await _ttsService.SpeakAsync(text);
+            await _ttsService.SpeakAsync(text, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // 用户停止朗读
         }
         catch (Exception ex)
         {
             _logger?.ZLogError(ex, $"朗读文本失败: {ex.Message}");
+        }
+        finally
+        {
+            _activeSpeechCount--;
+            if (_activeSpeechCount == 0)
+                IsSpeaking = false;
         }
     }
 
@@ -672,16 +848,19 @@ public partial class PopupWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void UseTranslationAsSource()
+    public void UseTranslationAsSource(TranslationResult? result)
     {
-        var result = TranslationResults.FirstOrDefault(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
-        if (result?.Result == null)
+        // 优先使用所点卡片的译文，未传参时回落到第一条成功结果
+        var chosen = result is { IsSuccess: true } && !string.IsNullOrWhiteSpace(result.Result)
+            ? result
+            : TranslationResults.FirstOrDefault(r => r.IsSuccess && !string.IsNullOrWhiteSpace(r.Result));
+        if (chosen?.Result == null)
         {
             _logger?.ZLogWarning($"没有可用译文，无法转为原文");
             return;
         }
 
-        SourceText = result.Result;
+        SourceText = chosen.Result;
         TranslationResults.Clear();
 
         if (SelectedTargetLanguage != null)
@@ -691,26 +870,21 @@ public partial class PopupWindowViewModel : ViewModelBase
         _logger?.ZLogInformation($"已将译文转为原文，长度: {SourceText.Length}");
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSwapLanguages))]
     public void SwapLanguages()
     {
-        // 如果源语言不是自动检测，可以交换
-        if (SelectedSourceLanguage?.Code != "auto" && SelectedTargetLanguage != null)
-        {
-            var tempCode = SelectedSourceLanguage?.Code;
+        if (!CanSwapLanguages || SelectedTargetLanguage == null)
+            return;
 
-            // 将当前目标语言设置为源语言
-            SelectedSourceLanguage = SourceLanguages.FirstOrDefault(l => l.Code == SelectedTargetLanguage.Code);
+        var tempCode = SelectedSourceLanguage?.Code;
 
-            // 将原来的源语言设置为目标语言
-            if (tempCode != null)
-                SelectedTargetLanguage = TargetLanguages.FirstOrDefault(l => l.Code == tempCode);
+        // 将当前目标语言设置为源语言
+        SelectedSourceLanguage = SourceLanguages.FirstOrDefault(l => l.Code == SelectedTargetLanguage.Code);
 
-            _logger.ZLogInformation($"已交换语言，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
-        }
-        else
-        {
-            _logger.ZLogWarning($"无法交换语言：源语言为自动检测");
-        }
+        // 将原来的源语言设置为目标语言
+        if (tempCode != null)
+            SelectedTargetLanguage = TargetLanguages.FirstOrDefault(l => l.Code == tempCode);
+
+        _logger.ZLogInformation($"已交换语言，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
     }
 }

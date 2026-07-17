@@ -245,7 +245,9 @@ public class TranslationService
             {
                 _logger.ZLogError(ex, $"流式翻译后台任务异常: {ex.Message}");
             }
-        }, ct);
+        });
+        // 注意：不把 ct 传给 Task.Run——令牌已取消时任务不会启动，
+        // 占位结果将永远停留在加载状态；取消由每个提供商任务内部处理并落到结果上。
 
         // 立即返回results，让ViewModel可以显示并接收实时更新
         return Task.FromResult(results);
@@ -266,9 +268,9 @@ public class TranslationService
             Result = string.Empty
         };
 
+        // 不把 ct 传给 Task.Run，理由同上：保证结果状态总能被收尾
         _ = Task.Run(
-            () => TranslateSingleProviderStreamAsync(provider, text, targetLanguage, sourceLanguage, settings, result, ct),
-            ct);
+            () => TranslateSingleProviderStreamAsync(provider, text, targetLanguage, sourceLanguage, settings, result, ct));
 
         return result;
     }
@@ -454,6 +456,13 @@ public class TranslationService
             result.IsSuccess = true;
 
             _logger.ZLogInformation($"{providerCfg.Name} 翻译成功，结果长度: {result.Result?.Length ?? 0}");
+        }
+        catch (OperationCanceledException)
+        {
+            result.IsSuccess = false;
+            result.ErrorMessage = "翻译已取消";
+
+            _logger.ZLogInformation($"{providerCfg.Name} 翻译被取消");
         }
         catch (Exception ex)
         {

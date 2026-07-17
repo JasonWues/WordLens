@@ -129,6 +129,22 @@
         <Setter Property="Background" Value="#176856" />
     </Style>
 
+    <Style Selector="Button.translate-button.stop-translate">
+        <Setter Property="Background" Value="#D92D20" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+    </Style>
+
+    <Style Selector="Button.translate-button.stop-translate:pointerover">
+        <Setter Property="Background" Value="#B42318" />
+    </Style>
+
+    <Style Selector="Button.translate-button.stop-translate:pressed">
+        <Setter Property="Background" Value="#912018" />
+    </Style>
+
     <Style Selector="Button.icon-button.popup-icon">
         <Setter Property="Padding" Value="0" />
         <Setter Property="MinWidth" Value="28" />
@@ -146,6 +162,14 @@
 
     <Style Selector="Button.icon-button.popup-icon:pressed">
         <Setter Property="Background" Value="#DDE6EF" />
+    </Style>
+
+    <Style Selector="Button.icon-button.popup-icon.copied">
+        <Setter Property="Foreground" Value="#1F7A68" />
+    </Style>
+
+    <Style Selector="Button.icon-button.popup-icon.copied:pointerover">
+        <Setter Property="Foreground" Value="#1F7A68" />
     </Style>
 
     <Style Selector="Button.icon-button.popup-icon.topmost-active">
@@ -253,6 +277,8 @@
         <Setter Property="VerticalContentAlignment" Value="Top" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="LineHeight" Value="21" />
+        <Setter Property="MinHeight" Value="60" />
+        <Setter Property="MaxHeight" Value="140" />
         <Setter Property="Foreground" Value="#172033" />
     </Style>
 
@@ -318,6 +344,7 @@
 
     <Style Selector="Border.tiny-pill">
         <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="9,0" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
     </Style>

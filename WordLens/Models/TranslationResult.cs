@@ -36,6 +36,11 @@ public partial class TranslationResult : ObservableObject
     /// </summary>
     [ObservableProperty] private string? result;
 
+    /// <summary>
+    ///     复制成功反馈状态（仅 UI 状态，不参与历史序列化）
+    /// </summary>
+    [ObservableProperty] private bool isCopied;
+
     partial void OnIsLoadingChanged(bool value)
     {
         OnPropertyChanged(nameof(HasVisibleResult));

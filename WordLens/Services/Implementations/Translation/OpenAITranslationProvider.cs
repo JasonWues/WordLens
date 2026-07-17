@@ -128,6 +128,10 @@ public class OpenAITranslationProvider : ITranslationProvider
             HttpCompletionOption.ResponseHeadersRead,
             ct);
 
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
         response.EnsureSuccessStatusCode();
 
         // 处理SSE流

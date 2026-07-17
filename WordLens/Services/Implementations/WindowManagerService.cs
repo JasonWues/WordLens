@@ -101,6 +101,7 @@ public class WindowManagerService : IWindowManagerService
                     ApplyTranslationWindowPosition(_translationWindow, popupConfig, false);
                     _translationWindow.Show();
                     _translationWindow.Activate();
+                    popupWindow.FocusSourceEditor();
 
                     // 执行翻译
                     _ = viewModel.TranslateAsync(CancellationToken.None);
@@ -121,6 +122,8 @@ public class WindowManagerService : IWindowManagerService
 
                     // 激活窗口
                     ActivateWindow(_translationWindow);
+                    if (_translationWindow is PopupWindowView popupView)
+                        popupView.FocusSourceEditor();
                 }
 
             });
