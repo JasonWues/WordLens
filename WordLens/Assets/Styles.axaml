@@ -210,6 +210,15 @@
         <Setter Property="Background" Value="#D7EEE5" />
     </Style>
 
+    <Style Selector="Button.icon-button.provider-refresh.filter-active">
+        <Setter Property="Background" Value="#FDECEC" />
+        <Setter Property="Foreground" Value="#B42318" />
+    </Style>
+
+    <Style Selector="Button.icon-button.provider-refresh.filter-active:pointerover">
+        <Setter Property="Background" Value="#F8D7D7" />
+    </Style>
+
     <Style Selector="ComboBox.language-selector">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

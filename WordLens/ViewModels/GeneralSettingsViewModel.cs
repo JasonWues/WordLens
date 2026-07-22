@@ -175,7 +175,8 @@ public partial class GeneralSettingsViewModel : ViewModelBase
         {
             PositionMode = TranslationPopupPositionMode,
             X = current?.X,
-            Y = current?.Y
+            Y = current?.Y,
+            IsTopmost = current?.IsTopmost ?? false
         };
     }
 

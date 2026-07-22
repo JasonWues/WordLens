@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using WordLens.Models;
 using WordLens.ViewModels;
 
 namespace WordLens.Views;
@@ -83,6 +84,20 @@ public partial class PopupWindowView : Window
         }
 
         _resultsPinnedToBottom = viewer.Offset.Y + viewer.Viewport.Height >= viewer.Extent.Height - 4;
+    }
+
+    private void ResultEditor_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is not PopupWindowViewModel vm)
+            return;
+
+        // TextBox 的 DataContext 是对应的 TranslationResult 卡片
+        if (sender is Control { DataContext: TranslationResult result } &&
+            vm.CopyTranslationCommand.CanExecute(result))
+        {
+            vm.CopyTranslationCommand.Execute(result);
+            e.Handled = true;
+        }
     }
 
     private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)

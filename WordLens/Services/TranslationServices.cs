@@ -288,6 +288,7 @@ public class TranslationService
         CancellationToken ct)
     {
         StreamResultUpdater? streamUpdater = null;
+        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -341,7 +342,13 @@ public class TranslationService
             if (streamUpdater != null)
                 await streamUpdater.FlushAsync();
 
-            await Dispatcher.UIThread.InvokeAsync(() => result.IsLoading = false);
+            stopwatch.Stop();
+            var durationMs = stopwatch.ElapsedMilliseconds;
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                result.DurationMs = durationMs;
+                result.IsLoading = false;
+            });
         }
     }
 
@@ -431,6 +438,7 @@ public class TranslationService
             ProviderName = providerCfg.Name,
             IsLoading = true
         };
+        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -473,6 +481,8 @@ public class TranslationService
         }
         finally
         {
+            stopwatch.Stop();
+            result.DurationMs = stopwatch.ElapsedMilliseconds;
             result.IsLoading = false;
         }
 

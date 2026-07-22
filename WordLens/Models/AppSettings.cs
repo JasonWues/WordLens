@@ -144,6 +144,11 @@ public class TranslationPopupConfig
     public int? X { get; set; }
 
     public int? Y { get; set; }
+
+    /// <summary>
+    ///     翻译弹窗是否默认置顶。用户在弹窗内切换置顶时会写回此字段。
+    /// </summary>
+    public bool IsTopmost { get; set; }
 }
 
 public enum ProviderType

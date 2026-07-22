@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Avalonia;
+using Velopack;
 
 namespace WordLens;
 
@@ -16,6 +17,7 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        VelopackApp.Build().Run();
         if (!TryAcquireSingleInstanceMutex())
         {
             return;

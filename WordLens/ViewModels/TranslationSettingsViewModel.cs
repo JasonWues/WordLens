@@ -34,6 +34,7 @@ public partial class TranslationSettingsViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<ProviderConfig> providers = new();
     [ObservableProperty] private ModelInfo? selectedModelInfo;
     [ObservableProperty] private ProviderConfig? selectedProvider;
+    [ObservableProperty] private ProviderEndpointPreset? selectedEndpointPreset;
 
     public List<ProviderTypeOption> AvailableProviderTypes { get; } = new()
     {
@@ -41,9 +42,15 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         new ProviderTypeOption(ProviderType.DeepL, "DeepL")
     };
 
+    public IReadOnlyList<ProviderEndpointPreset> AvailableEndpointPresets { get; } = ProviderEndpointPresets.All;
+
     public bool IsSelectedProviderOpenAI => SelectedProvider?.Type == ProviderType.OpenAI;
 
     public bool IsSelectedProviderDeepL => SelectedProvider?.Type == ProviderType.DeepL;
+
+    public bool CanApplyEndpointPreset => SelectedEndpointPreset != null && SelectedProvider != null;
+
+    public bool CanAddFromEndpointPreset => SelectedEndpointPreset != null;
 
     public TranslationSettingsViewModel(
         OpenAIModelProviderService modelProviderService,
@@ -55,6 +62,7 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         _encryptionService = encryptionService;
         _networkSettings = networkSettings;
         _logger = logger;
+        SelectedEndpointPreset = AvailableEndpointPresets.FirstOrDefault();
     }
 
     public void Load(AppSettings settings)
@@ -118,6 +126,56 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         SelectedProvider = newProvider;
     }
 
+    /// <summary>
+    ///     按当前选中的常用端点预设新建一个翻译源（不覆盖已有源，不写入 API Key）。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanAddFromEndpointPreset))]
+    private void AddProviderFromPreset()
+    {
+        if (SelectedEndpointPreset == null)
+            return;
+
+        var name = CreateUniqueProviderName(SelectedEndpointPreset.DefaultName);
+        var newProvider = SelectedEndpointPreset.CreateProvider(name);
+        Providers.Add(newProvider);
+        SelectedProvider = newProvider;
+        SelectedModelInfo = null;
+        HasModelLoadError = false;
+        ModelLoadErrorMessage = string.Empty;
+        _logger.ZLogInformation($"已从预设添加翻译源: {newProvider.Name} ({newProvider.BaseUrl})");
+    }
+
+    /// <summary>
+    ///     将预设应用到当前选中的翻译源。保留 API Key 与自定义 Prompt。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanApplyEndpointPreset))]
+    private void ApplyEndpointPreset()
+    {
+        if (SelectedEndpointPreset == null || SelectedProvider == null)
+            return;
+
+        SelectedEndpointPreset.ApplyTo(SelectedProvider);
+
+        if (SelectedProvider.Type != ProviderType.OpenAI)
+        {
+            SelectedModelInfo = null;
+            HasModelLoadError = false;
+            ModelLoadErrorMessage = string.Empty;
+        }
+        else if (!string.IsNullOrWhiteSpace(SelectedProvider.Model))
+        {
+            SelectedProvider.AvailableModels ??= new ObservableCollection<ModelInfo>();
+            if (SelectedProvider.AvailableModels.All(m => m.Id != SelectedProvider.Model))
+                SelectedProvider.AvailableModels.Insert(0, new ModelInfo { Id = SelectedProvider.Model, OwnedBy = "preset" });
+
+            SelectedModelInfo = SelectedProvider.AvailableModels.FirstOrDefault(m => m.Id == SelectedProvider.Model);
+        }
+
+        NotifySelectedProviderTypeProperties();
+        _logger.ZLogInformation(
+            $"已将预设 {SelectedEndpointPreset.DisplayName} 应用到 {SelectedProvider.Name} ({SelectedProvider.BaseUrl})");
+    }
+
     [RelayCommand]
     private void DeleteProvider()
     {
@@ -129,6 +187,26 @@ public partial class TranslationSettingsViewModel : ViewModelBase
 
         if (Providers.Count > 0)
             SelectedProvider = Providers[Math.Min(index, Providers.Count - 1)];
+    }
+
+    partial void OnSelectedEndpointPresetChanged(ProviderEndpointPreset? value)
+    {
+        OnPropertyChanged(nameof(CanAddFromEndpointPreset));
+        OnPropertyChanged(nameof(CanApplyEndpointPreset));
+        AddProviderFromPresetCommand.NotifyCanExecuteChanged();
+        ApplyEndpointPresetCommand.NotifyCanExecuteChanged();
+    }
+
+    private string CreateUniqueProviderName(string preferredName)
+    {
+        if (Providers.All(p => !string.Equals(p.Name, preferredName, StringComparison.OrdinalIgnoreCase)))
+            return preferredName;
+
+        var index = 2;
+        while (Providers.Any(p => string.Equals(p.Name, $"{preferredName} {index}", StringComparison.OrdinalIgnoreCase)))
+            index++;
+
+        return $"{preferredName} {index}";
     }
 
     [RelayCommand]
@@ -248,6 +326,8 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         }
 
         NotifySelectedProviderTypeProperties();
+        OnPropertyChanged(nameof(CanApplyEndpointPreset));
+        ApplyEndpointPresetCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedProviderChanging(ProviderConfig? oldValue, ProviderConfig? newValue)

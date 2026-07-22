@@ -480,7 +480,8 @@ public partial class SettingsViewModel : ViewModelBase
         {
             PositionMode = config.PositionMode,
             X = config.X,
-            Y = config.Y
+            Y = config.Y,
+            IsTopmost = config.IsTopmost
         };
     }
 

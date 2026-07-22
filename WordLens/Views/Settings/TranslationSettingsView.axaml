@@ -80,6 +80,41 @@
               Width="250"
               MinHeight="0">
             <StackPanel Grid.Row="0" Spacing="10">
+                <TextBlock Text="常用端点预设"
+                           FontWeight="SemiBold"
+                           FontSize="12" />
+                <ComboBox ItemsSource="{Binding AvailableEndpointPresets}"
+                          SelectedItem="{Binding SelectedEndpointPreset}"
+                          HorizontalAlignment="Stretch"
+                          ToolTip.Tip="{Binding SelectedEndpointPreset.Description}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:ProviderEndpointPreset">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding DisplayName}" />
+                                <TextBlock Text="{Binding BaseUrl}"
+                                           FontSize="11"
+                                           Opacity="0.65"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Text="{Binding SelectedEndpointPreset.Description}"
+                           FontSize="11"
+                           Opacity="0.65"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding SelectedEndpointPreset, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                <Button Content="从预设添加"
+                        Command="{Binding AddProviderFromPresetCommand}"
+                        HorizontalAlignment="Stretch"
+                        ToolTip.Tip="按当前预设新建翻译源，保留现有源；API Key 需自行填写" />
+                <Button Content="应用到当前"
+                        Command="{Binding ApplyEndpointPresetCommand}"
+                        HorizontalAlignment="Stretch"
+                        ToolTip.Tip="用预设覆盖当前源的类型、Base URL 和默认模型；保留 API Key 与 Prompt" />
+
+                <Separator Margin="0,2" />
+
                 <Button Content="添加翻译源"
                         Command="{Binding AddProviderCommand}"
                         HorizontalAlignment="Stretch" />

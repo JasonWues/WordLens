@@ -72,6 +72,10 @@ public partial class PopupWindowViewModel : ViewModelBase
     // 是否正在朗读（源文本或译文）
     [ObservableProperty] private bool isSpeaking;
 
+    /// <summary>
+    ///     是否隐藏失败的翻译结果卡片。
+    /// </summary>
+    [ObservableProperty] private bool hideFailedResults;
 
     public PopupWindowViewModel()
     {
@@ -86,6 +90,7 @@ public partial class PopupWindowViewModel : ViewModelBase
 
         InitializeLanguageCollections();
         TrackTranslationResults(TranslationResults);
+        RefreshVisibleTranslationResults();
     }
 
     public PopupWindowViewModel(
@@ -110,8 +115,14 @@ public partial class PopupWindowViewModel : ViewModelBase
         // 初始化语言列表
         _languageInitializationTask = InitializeLanguagesAsync();
         TrackTranslationResults(TranslationResults);
+        RefreshVisibleTranslationResults();
         _localizationService.CultureChanged += OnCultureChanged;
     }
+
+    /// <summary>
+    ///     供 UI 绑定的结果列表；会根据 HideFailedResults 过滤。
+    /// </summary>
+    public ObservableCollection<TranslationResult> VisibleTranslationResults { get; } = new();
 
     public bool CanCopySource => !string.IsNullOrWhiteSpace(SourceText);
 
@@ -133,6 +144,19 @@ public partial class PopupWindowViewModel : ViewModelBase
 
     public bool HasTranslationResults => TranslationResults.Count > 0;
 
+    public bool HasFailedResults => TranslationResults.Any(static r => r.IsError);
+
+    public bool CanRetryFailed =>
+        HasFailedResults &&
+        !string.IsNullOrWhiteSpace(SourceText) &&
+        !IsBusy &&
+        TranslationResults.All(static r => !r.IsLoading);
+
+    /// <summary>
+    ///     有失败项时可开启过滤；已开启过滤时始终可关闭，避免「全成功后按钮被禁用」。
+    /// </summary>
+    public bool CanToggleHideFailedResults => HasFailedResults || HideFailedResults;
+
     public bool IsTranslating => IsBusy || TranslationResults.Any(static r => r.IsLoading);
 
     public bool CanSwapLanguages =>
@@ -142,13 +166,23 @@ public partial class PopupWindowViewModel : ViewModelBase
 
     public bool HasEnabledProviders => AvailableTranslationProviders.Count > 0;
 
-    public bool ShowEmptyHint => !HasTranslationResults && !IsTranslating;
+    public bool ShowEmptyHint => VisibleTranslationResults.Count == 0 && !IsTranslating && !HasTranslationResults;
+
+    public bool ShowFilteredEmptyHint =>
+        VisibleTranslationResults.Count == 0 &&
+        !IsTranslating &&
+        HasTranslationResults &&
+        HideFailedResults;
 
     public int SourceCharacterCount => SourceText?.Length ?? 0;
 
     public string SourceCharacterCountText => _localizationService?.GetString(
         "Popup_CharacterCountFormat",
         SourceCharacterCount) ?? $"{SourceCharacterCount} 字符";
+
+    public string HideFailedResultsTooltip => HideFailedResults
+        ? (_localizationService?.GetString("Popup_ShowFailedResults") ?? "显示失败结果")
+        : (_localizationService?.GetString("Popup_HideFailedResults") ?? "隐藏失败结果");
 
     private void InitializeLanguageCollections()
     {
@@ -181,10 +215,11 @@ public partial class PopupWindowViewModel : ViewModelBase
             SelectedTargetLanguage = TargetLanguages.FirstOrDefault(l => l.Code == settings.LastTargetLanguage) ??
                                      TargetLanguages.FirstOrDefault(l => l.Code == "en") ??
                                      TargetLanguages.FirstOrDefault();
+            IsTopmost = settings.TranslationPopup.IsTopmost;
             ApplyTranslationProviders(settings);
 
             _logger.ZLogInformation(
-                $"语言初始化完成，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
+                $"语言初始化完成，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}, 置顶: {IsTopmost}");
         }
         catch (Exception ex)
         {
@@ -204,11 +239,13 @@ public partial class PopupWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SourceCharacterCount));
         OnPropertyChanged(nameof(SourceCharacterCountText));
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        OnPropertyChanged(nameof(CanRetryFailed));
         VocabularyStatus = string.Empty;
         CopySourceCommand.NotifyCanExecuteChanged();
         SpeakSourceCommand.NotifyCanExecuteChanged();
         AddSourceToVocabularyCommand.NotifyCanExecuteChanged();
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+        RetryFailedCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsAddingToVocabularyChanged(bool value)
@@ -220,9 +257,12 @@ public partial class PopupWindowViewModel : ViewModelBase
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        OnPropertyChanged(nameof(CanRetryFailed));
         OnPropertyChanged(nameof(IsTranslating));
         OnPropertyChanged(nameof(ShowEmptyHint));
+        OnPropertyChanged(nameof(ShowFilteredEmptyHint));
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+        RetryFailedCommand.NotifyCanExecuteChanged();
         StopTranslationCommand.NotifyCanExecuteChanged();
     }
 
@@ -230,6 +270,14 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnHideFailedResultsChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HideFailedResultsTooltip));
+        OnPropertyChanged(nameof(CanToggleHideFailedResults));
+        OnPropertyChanged(nameof(ShowFilteredEmptyHint));
+        RefreshVisibleTranslationResults();
     }
 
     partial void OnTranslationResultsChanged(ObservableCollection<TranslationResult> value)
@@ -275,7 +323,9 @@ public partial class PopupWindowViewModel : ViewModelBase
     {
         if (e.PropertyName is nameof(TranslationResult.IsLoading)
             or nameof(TranslationResult.IsSuccess)
-            or nameof(TranslationResult.Result))
+            or nameof(TranslationResult.Result)
+            or nameof(TranslationResult.ErrorMessage)
+            or nameof(TranslationResult.DurationMs))
             NotifyTranslationResultsStateChanged();
 
         if (e.PropertyName is nameof(TranslationResult.IsLoading) or nameof(TranslationResult.IsSuccess))
@@ -285,12 +335,48 @@ public partial class PopupWindowViewModel : ViewModelBase
     private void NotifyTranslationResultsStateChanged()
     {
         OnPropertyChanged(nameof(HasTranslationResults));
+        OnPropertyChanged(nameof(HasFailedResults));
+        OnPropertyChanged(nameof(CanToggleHideFailedResults));
         OnPropertyChanged(nameof(CanUseTranslationAsSource));
         OnPropertyChanged(nameof(CanRetranslateWithSelectedProvider));
+        OnPropertyChanged(nameof(CanRetryFailed));
         OnPropertyChanged(nameof(IsTranslating));
         OnPropertyChanged(nameof(ShowEmptyHint));
+        OnPropertyChanged(nameof(ShowFilteredEmptyHint));
         RetranslateWithSelectedProviderCommand.NotifyCanExecuteChanged();
+        RetryFailedCommand.NotifyCanExecuteChanged();
         StopTranslationCommand.NotifyCanExecuteChanged();
+        RefreshVisibleTranslationResults();
+    }
+
+    private void RefreshVisibleTranslationResults()
+    {
+        var source = TranslationResults ?? new ObservableCollection<TranslationResult>();
+        var desired = HideFailedResults
+            ? source.Where(static r => !r.IsError).ToList()
+            : source.ToList();
+
+        // 增量同步，避免 ItemsControl 整表重建导致滚动跳动
+        for (var i = VisibleTranslationResults.Count - 1; i >= 0; i--)
+            if (!desired.Contains(VisibleTranslationResults[i]))
+                VisibleTranslationResults.RemoveAt(i);
+
+        for (var i = 0; i < desired.Count; i++)
+        {
+            var item = desired[i];
+            var existingIndex = VisibleTranslationResults.IndexOf(item);
+            if (existingIndex < 0)
+            {
+                if (i >= VisibleTranslationResults.Count)
+                    VisibleTranslationResults.Add(item);
+                else
+                    VisibleTranslationResults.Insert(i, item);
+            }
+            else if (existingIndex != i)
+            {
+                VisibleTranslationResults.Move(existingIndex, i);
+            }
+        }
     }
 
     partial void OnSelectedSourceLanguageChanged(LanguageInfo? value)
@@ -685,6 +771,34 @@ public partial class PopupWindowViewModel : ViewModelBase
     public void ToggleTopmost()
     {
         IsTopmost = !IsTopmost;
+        _ = SaveTopmostPreferenceAsync(IsTopmost);
+    }
+
+    private async Task SaveTopmostPreferenceAsync(bool isTopmost)
+    {
+        if (_settingsService == null)
+            return;
+
+        try
+        {
+            var settings = await _settingsService.LoadAsync();
+            if (settings.TranslationPopup.IsTopmost == isTopmost)
+                return;
+
+            settings.TranslationPopup.IsTopmost = isTopmost;
+            await _settingsService.SaveAsync(settings);
+            _logger?.ZLogInformation($"已保存翻译弹窗置顶偏好: {isTopmost}");
+        }
+        catch (Exception ex)
+        {
+            _logger?.ZLogError(ex, $"保存翻译弹窗置顶偏好失败");
+        }
+    }
+
+    [RelayCommand]
+    public void ToggleHideFailedResults()
+    {
+        HideFailedResults = !HideFailedResults;
     }
 
     [RelayCommand]
@@ -845,10 +959,11 @@ public partial class PopupWindowViewModel : ViewModelBase
     private void OnCultureChanged(object? sender, EventArgs e)
     {
         OnPropertyChanged(nameof(SourceCharacterCountText));
+        OnPropertyChanged(nameof(HideFailedResultsTooltip));
     }
 
     [RelayCommand]
-    public void UseTranslationAsSource(TranslationResult? result)
+    public async Task UseTranslationAsSourceAsync(TranslationResult? result)
     {
         // 优先使用所点卡片的译文，未传参时回落到第一条成功结果
         var chosen = result is { IsSuccess: true } && !string.IsNullOrWhiteSpace(result.Result)
@@ -868,10 +983,17 @@ public partial class PopupWindowViewModel : ViewModelBase
                                      SelectedSourceLanguage;
 
         _logger?.ZLogInformation($"已将译文转为原文，长度: {SourceText.Length}");
+
+        // 有原文时自动重新翻译，形成「回译」闭环
+        if (!string.IsNullOrWhiteSpace(SourceText))
+            await TranslateAsync(CancellationToken.None);
     }
 
+    /// <summary>
+    ///     交换源/目标语言；若当前有原文且未在翻译中，则自动重新翻译。
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanSwapLanguages))]
-    public void SwapLanguages()
+    public async Task SwapLanguagesAsync()
     {
         if (!CanSwapLanguages || SelectedTargetLanguage == null)
             return;
@@ -886,5 +1008,35 @@ public partial class PopupWindowViewModel : ViewModelBase
             SelectedTargetLanguage = TargetLanguages.FirstOrDefault(l => l.Code == tempCode);
 
         _logger.ZLogInformation($"已交换语言，源语言: {SelectedSourceLanguage?.Code}, 目标语言: {SelectedTargetLanguage?.Code}");
+
+        if (!string.IsNullOrWhiteSpace(SourceText) && !IsTranslating)
+            await TranslateAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    ///     仅重试当前失败的翻译源，不打断成功卡片。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanRetryFailed))]
+    public async Task RetryFailedAsync(CancellationToken cancellationToken)
+    {
+        var failedProviders = TranslationResults
+            .Where(static r => r.IsError && !string.IsNullOrWhiteSpace(r.ProviderName))
+            .Select(static r => r.ProviderName)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        if (failedProviders.Count == 0)
+            return;
+
+        _logger.ZLogInformation($"重试失败翻译源，数量: {failedProviders.Count}");
+
+        // 串行逐个刷新，避免 cancelActiveRun=false 时并发共用 CTS 互相覆盖状态
+        foreach (var providerName in failedProviders)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
+            await RetranslateProviderCoreAsync(providerName, cancellationToken, cancelActiveRun: false);
+        }
     }
 }
