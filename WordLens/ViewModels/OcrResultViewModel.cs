@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
@@ -19,6 +20,8 @@ public partial class OcrResultViewModel : ViewModelBase
     private readonly IOcrService _ocrService;
     private readonly ILocalizationService? _localizationService;
     private readonly IWindowManagerService _windowManager;
+    private readonly HashSet<WriteableBitmap> _recognitionBitmaps = new();
+    private int _activeRecognitionCount;
     private int _recognitionVersion;
     private object[] _statusTextArgs = Array.Empty<object>();
     private string _statusTextKey = "Ocr_StatusWaiting";
@@ -66,7 +69,10 @@ public partial class OcrResultViewModel : ViewModelBase
     public void LoadScreenshot(WriteableBitmap bitmap, string? initialText = null)
     {
         _recognitionVersion++;
+        var previousScreenshot = Screenshot;
         Screenshot = bitmap;
+        if (!ReferenceEquals(previousScreenshot, bitmap))
+            DisposeWhenUnused(previousScreenshot);
         RecognizedText = initialText?.Trim() ?? "";
         HasError = false;
         SetStatusText(
@@ -75,6 +81,17 @@ public partial class OcrResultViewModel : ViewModelBase
 
         if (!HasRecognizedText)
             _ = ReRecognizeAsync();
+    }
+
+    public void ReleaseScreenshot()
+    {
+        _recognitionVersion++;
+        var screenshot = Screenshot;
+        Screenshot = null;
+        DisposeWhenUnused(screenshot);
+        RecognizedText = string.Empty;
+        HasError = false;
+        SetStatusText("Ocr_StatusWaiting");
     }
 
     partial void OnIsBusyChanged(bool value)
@@ -97,11 +114,14 @@ public partial class OcrResultViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanReRecognize))]
     private async Task ReRecognizeAsync()
     {
-        if (Screenshot == null)
+        var screenshot = Screenshot;
+        if (screenshot == null)
             return;
 
         var recognitionVersion = ++_recognitionVersion;
 
+        _recognitionBitmaps.Add(screenshot);
+        _activeRecognitionCount++;
         IsBusy = true;
         HasError = false;
         SetStatusText("Ocr_StatusRecognizing");
@@ -110,7 +130,7 @@ public partial class OcrResultViewModel : ViewModelBase
         {
             _logger.ZLogInformation($"开始重新识别 OCR 截图");
 
-            var text = await _ocrService.RecognizeTextAsync(Screenshot, "auto");
+            var text = await _ocrService.RecognizeTextAsync(screenshot, "auto");
 
             if (recognitionVersion != _recognitionVersion)
                 return;
@@ -135,8 +155,12 @@ public partial class OcrResultViewModel : ViewModelBase
         }
         finally
         {
-            if (recognitionVersion == _recognitionVersion)
-                IsBusy = false;
+            _recognitionBitmaps.Remove(screenshot);
+            if (!ReferenceEquals(screenshot, Screenshot))
+                screenshot.Dispose();
+
+            _activeRecognitionCount--;
+            IsBusy = _activeRecognitionCount > 0;
         }
     }
 
@@ -167,6 +191,12 @@ public partial class OcrResultViewModel : ViewModelBase
     {
         StatusText = _localizationService?.GetString(_statusTextKey, _statusTextArgs)
                      ?? GetFallbackStatusText(_statusTextKey, _statusTextArgs);
+    }
+
+    private void DisposeWhenUnused(WriteableBitmap? screenshot)
+    {
+        if (screenshot != null && !_recognitionBitmaps.Contains(screenshot))
+            screenshot.Dispose();
     }
 
     private static string GetFallbackStatusText(string resourceKey, object[] args)

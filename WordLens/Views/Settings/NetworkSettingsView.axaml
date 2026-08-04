@@ -7,8 +7,11 @@
              x:Class="WordLens.Views.Settings.NetworkSettingsView"
              x:DataType="vm:NetworkSettingsViewModel">
 
-    <ScrollViewer>
-        <StackPanel Spacing="16" Margin="20" MaxWidth="500">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16"
+                    Margin="4,0,12,24"
+                    MaxWidth="620"
+                    HorizontalAlignment="Stretch">
             <CheckBox Content="启用 HTTP 代理" IsChecked="{Binding ProxyEnabled}" />
 
             <StackPanel Spacing="12" IsEnabled="{Binding ProxyEnabled}">

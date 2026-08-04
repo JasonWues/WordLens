@@ -21,6 +21,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
     private readonly ITranslationHistoryService _historyService;
     private readonly ILogger<TranslationHistoryViewModel> _logger;
     private bool _hasLoaded;
+    private int _loadVersion;
 
     [ObservableProperty] private ObservableCollection<TranslationHistory> histories = new();
 
@@ -71,6 +72,18 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         await LoadHistoriesAsync();
     }
 
+    public void ReleaseLoadedData()
+    {
+        _loadVersion++;
+        _hasLoaded = false;
+        Histories.Clear();
+        SelectedHistory = null;
+        TotalCount = 0;
+        HasMoreHistories = false;
+        IsBusy = false;
+        IsLoadingMore = false;
+    }
+
     partial void OnIsBusyChanged(bool value)
     {
         NotifyLoadMoreStateChanged();
@@ -100,6 +113,7 @@ public partial class TranslationHistoryViewModel : ViewModelBase
     {
         if (IsBusy) return;
 
+        var loadVersion = ++_loadVersion;
         IsBusy = true;
         try
         {
@@ -127,10 +141,19 @@ public partial class TranslationHistoryViewModel : ViewModelBase
                 hasMoreHistories = historyList.Count < TotalCount;
             }
 
+            if (loadVersion != _loadVersion)
+                return;
+
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                if (loadVersion != _loadVersion)
+                    return;
+
                 Histories = new ObservableCollection<TranslationHistory>(historyList);
             });
+
+            if (loadVersion != _loadVersion)
+                return;
 
             HasMoreHistories = hasMoreHistories;
             _hasLoaded = true;
@@ -143,7 +166,8 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         }
         finally
         {
-            IsBusy = false;
+            if (loadVersion == _loadVersion)
+                IsBusy = false;
         }
     }
 
@@ -172,15 +196,25 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         if (!CanLoadMoreHistories)
             return;
 
+        var loadVersion = _loadVersion;
         IsLoadingMore = true;
         try
         {
             var historyList = await _historyService.GetPagedAsync(Histories.Count, HistoryPageSize);
+            if (loadVersion != _loadVersion)
+                return;
+
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                if (loadVersion != _loadVersion)
+                    return;
+
                 foreach (var history in historyList)
                     Histories.Add(history);
             });
+
+            if (loadVersion != _loadVersion)
+                return;
 
             TotalCount = await _historyService.GetCountAsync();
             HasMoreHistories = Histories.Count < TotalCount;
@@ -193,7 +227,8 @@ public partial class TranslationHistoryViewModel : ViewModelBase
         }
         finally
         {
-            IsLoadingMore = false;
+            if (loadVersion == _loadVersion)
+                IsLoadingMore = false;
         }
     }
 

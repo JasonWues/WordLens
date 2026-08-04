@@ -8,8 +8,11 @@
              x:Class="WordLens.Views.Settings.GeneralSettingsView"
              x:DataType="vm:GeneralSettingsViewModel">
 
-    <ScrollViewer>
-        <StackPanel Spacing="16" Margin="20">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16"
+                    Margin="4,0,12,24"
+                    MaxWidth="720"
+                    HorizontalAlignment="Stretch">
             <StackPanel Spacing="8">
                 <TextBlock Text="{DynamicResource General_UILanguage_Title}" FontWeight="Bold" FontSize="14" />
                 <ComboBox ItemsSource="{Binding AvailableUILanguages}"

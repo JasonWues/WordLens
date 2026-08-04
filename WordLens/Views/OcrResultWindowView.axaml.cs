@@ -3,6 +3,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using WordLens.ViewModels;
 
 namespace WordLens.Views;
 
@@ -17,7 +18,7 @@ public partial class OcrResultWindowView : Window
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         e.Cancel = true;
-        Hide();
+        HideWindow();
     }
 
     private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -33,6 +34,14 @@ public partial class OcrResultWindowView : Window
 
     private void Close_Click(object? sender, RoutedEventArgs e)
     {
+        HideWindow();
+    }
+
+    private void HideWindow()
+    {
+        if (DataContext is OcrResultViewModel viewModel)
+            viewModel.ReleaseScreenshot();
+
         Hide();
     }
 

@@ -27,6 +27,7 @@ public partial class TranslationSettingsViewModel : ViewModelBase
     private readonly OpenAIModelProviderService _modelProviderService;
     private readonly NetworkSettingsViewModel _networkSettings;
     private bool _hasLoadedProviderModels;
+    private int _modelLoadVersion;
 
     [ObservableProperty] private bool hasModelLoadError;
     [ObservableProperty] private bool isLoadingModels;
@@ -93,13 +94,26 @@ public partial class TranslationSettingsViewModel : ViewModelBase
 
         try
         {
-            await LoadModelsForAllProvidersAsync();
+            await LoadModelsForAllProvidersAsync(_modelLoadVersion);
         }
         catch (Exception ex)
         {
             _hasLoadedProviderModels = false;
             _logger.ZLogWarning(ex, $"加载模型列表失败: {ex.Message}");
         }
+    }
+
+    public void ReleaseProviderModelCache()
+    {
+        _modelLoadVersion++;
+        _hasLoadedProviderModels = false;
+        IsLoadingModels = false;
+        SelectedModelInfo = null;
+        HasModelLoadError = false;
+        ModelLoadErrorMessage = string.Empty;
+
+        foreach (var provider in Providers)
+            provider.AvailableModels?.Clear();
     }
 
     [RelayCommand]
@@ -221,7 +235,12 @@ public partial class TranslationSettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task RefreshModelsAsync(ProviderConfig? provider)
+    private Task RefreshModelsAsync(ProviderConfig? provider)
+    {
+        return RefreshModelsCoreAsync(provider, _modelLoadVersion);
+    }
+
+    private async Task RefreshModelsCoreAsync(ProviderConfig? provider, int modelLoadVersion)
     {
         if (provider == null || string.IsNullOrEmpty(provider.ApiKey))
         {
@@ -248,6 +267,9 @@ public partial class TranslationSettingsViewModel : ViewModelBase
                 provider.BaseUrl,
                 _networkSettings.BuildProxyConfig(),
                 CancellationToken.None);
+
+            if (modelLoadVersion != _modelLoadVersion)
+                return;
 
             if (!string.IsNullOrEmpty(provider.Model) &&
                 models.All(m => m.Id != provider.Model))
@@ -282,7 +304,8 @@ public partial class TranslationSettingsViewModel : ViewModelBase
         }
         finally
         {
-            IsLoadingModels = false;
+            if (modelLoadVersion == _modelLoadVersion)
+                IsLoadingModels = false;
         }
     }
 
@@ -336,21 +359,26 @@ public partial class TranslationSettingsViewModel : ViewModelBase
             oldValue.PropertyChanged -= OnSelectedProviderPropertyChanged;
     }
 
-    private async Task LoadModelsForAllProvidersAsync()
+    private async Task LoadModelsForAllProvidersAsync(int modelLoadVersion)
     {
         var providersToLoad = Providers
             .Where(p => p.Type == ProviderType.OpenAI && p.IsEnabled && !string.IsNullOrEmpty(p.ApiKey))
             .ToList();
 
         foreach (var provider in providersToLoad)
+        {
+            if (modelLoadVersion != _modelLoadVersion)
+                return;
+
             try
             {
-                await RefreshModelsAsync(provider);
+                await RefreshModelsCoreAsync(provider, modelLoadVersion);
             }
             catch (Exception ex)
             {
                 _logger.ZLogWarning(ex, $"为Provider {provider.Name} 加载模型失败: {ex.Message}");
             }
+        }
     }
 
     private void SetModelLoadError(string message, Exception ex)

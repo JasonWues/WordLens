@@ -3,73 +3,171 @@
         xmlns:vm="using:WordLens.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="550"
+        mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="660"
         x:Class="WordLens.Views.MainWindowView"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="{DynamicResource App_SettingsTitle}"
-        Width="700" Height="550"
-        MinWidth="600" MinHeight="450"
+        Width="960" Height="660"
+        MinWidth="840" MinHeight="540"
+        Background="#F5F7F8"
         WindowStartupLocation="CenterScreen">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid Margin="0">
-        <!-- 主内容区域 -->
-        <DrawerPage Grid.Row="0"
-                    IsOpen="True"
-                    DrawerBehavior="Locked"
-                    DrawerLayoutBehavior="Split"
-                    DrawerLength="220"
-                    CompactDrawerLength="56">
-            <DrawerPage.Drawer>
-                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                        BorderThickness="0,0,1,0"
-                        Padding="16"
-                        x:DataType="vm:SettingsViewModel"
-                        DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}">
-                    <Grid RowDefinitions="Auto,*">
-                        <StackPanel Grid.Row="0" Spacing="6" Margin="0,4,0,20">
-                            <TextBlock Text="WordLens"
-                                       FontSize="20"
-                                       FontWeight="Bold" />
-                            <TextBlock Text="{DynamicResource Settings_Title}"
-                                       FontSize="12"
-                                       Opacity="0.65" />
-                            <TextBlock Text="{Binding AutoSaveStatus}"
-                                       FontSize="11"
-                                       Opacity="0.55" />
-                        </StackPanel>
+    <Window.Styles>
+        <Style Selector="ListBox.settings-nav">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ListBox.settings-nav ListBoxItem">
+            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Foreground" Value="#53606F" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="ListBox.settings-nav ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#EEF2F3" />
+            <Setter Property="Foreground" Value="#17212B" />
+        </Style>
+        <Style Selector="ListBox.settings-nav ListBoxItem:selected">
+            <Setter Property="Background" Value="#E4F2ED" />
+            <Setter Property="Foreground" Value="#176451" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="ListBox.settings-nav PathIcon">
+            <Setter Property="Width" Value="17" />
+            <Setter Property="Height" Value="17" />
+        </Style>
+    </Window.Styles>
 
-                        <ListBox Grid.Row="1"
-                                 SelectedIndex="{Binding SelectedSettingsSectionIndex}"
-                                 BorderThickness="0"
-                                 Background="Transparent">
-                            <ListBoxItem Content="{DynamicResource Settings_General}" />
-                            <ListBoxItem Content="{DynamicResource Settings_TranslationProviders}" />
-                            <ListBoxItem Content="OCR" />
-                            <ListBoxItem Content="TTS" />
-                            <ListBoxItem Content="{DynamicResource Settings_NetworkProxy}" />
-                            <ListBoxItem Content="{DynamicResource Settings_History}" />
-                            <ListBoxItem Content="{DynamicResource Settings_About}" />
-                        </ListBox>
-                    </Grid>
-                </Border>
-            </DrawerPage.Drawer>
+    <Grid ColumnDefinitions="208,*">
+        <Border Grid.Column="0"
+                Background="#FFFFFF"
+                BorderBrush="#E2E7EA"
+                BorderThickness="0,0,1,0"
+                Padding="16,18">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="36,*"
+                      ColumnSpacing="10"
+                      Margin="4,0,4,24">
+                    <Border Width="36"
+                            Height="36"
+                            CornerRadius="6"
+                            Background="#1F7A68">
+                        <PathIcon Width="19"
+                                  Height="19"
+                                  Foreground="#FFFFFF"
+                                  Data="{StaticResource sparkles_regular}" />
+                    </Border>
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Spacing="1">
+                        <TextBlock Text="WordLens"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Foreground="#17212B" />
+                        <TextBlock Text="{DynamicResource Settings_Title}"
+                                   FontSize="11"
+                                   Foreground="#7A8794" />
+                    </StackPanel>
+                </Grid>
 
-            <DrawerPage.Content>
-                <TransitioningContentControl Margin="10"
-                                             x:DataType="vm:SettingsViewModel"
-                                             DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}"
-                                             Content="{Binding CurrentSectionViewModel}">
-                    <TransitioningContentControl.PageTransition>
-                        <CrossFade Duration="0:0:0.18" />
-                    </TransitioningContentControl.PageTransition>
-                </TransitioningContentControl>
-            </DrawerPage.Content>
-        </DrawerPage>
+                <ListBox Grid.Row="1"
+                         Classes="settings-nav"
+                         x:DataType="vm:SettingsViewModel"
+                         DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}"
+                         SelectedIndex="{Binding SelectedSettingsSectionIndex}">
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="M4 5.75C4 4.78 4.78 4 5.75 4H18.25C19.22 4 20 4.78 20 5.75V18.25C20 19.22 19.22 20 18.25 20H5.75C4.78 20 4 19.22 4 18.25V5.75ZM8 7V17M12 7V17M16 7V17M6 10H18M6 14H18" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_General}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="{StaticResource translate_regular}" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_TranslationProviders}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="M4 7V5C4 4.45 4.45 4 5 4H7M17 4H19C19.55 4 20 4.45 20 5V7M20 17V19C20 19.55 19.55 20 19 20H17M7 20H5C4.45 20 4 19.55 4 19V17M8 9H16V15H8V9Z" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_Ocr}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="{StaticResource speaker_regular}" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_Tts}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="{StaticResource link_regular}" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_NetworkProxy}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="M12 3.75C7.44 3.75 3.75 7.44 3.75 12S7.44 20.25 12 20.25 20.25 16.56 20.25 12 16.56 3.75 12 3.75ZM12 7V12L15.5 14" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_History}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid ColumnDefinitions="22,*" ColumnSpacing="10">
+                            <PathIcon Data="M12 20.25A8.25 8.25 0 1 0 12 3.75A8.25 8.25 0 0 0 12 20.25ZM12 10.5V16M12 8V8.01" />
+                            <TextBlock Grid.Column="1" Text="{DynamicResource Settings_About}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ListBoxItem>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1"
+              RowDefinitions="76,1,*"
+              x:DataType="vm:SettingsViewModel"
+              DataContext="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SettingsViewModel}">
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="*,Auto"
+                  Margin="28,0"
+                  VerticalAlignment="Center">
+                <TextBlock Text="{Binding CurrentSectionTitle}"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="#17212B"
+                           VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="7"
+                            VerticalAlignment="Center">
+                    <Border Width="7"
+                            Height="7"
+                            CornerRadius="4"
+                            Background="#2B8A6E" />
+                    <TextBlock Text="{Binding AutoSaveStatus}"
+                               FontSize="12"
+                               Foreground="#687582"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1" Background="#E2E7EA" />
+
+            <TransitioningContentControl Grid.Row="2"
+                                         Margin="24,20,24,24"
+                                         Content="{Binding CurrentSectionViewModel}">
+                <TransitioningContentControl.PageTransition>
+                    <CrossFade Duration="0:0:0.12" />
+                </TransitioningContentControl.PageTransition>
+            </TransitioningContentControl>
+        </Grid>
     </Grid>
 </Window>

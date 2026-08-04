@@ -33,6 +33,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly HashSet<TtsProviderConfig> _trackedTtsProviders = new();
     private CancellationTokenSource? _autoSaveCts;
     private bool _hasLoadedSettings;
+    private bool _isContentActive = true;
     private bool _isLoadingSettings;
     private string _autoSaveStatusKey = "Settings_AutoSaved";
     private AppSettings? _originalSettings;
@@ -94,16 +95,29 @@ public partial class SettingsViewModel : ViewModelBase
 
     public AboutViewModel About { get; }
 
-    public ViewModelBase CurrentSectionViewModel => SelectedSettingsSectionIndex switch
+    public ViewModelBase? CurrentSectionViewModel => _isContentActive
+        ? SelectedSettingsSectionIndex switch
+        {
+            0 => GeneralSettings,
+            1 => TranslationSettings,
+            2 => OcrSettings,
+            3 => TtsSettings,
+            4 => NetworkSettings,
+            5 => History,
+            _ => About
+        }
+        : null;
+
+    public string CurrentSectionTitle => _localizationService.GetString(SelectedSettingsSectionIndex switch
     {
-        0 => GeneralSettings,
-        1 => TranslationSettings,
-        2 => OcrSettings,
-        3 => TtsSettings,
-        4 => NetworkSettings,
-        5 => History,
-        _ => About
-    };
+        0 => "Settings_General",
+        1 => "Settings_TranslationProviders",
+        2 => "Settings_Ocr",
+        3 => "Settings_Tts",
+        4 => "Settings_NetworkProxy",
+        5 => "Settings_History",
+        _ => "Settings_About"
+    });
 
     public bool IsGeneralSectionSelected => SelectedSettingsSectionIndex == 0;
 
@@ -124,6 +138,27 @@ public partial class SettingsViewModel : ViewModelBase
         await LoadSettingsAsync();
     }
 
+    public void SetContentActive(bool isActive)
+    {
+        if (_isContentActive == isActive)
+            return;
+
+        _isContentActive = isActive;
+        OnPropertyChanged(nameof(CurrentSectionViewModel));
+
+        if (!isActive)
+        {
+            TranslationSettings.ReleaseProviderModelCache();
+            History.ReleaseLoadedData();
+            return;
+        }
+
+        if (SelectedSettingsSectionIndex == 1)
+            _ = TranslationSettings.LoadProviderModelsOnceAsync();
+        else if (SelectedSettingsSectionIndex == 5)
+            _ = History.InitializeAsync();
+    }
+
     partial void OnSelectedSettingsSectionIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsGeneralSectionSelected));
@@ -134,6 +169,7 @@ public partial class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsHistorySectionSelected));
         OnPropertyChanged(nameof(IsAboutSectionSelected));
         OnPropertyChanged(nameof(CurrentSectionViewModel));
+        OnPropertyChanged(nameof(CurrentSectionTitle));
 
         if (value == 1)
             _ = TranslationSettings.LoadProviderModelsOnceAsync();
@@ -373,6 +409,7 @@ public partial class SettingsViewModel : ViewModelBase
     private void OnCultureChanged(object? sender, EventArgs e)
     {
         AutoSaveStatus = _localizationService.GetString(_autoSaveStatusKey);
+        OnPropertyChanged(nameof(CurrentSectionTitle));
     }
 
     private AppSettings BuildSettingsFromViewModels(TranslationPopupConfig? currentTranslationPopup)
